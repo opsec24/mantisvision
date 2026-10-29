@@ -1,0 +1,126 @@
+services:
+  proxy:
+    image: nginx:alpine
+    container_name: newgensast-proxy-1
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+      - langfuse
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=
+      - NEXT_PUBLIC_LANGFUSE_URL=http://langfuse.localhost
+      - INTERNAL_API_URL=http://backend:8000
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://mantis:securepass@postgres:5432/mantis_web}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - JWT_SECRET=${JWT_SECRET:-change-this-in-production-use-openssl-rand-hex-32}
+      - SETTINGS_ENCRYPTION_KEY=${SETTINGS_ENCRYPTION_KEY:-generate-with-python-cryptography-fernet}
+      - REQUIRE_TOTP=${REQUIRE_TOTP:-false}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-http://langfuse:3000}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf-local}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf-local}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - scan_data:/data/scans
+      - host_repos:/data/repos:ro
+      - /Users:/Users:ro
+
+  worker:
+    build: ./backend
+    command: >
+      celery -A app.pipeline.orchestrator.celery_app worker
+      --loglevel=info --concurrency=2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://mantis:securepass@postgres:5432/mantis_web}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - JWT_SECRET=${JWT_SECRET:-change-this-in-production-use-openssl-rand-hex-32}
+      - SETTINGS_ENCRYPTION_KEY=${SETTINGS_ENCRYPTION_KEY:-generate-with-python-cryptography-fernet}
+      - REQUIRE_TOTP=${REQUIRE_TOTP:-false}
+      - OLLAMA_API_BASE=${OLLAMA_API_BASE:-https://ollama.com}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
+      - LITELLM_SUCCESS_CALLBACKS=${LITELLM_SUCCESS_CALLBACKS:-["langfuse"]}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-http://langfuse:3000}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf-local}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf-local}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - scan_data:/data/scans
+      - host_repos:/data/repos:ro
+      - /Users:/Users:ro
+
+  langfuse:
+    image: langfuse/langfuse:2
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://mantis:securepass@postgres:5432/mantis_web?schema=langfuse
+      - NEXTAUTH_URL=http://langfuse.localhost
+      - NEXTAUTH_SECRET=langfuse-nextauth-secret
+      - SALT=langfuse-salt-value
+      - TELEMETRY_ENABLED=false
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mantis
+      POSTGRES_PASSWORD: securepass
+      POSTGRES_DB: mantis_web
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/app/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mantis -d mantis_web"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:
+  scan_data:
+  host_repos:
