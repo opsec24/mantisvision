@@ -111,7 +111,7 @@ def _record_trace(scan_id: str, step: int, phase: str, agent: str, **kwargs) -> 
                 VALUES
                   (:scan_id, :step, :phase, :agent, :model,
                    :thinking, :prompt, :response,
-                   :tool_name, :tool_input::jsonb, :tool_output,
+                   :tool_name, CAST(:tool_input AS jsonb), :tool_output,
                    :vuln_title, :status, :reason,
                    :ptok, :ctok, :ttok, :latency, :cost)
             """),
@@ -270,7 +270,7 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
                                    decision_status)
                                 VALUES
                                   (:scan_id, :step, :phase, :agent,
-                                   :resp, :tool, :tool_in::jsonb, :tool_out,
+                                   :resp, :tool, CAST(:tool_in AS jsonb), :tool_out,
                                    'PROGRESS')
                             """),
                             {
@@ -322,10 +322,17 @@ def _build_workspace(scan_id: str, source_target: str, source_type: str,
         src = Path(source_target)
         if not src.exists():
             raise FileNotFoundError(f"Local path does not exist: {source_target}")
-        # Symlink the local directory read-only
-        if target_dir.exists() or target_dir.is_symlink():
+        # Copy the local directory into workspace (Mantis refuses symlinks for jail safety)
+        if target_dir.is_symlink() or target_dir.is_file():
             target_dir.unlink()
-        target_dir.symlink_to(src.resolve())
+        elif target_dir.exists():
+            shutil.rmtree(target_dir)
+
+        if src.is_dir():
+            shutil.copytree(src.resolve(), target_dir)
+        else:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src.resolve(), target_dir / src.name)
     else:
         raise ValueError(f"Unsupported source_type: {source_type}")
 
@@ -396,18 +403,21 @@ def run_mantis_scan(
         _publish_progress(scan_id, payload)
         # Persist to agent_inference_traces
         try:
+            trace_data = {k: v for k, v in data.items() if k in (
+                "model", "thinking_content", "prompt_raw", "response_raw",
+                "tool_name", "tool_input", "tool_output",
+                "candidate_vuln_title", "decision_status", "decision_reason",
+                "prompt_tokens", "completion_tokens", "total_tokens",
+                "latency_ms", "cost_usd",
+            )}
+            if "response_raw" not in trace_data and "message" in data:
+                trace_data["response_raw"] = data["message"]
             _record_trace(
                 scan_id=scan_id,
                 step=step_counter,
                 phase=phase,
                 agent=node,
-                **{k: v for k, v in data.items() if k in (
-                    "model", "thinking_content", "prompt_raw", "response_raw",
-                    "tool_name", "tool_input", "tool_output",
-                    "candidate_vuln_title", "decision_status", "decision_reason",
-                    "prompt_tokens", "completion_tokens", "total_tokens",
-                    "latency_ms", "cost_usd",
-                )}
+                **trace_data,
             )
         except Exception as exc:
             logger.warning("trace_record_failed", error=str(exc))
@@ -451,6 +461,7 @@ def run_mantis_scan(
                 env[key] = val
 
         # Also load encrypted API keys saved via the Web UI Settings page
+        provider_base_urls = {}
         try:
             from app.core.security import decrypt_value
             engine = _get_sync_engine()
@@ -458,6 +469,8 @@ def run_mantis_scan(
                 rows = conn.execute(text("SELECT provider, api_key_encrypted, api_base_url FROM provider_configs WHERE is_active = true")).fetchall()
                 for p_name, p_enc, p_base in rows:
                     p_lower = str(p_name).lower()
+                    if p_base:
+                        provider_base_urls[p_lower] = p_base
                     if p_enc:
                         try:
                             key_val = decrypt_value(p_enc)
@@ -467,6 +480,7 @@ def run_mantis_scan(
                                 env["ANTHROPIC_API_KEY"] = key_val
                             elif p_lower in ("gemini", "google"):
                                 env["GEMINI_API_KEY"] = key_val
+                                env["GOOGLE_API_KEY"] = key_val
                             elif p_lower == "deepseek":
                                 env["DEEPSEEK_API_KEY"] = key_val
                         except Exception:
@@ -477,6 +491,31 @@ def run_mantis_scan(
         except Exception as prov_err:
             logger.warning("provider_keys_load_failed", error=str(prov_err))
 
+        # Ensure symmetric google/gemini env var mapping
+        if env.get("GEMINI_API_KEY") and not env.get("GOOGLE_API_KEY"):
+            env["GOOGLE_API_KEY"] = env["GEMINI_API_KEY"]
+        elif env.get("GOOGLE_API_KEY") and not env.get("GEMINI_API_KEY"):
+            env["GEMINI_API_KEY"] = env["GOOGLE_API_KEY"]
+
+        # Determine effective model
+        model = scan_config.get("model")
+        if not model or model.strip() in ("", "default"):
+            if env.get("GEMINI_API_KEY") or env.get("GOOGLE_API_KEY"):
+                model = "gemini-3.5-flash-lite"
+            elif env.get("OPENAI_API_KEY"):
+                model = "openai/gpt-4o"
+            elif env.get("ANTHROPIC_API_KEY"):
+                model = "anthropic/claude-3-5-sonnet-20241022"
+            elif env.get("OLLAMA_API_BASE"):
+                model = "ollama/qwen2.5-coder"
+            elif env.get("VERTEXAI_PROJECT") or env.get("GOOGLE_CLOUD_PROJECT"):
+                model = "vertex_ai/gemini-3.8-flash"
+            else:
+                model = "gemini-3.5-flash-lite"
+
+        # Update scan model record in DB if it was empty
+        _update_scan(scan_id, model=model)
+
         # Build command
         transcript_file = workspace / "transcript.jsonl"
         cmd = [
@@ -486,6 +525,7 @@ def run_mantis_scan(
             "--db", str(workspace / "knowledge.db"),
             "--transcript-out", str(transcript_file),
             "--yes",
+            "--model", model,
         ]
 
         if focus:
@@ -494,12 +534,28 @@ def run_mantis_scan(
             cmd += ["--exclude", ex]
         if scan_config.get("max_tokens"):
             cmd += ["--max-tokens", str(scan_config["max_tokens"])]
-        if scan_config.get("model"):
-            cmd += ["--model", scan_config["model"]]
         if scan_config.get("reasoning_effort"):
             cmd += ["--reasoning-effort", scan_config["reasoning_effort"]]
         if scan_config.get("sandbox"):
             cmd += ["--sandbox", scan_config["sandbox"]]
+        if scan_config.get("scan_mode"):
+            cmd += ["--scan-mode", scan_config["scan_mode"]]
+        if scan_config.get("objective"):
+            cmd += ["--objective", scan_config["objective"]]
+        if scan_config.get("seed_report"):
+            cmd += ["--seed-report", scan_config["seed_report"]]
+        if scan_config.get("deterministic_only"):
+            cmd += ["--deterministic-only"]
+        if scan_config.get("no_replan"):
+            cmd += ["--no-replan"]
+        if scan_config.get("parallel"):
+            cmd += ["--parallel", str(scan_config["parallel"])]
+        if scan_config.get("max_llm_calls"):
+            cmd += ["--max-llm-calls", str(scan_config["max_llm_calls"])]
+        if scan_config.get("api_base"):
+            cmd += ["--api-base", scan_config["api_base"]]
+        elif model.startswith("ollama/") and env.get("OLLAMA_API_BASE"):
+            cmd += ["--api-base", env["OLLAMA_API_BASE"]]
         if resume and (workspace / "knowledge.db").exists():
             # Find most recent run_id from knowledge.db to resume
             try:
@@ -514,8 +570,8 @@ def run_mantis_scan(
 
         _update_scan(scan_id, current_phase="running")
         emit("running", "mantis_engine", "launch", {
-            "message": "Launching Google Mantis ADK harness",
-            "command": " ".join(cmd[:6]) + " ...",
+            "message": f"Launching Google Mantis ADK harness (model: {model})",
+            "command": " ".join(cmd[:8]) + " ...",
         })
 
         # 5. Stream subprocess output line-by-line
@@ -529,10 +585,15 @@ def run_mantis_scan(
         )
 
         current_node = "mantis_engine"
+        recent_output_lines = []
         for line in proc.stdout:
             line = line.rstrip()
             if not line:
                 continue
+
+            recent_output_lines.append(line)
+            if len(recent_output_lines) > 60:
+                recent_output_lines.pop(0)
 
             # Detect node transitions from Mantis output banners
             # Mantis prints: ╔══ [history] ══╗ or similar
@@ -554,8 +615,15 @@ def run_mantis_scan(
         proc.wait(timeout=86400 * 3)
         exit_code = proc.returncode
 
-        if exit_code != 0:
-            raise RuntimeError(f"Mantis exited with code {exit_code}")
+        if exit_code not in (0, 2):
+            tail_err = "\n".join(recent_output_lines[-15:]) if recent_output_lines else f"Exit code {exit_code}"
+            raise RuntimeError(f"Mantis exited with code {exit_code}: {tail_err}")
+
+        if exit_code == 2:
+            emit("running", "orchestrator", "budget_paused", {
+                "message": "Mantis reached configured budget limit and paused gracefully. Processing discovered findings.",
+                "decision_status": "PROGRESS",
+            })
 
         # 6. Ingest findings
         _update_scan(scan_id, current_phase="ingesting_findings")
@@ -564,14 +632,28 @@ def run_mantis_scan(
         findings_count = _ingest_findings(scan_id, workspace)
         _ingest_transcript(scan_id, workspace)
 
-        # 7. Ingest threat model and architecture summary from KB
-        kb_dir = workspace / "workspace" / "kb"
+        # 7. Ingest threat model and architecture summary from KB directory or knowledge.db artifacts
         threat_model_text = None
         arch_summary = None
+        kb_dir = workspace / "workspace" / "kb"
         if (kb_dir / "THREAT_MODEL.md").exists():
             threat_model_text = (kb_dir / "THREAT_MODEL.md").read_text(encoding="utf-8", errors="replace")
         if (kb_dir / "architecture.md").exists():
             arch_summary = (kb_dir / "architecture.md").read_text(encoding="utf-8", errors="replace")
+
+        kb_path = workspace / "knowledge.db"
+        if kb_path.exists():
+            try:
+                import sqlite3
+                con = sqlite3.connect(str(kb_path))
+                for fpath, content in con.execute("SELECT filepath, content FROM campaign_artifacts").fetchall():
+                    if not arch_summary and "architecture.md" in fpath:
+                        arch_summary = content
+                    elif not threat_model_text and ("threat" in fpath.lower()):
+                        threat_model_text = content
+                con.close()
+            except Exception:
+                pass
 
         update_fields: dict = {
             "status": "completed",

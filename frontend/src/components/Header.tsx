@@ -13,6 +13,7 @@ import {
   LogOut,
   User as UserIcon,
   GitCompare,
+  FlaskConical,
 } from "lucide-react";
 import { api, getToken, removeToken } from "@/lib/api";
 
@@ -62,6 +63,7 @@ export default function Header() {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: Activity },
     { label: "New Scan", href: "/scans/new", icon: PlusCircle },
+    { label: "Benchmarks & Lab", href: "/benchmarks", icon: FlaskConical },
     { label: "Compare", href: "/scans/compare", icon: GitCompare },
     { label: "Audit Log", href: "/audit", icon: History },
     { label: "Settings", href: "/settings", icon: Settings },

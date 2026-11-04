@@ -9,7 +9,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import audit, auth, health, scans, settings, stream
+from app.api import audit, auth, health, lab, scans, settings, stream
 from app.core.database import engine
 
 logger = structlog.get_logger(__name__)
@@ -59,6 +59,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(scans.router)
+app.include_router(lab.router)
 app.include_router(audit.router)
 app.include_router(settings.router)
 app.include_router(stream.router)

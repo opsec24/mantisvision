@@ -252,6 +252,14 @@ export const api = {
     max_tokens?: number;
     sandbox?: string;
     resume?: boolean;
+    scan_mode?: string;
+    objective?: string;
+    seed_report?: string;
+    deterministic_only?: boolean;
+    no_replan?: boolean;
+    parallel?: number;
+    max_llm_calls?: number;
+    api_base?: string;
   }) =>
     request<{ id: string; status: string; name?: string }>("/api/scans", {
       method: "POST",
@@ -546,4 +554,69 @@ export const api = {
       active_scans: number;
       queued_scans: number;
     }>("/api/health"),
+
+  // Mantis Lab & Benchmarks
+  getLabTargets: () =>
+    request<
+      Array<{
+        id: string;
+        name: string;
+        target_type: "builtin" | "synthetic";
+        path: string;
+        file_count: number;
+        flaw_count?: number;
+        decoy_count?: number;
+        seed?: number;
+        size?: string;
+        ground_truth_path?: string;
+        description: string;
+      }>
+    >("/api/lab/targets"),
+
+  generateSyntheticTarget: (data: { seed: number; size: "small" | "medium" | "large"; name?: string }) =>
+    request<{
+      id: string;
+      name: string;
+      target_type: string;
+      path: string;
+      file_count: number;
+      flaw_count?: number;
+      decoy_count?: number;
+      seed?: number;
+      size?: string;
+      ground_truth_path?: string;
+      description: string;
+    }>("/api/lab/generate-target", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  runSurveyorBenchmark: (data: { mode: "synthetic" | "target"; target?: string; ground_truth?: string }) =>
+    request<{
+      status: string;
+      stdout: string;
+      metrics: any;
+    }>("/api/lab/surveyor-benchmark", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  runStageBenchmark: (data: {
+    stage: string;
+    model?: string;
+    effort?: string;
+    toolset?: string;
+    runs?: number;
+    max_tokens?: number;
+  }) =>
+    request<{
+      status: string;
+      exit_code: number;
+      stdout: string;
+      stderr: string;
+      metrics?: any;
+    }>("/api/lab/stage-benchmark", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };

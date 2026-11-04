@@ -40,7 +40,8 @@ interface CuratedModelDef {
 }
 
 const MODEL_PRESETS = [
-  { id: "gemini/gemini-2.5-flash", label: "Gemini 2.5 Flash (Google AI Studio)" },
+  { id: "gemini/gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite (Google AI)" },
+  { id: "gemini/gemini-3.8-flash", label: "Gemini 3.8 Flash (Google AI)" },
   { id: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet (Anthropic)" },
   { id: "openai/gpt-4o", label: "GPT-4o (OpenAI)" },
   { id: "deepseek/deepseek-chat", label: "DeepSeek Chat" },
@@ -64,7 +65,7 @@ export default function NewScanPage() {
   const [gitToken, setGitToken] = useState("");
 
   // Mantis-native flags
-  const [modelPreset, setModelPreset] = useState("gemini/gemini-2.5-flash");
+  const [modelPreset, setModelPreset] = useState("gemini/gemini-3.5-flash-lite");
   const [customModel, setCustomModel] = useState("");
   const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium" | "high">("medium");
   const [focus, setFocus] = useState("");
@@ -72,6 +73,14 @@ export default function NewScanPage() {
   const [sandbox, setSandbox] = useState("static-only");
   const [maxTokens, setMaxTokens] = useState<number | "">("");
   const [resumeScan, setResumeScan] = useState(false);
+  const [scanMode, setScanMode] = useState<"auto" | "whole" | "file-by-file" | "cross-functional">("auto");
+  const [objective, setObjective] = useState("");
+  const [seedReport, setSeedReport] = useState("");
+  const [deterministicOnly, setDeterministicOnly] = useState(false);
+  const [noReplan, setNoReplan] = useState(false);
+  const [parallel, setParallel] = useState(1);
+  const [maxLlmCalls, setMaxLlmCalls] = useState<number | "">("");
+  const [showAdvancedMantis, setShowAdvancedMantis] = useState(false);
 
   // Budget
   const [budgetLimit, setBudgetLimit] = useState(5.0);
@@ -128,6 +137,16 @@ export default function NewScanPage() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const st = sp.get("source_type");
+      const target = sp.get("source_target");
+      const name = sp.get("name");
+      if (st === "local" || st === "git") setSourceType(st);
+      if (target) setSourceTarget(target);
+      if (name) setScanName(name);
+    }
+
     loadData().then(({ provList, enabled }) => {
       // Auto-select first configured provider with models
       const hasOllama = isProviderConfigured("ollama", provList);
@@ -402,6 +421,13 @@ export default function NewScanPage() {
         sandbox: sandbox,
         max_tokens: maxTokens !== "" ? maxTokens : undefined,
         resume: resumeScan,
+        scan_mode: scanMode,
+        objective: objective.trim() || undefined,
+        seed_report: seedReport.trim() || undefined,
+        deterministic_only: deterministicOnly,
+        no_replan: noReplan,
+        parallel: parallel > 1 ? parallel : undefined,
+        max_llm_calls: maxLlmCalls !== "" ? Number(maxLlmCalls) : undefined,
       });
 
       router.push(`/scans/${res.id}`);
@@ -507,6 +533,51 @@ export default function NewScanPage() {
                 <span>Local Workspace</span>
               </button>
             </div>
+          </div>
+
+          {/* Quick Target Presets */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+            <span className="text-[11px] font-semibold text-slate-400">Quick Test Targets:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setSourceType("local");
+                setSourceTarget("/app/mantis_engine/test_targets");
+                setScanName("Built-in Test Suite (Flask & Vault)");
+              }}
+              className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-mono font-medium transition-colors"
+            >
+              🧪 test_targets
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSourceType("local");
+                setSourceTarget("/app/mantis_engine/evals/research_target");
+                setScanName("Mantis 26-File Seeded Corpus");
+              }}
+              className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-mono font-medium transition-colors"
+            >
+              🎯 research_target
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSourceType("git");
+                setSourceTarget("https://github.com/juice-shop/juice-shop.git");
+                setScanName("OWASP Juice Shop Audit");
+              }}
+              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium transition-colors"
+            >
+              🧃 Juice Shop
+            </button>
+            <Link
+              href="/benchmarks"
+              className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-mono font-medium transition-colors flex items-center space-x-1"
+            >
+              <Sparkles className="w-3 h-3 text-amber-600" />
+              <span>Target Studio &amp; Benchmarks →</span>
+            </Link>
           </div>
 
           {sourceType === "git" ? (
@@ -745,6 +816,146 @@ export default function NewScanPage() {
               </p>
             </div>
           </label>
+
+          {/* Advanced Mantis ADK Controls Toggle */}
+          <div className="pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowAdvancedMantis(!showAdvancedMantis)}
+              className="flex items-center justify-between w-full py-1 text-xs font-bold text-purple-700 hover:text-purple-900"
+            >
+              <div className="flex items-center space-x-2">
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Advanced Mantis ADK Engine Flags ({showAdvancedMantis ? "Hide" : "Show"})</span>
+              </div>
+              <span className="text-[10px] font-mono bg-purple-50 px-2 py-0.5 rounded text-purple-600">
+                mode: {scanMode} | {parallel} worker(s)
+              </span>
+            </button>
+
+            {showAdvancedMantis && (
+              <div className="mt-4 space-y-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                {/* Scan Mode */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Scan Mode (--scan-mode)
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: "auto", label: "Auto", desc: "Adaptive campaign plan" },
+                      { id: "whole", label: "Whole", desc: "Entire repo single graph" },
+                      { id: "file-by-file", label: "File-by-File", desc: "Isolated single-file hunt" },
+                      { id: "cross-functional", label: "Cross-Functional", desc: "Multi-file defect chaining" },
+                    ].map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setScanMode(m.id as any)}
+                        className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                          scanMode === m.id
+                            ? "bg-purple-700 border-purple-700 text-white"
+                            : "bg-white border-slate-200 text-slate-700 hover:border-purple-300"
+                        }`}
+                      >
+                        <div className="font-bold">{m.label}</div>
+                        <div className={`text-[10px] mt-0.5 ${scanMode === m.id ? "text-purple-200" : "text-slate-400"}`}>
+                          {m.desc}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Campaign Objective */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Natural Language Objective (--objective)
+                  </label>
+                  <input
+                    type="text"
+                    value={objective}
+                    onChange={(e) => setObjective(e.target.value)}
+                    placeholder="e.g. Find privilege escalation from customer to tenant admin"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:border-purple-600"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Steers research graph synthesis towards a specific security goal.
+                  </p>
+                </div>
+
+                {/* Seed Report */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Variant Bug Hunting Report (--seed-report)
+                  </label>
+                  <input
+                    type="text"
+                    value={seedReport}
+                    onChange={(e) => setSeedReport(e.target.value)}
+                    placeholder="e.g. /app/reports/cve-2024-1234.md"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:border-purple-600"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Path to a prior bug report; Mantis will search for structural variants of the reported bug.
+                  </p>
+                </div>
+
+                {/* Grid for Parallel & Limits */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Parallel Campaigns Concurrency (--parallel)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={parallel}
+                      onChange={(e) => setParallel(parseInt(e.target.value) || 1)}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Max LLM Calls Ceiling (--max-llm-calls)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={maxLlmCalls}
+                      onChange={(e) => setMaxLlmCalls(e.target.value ? parseInt(e.target.value) : "")}
+                      placeholder="e.g. 100 (leave blank for workflow default)"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Toggles */}
+                <div className="pt-2 border-t border-slate-200 space-y-2">
+                  <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={deterministicOnly}
+                      onChange={(e) => setDeterministicOnly(e.target.checked)}
+                      className="rounded border-slate-300 text-purple-700 focus:ring-purple-500"
+                    />
+                    <span>Force Deterministic Archetype Synthesis (--deterministic-only)</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={noReplan}
+                      onChange={(e) => setNoReplan(e.target.checked)}
+                      className="rounded border-slate-300 text-purple-700 focus:ring-purple-500"
+                    />
+                    <span>Freeze Campaign Plan at Start (--no-replan) for exact reproducibility</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Section 3: Hard Cost Ceiling */}

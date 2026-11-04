@@ -38,7 +38,7 @@ class ScanCreateRequest(BaseModel):
     branch: Optional[str] = None
     git_token: Optional[str] = None
     # Mantis-native flags
-    model: Optional[str] = None                    # e.g. "openai/gpt-4o", "claude-3-5-sonnet"
+    model: Optional[str] = None                    # e.g. "openai/gpt-4o", "gemini-3.5-flash-lite"
     reasoning_effort: Optional[str] = "medium"     # "low", "medium", "high"
     focus: Optional[str] = None                    # e.g. "look for IDOR", "find SSRF"
     exclude: Optional[list[str]] = None            # e.g. ["vendor", "testdata", "*.min.js"]
@@ -47,6 +47,14 @@ class ScanCreateRequest(BaseModel):
     sandbox: Optional[str] = "static-only"         # "static-only", "microsandbox", "gvisor"
     resume: Optional[bool] = False                 # resume from last checkpoint
     fresh: Optional[bool] = False                  # wipe workspace and start clean
+    scan_mode: Optional[str] = "auto"              # "auto", "whole", "file-by-file", "cross-functional", "changed"
+    objective: Optional[str] = None                # natural language objective for graph synthesizer
+    seed_report: Optional[str] = None              # path or content for variant bug hunting
+    deterministic_only: Optional[bool] = False     # force deterministic archetype synthesis
+    no_replan: Optional[bool] = False              # freeze campaign plan at start
+    parallel: Optional[int] = 1                    # concurrent campaigns
+    max_llm_calls: Optional[int] = None            # LLM calls limit
+    api_base: Optional[str] = None                 # custom API base endpoint
 
 
 class ScanResponse(BaseModel):
@@ -238,6 +246,14 @@ async def create_scan(
         "exclude": body.exclude or [],
         "max_tokens": body.max_tokens,
         "sandbox": body.sandbox or "static-only",
+        "scan_mode": body.scan_mode or "auto",
+        "objective": body.objective,
+        "seed_report": body.seed_report,
+        "deterministic_only": body.deterministic_only or False,
+        "no_replan": body.no_replan or False,
+        "parallel": body.parallel or 1,
+        "max_llm_calls": body.max_llm_calls,
+        "api_base": body.api_base,
     }
 
     # Enqueue Celery task – import here to avoid circular imports at module
