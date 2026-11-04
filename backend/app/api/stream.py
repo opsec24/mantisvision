@@ -54,10 +54,36 @@ async def _event_generator(scan_id: str, scan: Scan):
     pubsub = redis_client.pubsub()
 
     try:
-        # 1. Replay historical logs from Redis list
+        # 1. Replay historical logs from Redis list, or fallback to Postgres traces if Redis history is empty
         history = await redis_client.lrange(history_key, 0, -1)
-        for item in history:
-            yield f"data: {item}\n\n"
+        if history:
+            for item in history:
+                yield f"data: {item}\n\n"
+        else:
+            try:
+                from app.core.database import async_session_factory
+                from app.core.models import AgentInferenceTrace
+                async with async_session_factory() as trace_db:
+                    res = await trace_db.execute(
+                        select(AgentInferenceTrace)
+                        .where(AgentInferenceTrace.scan_id == uuid.UUID(scan_id))
+                        .order_by(AgentInferenceTrace.step_number.asc())
+                        .limit(300)
+                    )
+                    rows = res.scalars().all()
+                    for r in rows:
+                        msg = r.response_raw or (f"[{r.tool_name}]" if r.tool_name else f"Swarm step {r.step_number}")
+                        payload = json.dumps({
+                            "step": r.step_number,
+                            "phase": r.phase,
+                            "node": r.agent_name,
+                            "timestamp": r.created_at.isoformat() if r.created_at else "",
+                            "message": msg,
+                            "decision_status": r.decision_status,
+                        })
+                        yield f"data: {payload}\n\n"
+            except Exception as fb_err:
+                logger.warning("sse_db_replay_failed", scan_id=scan_id, error=str(fb_err))
 
         # 2. If scan is already terminal and no history was stored yet (e.g. initial failure), yield terminal event
         if scan.status in ("completed", "failed", "cancelled", "budget_exceeded"):

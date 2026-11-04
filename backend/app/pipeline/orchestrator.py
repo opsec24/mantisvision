@@ -83,7 +83,12 @@ def _get_sync_engine():
 def _publish_progress(scan_id: str, event: dict) -> None:
     try:
         redis = _get_redis()
-        redis.publish(f"scan:{scan_id}:progress", json.dumps(event))
+        payload = json.dumps(event)
+        redis.publish(f"scan:{scan_id}:progress", payload)
+        # Persist event into Redis history list so reloads & new tabs replay past events
+        redis.rpush(f"scan:{scan_id}:history", payload)
+        redis.ltrim(f"scan:{scan_id}:history", -1500, -1)
+        redis.expire(f"scan:{scan_id}:history", 86400 * 7)
     except Exception as exc:
         logger.warning("sse_publish_failed", scan_id=scan_id, error=str(exc))
 
@@ -261,6 +266,7 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
                     tool_output = row.get("response") if r_type == "tool_response" else None
                     resp_text = row.get("text") if r_type == "text" else None
 
+                    phase_mapped = NODE_TO_PHASE.get(node, node)
                     with engine.begin() as conn:
                         conn.execute(
                             text("""
@@ -276,7 +282,7 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
                             {
                                 "scan_id": scan_id,
                                 "step": 10000 + idx,
-                                "phase": node,
+                                "phase": phase_mapped,
                                 "agent": node,
                                 "resp": resp_text,
                                 "tool": tool_name,
@@ -290,6 +296,82 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
     except Exception as exc:
         logger.warning("transcript_ingest_failed", scan_id=scan_id, error=str(exc))
     return count
+
+
+# ── Node to Visual Funnel Phase Mapping ───────────────────────────────────────
+
+NODE_TO_PHASE = {
+    "setup": "ingest",
+    "clone": "ingest",
+    "ready": "ingest",
+    "ingest": "ingest",
+    "history": "indexing",
+    "structural_index": "indexing",
+    "indexing": "indexing",
+    "architect": "threat_model",
+    "threat_modeler": "threat_model",
+    "threat_model": "threat_model",
+    "planner": "research",
+    "researcher": "research",
+    "research": "research",
+    "deduplicator": "critic",
+    "reviewer": "critic",
+    "critic": "critic",
+    "findings_gate": "critic",
+    "reproducer": "reproduce",
+    "chainer": "reproduce",
+    "reproduce": "reproduce",
+    "patcher": "patch",
+    "calibrator": "patch",
+    "reflector": "patch",
+    "reporter": "patch",
+    "patch": "patch",
+    "completed": "patch",
+}
+
+
+def _format_threat_model_md(content: str) -> str:
+    """Format JSON or Markdown threat model artifacts into clean Markdown for UI visualization."""
+    if not content or not content.strip():
+        return ""
+    if content.strip().startswith("#"):
+        return content
+
+    try:
+        data = json.loads(content)
+        lines = ["# Threat Model & Attack Surface Matrix\n"]
+        threats = data.get("threats", [])
+        if threats:
+            lines.append("## Identified Threats & Attack Vectors\n")
+            for t in threats:
+                if isinstance(t, str):
+                    # Mantis format: "target_component: ...; title: ...; threat_id: ...; impact: ...; attack_vector: ..."
+                    parts = [p.strip() for p in t.split(";") if p.strip()]
+                    fields = {}
+                    for p in parts:
+                        if ":" in p:
+                            k, v = p.split(":", 1)
+                            fields[k.strip().lower()] = v.strip()
+                    threat_title = fields.get("title", "Identified Threat")
+                    threat_id = fields.get("threat_id", "THRT")
+                    lines.append(f"### {threat_id}: {threat_title}\n")
+                    if "target_component" in fields:
+                        lines.append(f"- **Target Component**: {fields['target_component']}")
+                    if "attack_vector" in fields:
+                        lines.append(f"- **Attack Vector**: {fields['attack_vector']}")
+                    if "impact" in fields:
+                        lines.append(f"- **Impact**: {fields['impact']}")
+                    lines.append("")
+                elif isinstance(t, dict):
+                    title = t.get("title", "Identified Threat")
+                    lines.append(f"### {t.get('threat_id', 'THRT')}: {title}\n")
+                    for k, v in t.items():
+                        if k not in ("title", "threat_id") and v:
+                            lines.append(f"- **{k.replace('_', ' ').title()}**: {v}")
+                    lines.append("")
+        return "\n".join(lines)
+    except Exception:
+        return content
 
 
 # ── Mantis Workspace ──────────────────────────────────────────────────────────
@@ -584,8 +666,16 @@ def run_mantis_scan(
             cwd=str(MANTIS_ENGINE_DIR),
         )
 
-        current_node = "mantis_engine"
+        current_node = "setup"
+        current_phase = "indexing"
         recent_output_lines = []
+        arch_saved = False
+        threat_saved = False
+        plan_saved = False
+        review_saved = False
+        line_count = 0
+        transcript_ingested_lines = 0
+
         for line in proc.stdout:
             line = line.rstrip()
             if not line:
@@ -595,22 +685,134 @@ def run_mantis_scan(
             if len(recent_output_lines) > 60:
                 recent_output_lines.pop(0)
 
-            # Detect node transitions from Mantis output banners
-            # Mantis prints: ╔══ [history] ══╗ or similar
-            if "╔" in line or "══" in line:
-                for node_name in ["history", "structural_index", "architect", "threat_modeler",
-                                   "planner", "researcher", "deduplicator", "reviewer",
-                                   "critic", "reproducer", "chainer", "patcher",
-                                   "calibrator", "reflector", "reporter"]:
-                    if node_name in line.lower():
-                        current_node = node_name
-                        _update_scan(scan_id, current_phase=node_name)
+            line_count += 1
+
+            # Detect node transitions from Mantis ADK output banners
+            # e.g.: -- mantis_vulnerability_pipeline@1/architect@1
+            # or:   -- mantis_vulnerability_pipeline@1/threat_modeler@1
+            node_match = re.search(
+                r"/(history|structural_index|architect|threat_modeler|planner|researcher|deduplicator|reviewer|critic|findings_gate|reproducer|chainer|patcher|calibrator|reflector|reporter)@",
+                line,
+            )
+            if node_match:
+                current_node = node_match.group(1)
+                new_phase = NODE_TO_PHASE.get(current_node, "indexing")
+                if new_phase != current_phase:
+                    current_phase = new_phase
+                    _update_scan(scan_id, current_phase=current_phase)
+            elif "╔" in line or "══" in line or "node '" in line:
+                for candidate in NODE_TO_PHASE.keys():
+                    if candidate in line.lower():
+                        current_node = candidate
+                        new_phase = NODE_TO_PHASE.get(current_node, "indexing")
+                        if new_phase != current_phase:
+                            current_phase = new_phase
+                            _update_scan(scan_id, current_phase=current_phase)
                         break
 
-            emit("running", current_node, "log_line", {
+            # Parse tool calls and responses for instant swarm trace visibility
+            extra_trace = {}
+            tool_call_match = re.search(r"\[TOOL CALL:\s*(\w+)\](?:\s*args=(.+))?", line)
+            tool_resp_match = re.search(r"\[TOOL RESPONSE:\s*(\w+)\](?:\s*(.+))?", line)
+            if tool_call_match:
+                extra_trace["tool_name"] = tool_call_match.group(1)
+                raw_args = tool_call_match.group(2)
+                if raw_args:
+                    try:
+                        import ast
+                        extra_trace["tool_input"] = ast.literal_eval(raw_args.strip())
+                    except Exception:
+                        extra_trace["tool_input"] = {"args": raw_args.strip()}
+            elif tool_resp_match:
+                extra_trace["tool_name"] = tool_resp_match.group(1)
+                extra_trace["tool_output"] = (tool_resp_match.group(2) or "")[:3000]
+
+            emit(current_phase, current_node, "log_line", {
                 "message": line,
                 "decision_status": "PROGRESS",
+                **extra_trace,
             })
+
+            # Check for newly produced artifacts and transcript lines every 10 lines
+            if line_count % 10 == 0:
+                # 1. Ingest newly appended lines from transcript.jsonl
+                t_file = workspace / "transcript.jsonl"
+                if t_file.exists():
+                    try:
+                        with open(t_file, "r", encoding="utf-8") as tf:
+                            all_tlines = tf.readlines()
+                        if len(all_tlines) > transcript_ingested_lines:
+                            new_tlines = all_tlines[transcript_ingested_lines:]
+                            engine = _get_sync_engine()
+                            for t_idx, t_raw in enumerate(new_tlines):
+                                t_raw = t_raw.strip()
+                                if not t_raw:
+                                    continue
+                                try:
+                                    t_row = json.loads(t_raw)
+                                    t_node = t_row.get("node") or t_row.get("author") or current_node
+                                    t_phase = NODE_TO_PHASE.get(t_node, current_phase)
+                                    t_type = t_row.get("type", "text")
+                                    t_name = t_row.get("name") if t_type in ("tool_call", "tool_response") else None
+                                    t_args = t_row.get("args") if t_type == "tool_call" else None
+                                    t_resp = t_row.get("response") if t_type == "tool_response" else None
+                                    t_text = t_row.get("text") if t_type == "text" else None
+
+                                    with engine.begin() as conn:
+                                        conn.execute(
+                                            text("""
+                                                INSERT INTO agent_inference_traces
+                                                  (scan_id, step_number, phase, agent_name,
+                                                   response_raw, tool_name, tool_input, tool_output,
+                                                   decision_status)
+                                                VALUES
+                                                  (:scan_id, :step, :phase, :agent,
+                                                   :resp, :tool, CAST(:tool_in AS jsonb), :tool_out,
+                                                   'PROGRESS')
+                                            """),
+                                            {
+                                                "scan_id": scan_id,
+                                                "step": 20000 + transcript_ingested_lines + t_idx,
+                                                "phase": t_phase,
+                                                "agent": t_node,
+                                                "resp": t_text,
+                                                "tool": t_name,
+                                                "tool_in": json.dumps(t_args) if isinstance(t_args, (dict, list)) else json.dumps({"args": t_args}) if t_args else None,
+                                                "tool_out": str(t_resp)[:8000] if t_resp else None,
+                                            },
+                                        )
+                                except Exception:
+                                    pass
+                            transcript_ingested_lines = len(all_tlines)
+                    except Exception:
+                        pass
+
+                # 2. Extract architecture, threat model, hunting plan from knowledge.db
+                kb_path = workspace / "knowledge.db"
+                if kb_path.exists() and (not arch_saved or not threat_saved or not plan_saved or not review_saved):
+                    try:
+                        import sqlite3
+                        con = sqlite3.connect(str(kb_path))
+                        rows = con.execute("SELECT filepath, content FROM campaign_artifacts").fetchall()
+                        con.close()
+                        kb_updates = {}
+                        for fpath, content in rows:
+                            if not arch_saved and "architecture.md" in fpath and content:
+                                kb_updates["architecture_summary"] = content
+                                arch_saved = True
+                            elif not threat_saved and "threat_model" in fpath.lower() and content:
+                                kb_updates["threat_model"] = _format_threat_model_md(content)
+                                threat_saved = True
+                            elif not plan_saved and ("plan.json" in fpath or "hunting_plan" in fpath) and content:
+                                kb_updates["hunting_plan"] = content
+                                plan_saved = True
+                            elif not review_saved and ("review_packet" in fpath or "report.json" in fpath) and content:
+                                kb_updates["review_packet"] = content
+                                review_saved = True
+                        if kb_updates:
+                            _update_scan(scan_id, **kb_updates)
+                    except Exception:
+                        pass
 
         proc.wait(timeout=86400 * 3)
         exit_code = proc.returncode
@@ -641,19 +843,28 @@ def run_mantis_scan(
         if (kb_dir / "architecture.md").exists():
             arch_summary = (kb_dir / "architecture.md").read_text(encoding="utf-8", errors="replace")
 
+        hunting_plan_text = None
+        review_packet_text = None
         kb_path = workspace / "knowledge.db"
         if kb_path.exists():
             try:
                 import sqlite3
                 con = sqlite3.connect(str(kb_path))
                 for fpath, content in con.execute("SELECT filepath, content FROM campaign_artifacts").fetchall():
-                    if not arch_summary and "architecture.md" in fpath:
+                    if not arch_summary and "architecture.md" in fpath and content:
                         arch_summary = content
-                    elif not threat_model_text and ("threat" in fpath.lower()):
-                        threat_model_text = content
+                    elif not threat_model_text and ("threat" in fpath.lower()) and content:
+                        threat_model_text = _format_threat_model_md(content)
+                    elif not hunting_plan_text and ("plan.json" in fpath or "hunting_plan" in fpath) and content:
+                        hunting_plan_text = content
+                    elif not review_packet_text and ("review_packet" in fpath or "report.json" in fpath) and content:
+                        review_packet_text = content
                 con.close()
             except Exception:
                 pass
+
+        if threat_model_text:
+            threat_model_text = _format_threat_model_md(threat_model_text)
 
         update_fields: dict = {
             "status": "completed",
@@ -664,6 +875,10 @@ def run_mantis_scan(
             update_fields["threat_model"] = threat_model_text
         if arch_summary:
             update_fields["architecture_summary"] = arch_summary
+        if hunting_plan_text:
+            update_fields["hunting_plan"] = hunting_plan_text
+        if review_packet_text:
+            update_fields["review_packet"] = review_packet_text
         _update_scan(scan_id, **update_fields)
 
         emit("completed", "orchestrator", "scan_complete", {

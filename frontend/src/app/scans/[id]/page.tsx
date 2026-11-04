@@ -249,9 +249,11 @@ export default function ScanDetailPage() {
   };
 
   const getPhaseIndex = (phase?: string) => {
-    if (!phase) return -1;
+    if (!phase) return 0;
     const clean = phase.toLowerCase();
-    return PHASES.findIndex((p) => p.id === clean || p.nodes.includes(clean));
+    if (clean === "running") return 0;
+    const idx = PHASES.findIndex((p) => p.id === clean || p.nodes.includes(clean));
+    return idx >= 0 ? idx : 0;
   };
 
   const currentPhaseIdx = getPhaseIndex(scan?.current_phase);

@@ -23,6 +23,17 @@ from app.api.auth import get_current_user
 from app.core.audit import log_user_action
 from app.core.database import get_db
 from app.core.models import AgentInferenceTrace, Finding, Scan, User
+from app.pipeline.orchestrator import NODE_TO_PHASE, _format_threat_model_md
+
+PHASE_NODE_MAP = {
+    "ingest": ["setup", "clone", "ready", "ingest", "orchestrator"],
+    "indexing": ["history", "structural_index", "indexing"],
+    "threat_model": ["architect", "threat_modeler", "threat_model"],
+    "research": ["planner", "researcher", "research"],
+    "critic": ["deduplicator", "reviewer", "critic", "findings_gate"],
+    "reproduce": ["reproducer", "chainer", "reproduce"],
+    "patch": ["patcher", "calibrator", "reflector", "reporter", "patch", "completed"],
+}
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/scans", tags=["scans"])
@@ -546,6 +557,35 @@ async def get_scan(
     if scan is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
 
+    # On-demand sync of architecture, threat model, hunting plan, review packet from knowledge.db if missing in DB
+    db_updates = {}
+    kb_path = Path(f"/data/scans/{scan_id}/knowledge.db")
+    if kb_path.exists() and (not scan.architecture_summary or not scan.threat_model or not scan.hunting_plan or not scan.review_packet):
+        try:
+            import sqlite3
+            con = sqlite3.connect(str(kb_path))
+            rows = con.execute("SELECT filepath, content FROM campaign_artifacts").fetchall()
+            con.close()
+            for fpath, content in rows:
+                if not scan.architecture_summary and not db_updates.get("architecture_summary") and "architecture.md" in fpath and content:
+                    scan.architecture_summary = content
+                    db_updates["architecture_summary"] = content
+                elif not scan.threat_model and not db_updates.get("threat_model") and "threat_model" in fpath.lower() and content:
+                    formatted_tm = _format_threat_model_md(content)
+                    scan.threat_model = formatted_tm
+                    db_updates["threat_model"] = formatted_tm
+                elif not scan.hunting_plan and not db_updates.get("hunting_plan") and ("plan.json" in fpath or "hunting_plan" in fpath) and content:
+                    scan.hunting_plan = content
+                    db_updates["hunting_plan"] = content
+                elif not scan.review_packet and not db_updates.get("review_packet") and ("review_packet" in fpath or "report.json" in fpath) and content:
+                    scan.review_packet = content
+                    db_updates["review_packet"] = content
+            if db_updates:
+                await db.execute(update(Scan).where(Scan.id == scan_id).values(**db_updates))
+                await db.commit()
+        except Exception as kb_err:
+            logger.warning("get_scan_kb_sync_failed", scan_id=str(scan_id), error=str(kb_err))
+
     stage_obs: dict[str, str] = {}
     stage_counts: dict[str, int] = {}
     try:
@@ -554,19 +594,27 @@ async def get_scan(
                 """
                 SELECT 
                     phase,
+                    agent_name,
                     (ARRAY_AGG(id::text ORDER BY step_number ASC))[1] AS first_trace_id,
                     COUNT(id) AS trace_count
                 FROM agent_inference_traces
                 WHERE scan_id = :scan_id
-                GROUP BY phase
+                GROUP BY phase, agent_name
                 """
             ),
             {"scan_id": scan_id},
         )
         for row in obs_res:
+            raw_phase = row.phase or "indexing"
+            raw_agent = row.agent_name or ""
+            target_phase = NODE_TO_PHASE.get(raw_phase) or NODE_TO_PHASE.get(raw_agent) or raw_phase
+            c = int(row.trace_count)
+            stage_counts[target_phase] = stage_counts.get(target_phase, 0) + c
+            if target_phase not in stage_obs and row.first_trace_id:
+                stage_obs[target_phase] = str(row.first_trace_id)
             if row.phase:
                 stage_obs[row.phase] = str(row.first_trace_id)
-                stage_counts[row.phase] = int(row.trace_count)
+                stage_counts[row.phase] = stage_counts.get(row.phase, 0) + c
     except Exception as exc:
         logger.warning("fetch_stage_traces_failed", scan_id=str(scan_id), error=str(exc))
 
@@ -1046,8 +1094,26 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
     rp = getattr(scan, "review_packet", None)
     ec = getattr(scan, "exploit_chains", None)
 
-    # Disk fallbacks if not yet in DB
+    # Disk & knowledge.db fallbacks if not yet in DB
     scan_dir = Path(f"/data/scans/{scan.id}")
+    if (not arch or not tm or not hp or not rp) and (scan_dir / "knowledge.db").exists():
+        try:
+            import sqlite3
+            con = sqlite3.connect(str(scan_dir / "knowledge.db"))
+            rows = con.execute("SELECT filepath, content FROM campaign_artifacts").fetchall()
+            con.close()
+            for fpath, content in rows:
+                if not arch and "architecture.md" in fpath and content:
+                    arch = content
+                elif not tm and "threat_model" in fpath.lower() and content:
+                    tm = _format_threat_model_md(content)
+                elif not hp and ("plan.json" in fpath or "hunting_plan" in fpath) and content:
+                    hp = content
+                elif not rp and ("review_packet" in fpath or "report.json" in fpath) and content:
+                    rp = content
+        except Exception:
+            pass
+
     if not arch and (scan_dir / "architecture.md").exists():
         try:
             arch = (scan_dir / "architecture.md").read_text(encoding="utf-8", errors="replace")
@@ -1141,7 +1207,15 @@ async def get_scan_traces(
     query = select(AgentInferenceTrace).where(AgentInferenceTrace.scan_id == scan_id)
 
     if phase:
-        query = query.where(AgentInferenceTrace.phase == phase)
+        from sqlalchemy import or_
+        nodes = PHASE_NODE_MAP.get(phase, [phase])
+        query = query.where(
+            or_(
+                AgentInferenceTrace.phase.in_(nodes),
+                AgentInferenceTrace.agent_name.in_(nodes),
+                AgentInferenceTrace.phase == phase,
+            )
+        )
     if tool:
         query = query.where(AgentInferenceTrace.tool_name == tool)
     if status:
