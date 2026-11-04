@@ -244,8 +244,36 @@ def _ingest_findings(scan_id: str, workspace_dir: Path) -> int:
     return count
 
 
+def _parse_tool_input(args_val: Any) -> Optional[dict[str, Any]]:
+    """Parse tool input arguments into a structured JSON dictionary."""
+    if not args_val:
+        return None
+    if isinstance(args_val, (dict, list)):
+        return args_val if isinstance(args_val, dict) else {"items": args_val}
+    if isinstance(args_val, str):
+        try:
+            parsed = json.loads(args_val)
+            if isinstance(parsed, dict):
+                return parsed
+            if isinstance(parsed, list):
+                return {"items": parsed}
+        except Exception:
+            pass
+        try:
+            import ast
+            parsed = ast.literal_eval(args_val)
+            if isinstance(parsed, dict):
+                return parsed
+            if isinstance(parsed, list):
+                return {"items": parsed}
+        except Exception:
+            pass
+        return {"args": args_val}
+    return {"args": str(args_val)}
+
+
 def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
-    """Parse Mantis JSONL transcript rows into agent_inference_traces."""
+    """Parse Mantis JSONL transcript rows into agent_inference_traces, pairing tool calls and responses."""
     transcript_path = workspace_dir / "transcript.jsonl"
     if not transcript_path.exists():
         return 0
@@ -267,6 +295,36 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
                     resp_text = row.get("text") if r_type == "text" else None
 
                     phase_mapped = NODE_TO_PHASE.get(node, node)
+
+                    # If this is a tool_response, merge it into the preceding pending tool_call
+                    if r_type == "tool_response" and tool_name:
+                        with engine.begin() as conn:
+                            res = conn.execute(
+                                text("""
+                                    UPDATE agent_inference_traces
+                                    SET tool_output = :tool_out
+                                    WHERE id = (
+                                        SELECT id FROM agent_inference_traces
+                                        WHERE scan_id = :scan_id
+                                          AND agent_name = :agent
+                                          AND tool_name = :tool
+                                          AND (tool_output IS NULL OR tool_output = '')
+                                        ORDER BY step_number DESC
+                                        LIMIT 1
+                                    )
+                                """),
+                                {
+                                    "scan_id": scan_id,
+                                    "agent": node,
+                                    "tool": tool_name,
+                                    "tool_out": str(tool_output)[:16000] if tool_output else None,
+                                },
+                            )
+                            if res.rowcount > 0:
+                                count += 1
+                                continue
+
+                    parsed_inp = _parse_tool_input(tool_input) if tool_input else None
                     with engine.begin() as conn:
                         conn.execute(
                             text("""
@@ -286,8 +344,8 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
                                 "agent": node,
                                 "resp": resp_text,
                                 "tool": tool_name,
-                                "tool_in": json.dumps(tool_input) if isinstance(tool_input, (dict, list)) else json.dumps({"args": tool_input}) if tool_input else None,
-                                "tool_out": tool_output,
+                                "tool_in": json.dumps(parsed_inp) if parsed_inp else None,
+                                "tool_out": str(tool_output)[:16000] if tool_output else None,
                             },
                         )
                     count += 1
@@ -816,6 +874,34 @@ def run_mantis_scan(
                                     t_resp = t_row.get("response") if t_type == "tool_response" else None
                                     t_text = t_row.get("text") if t_type == "text" else None
 
+                                    # If this is a tool_response, merge it into the preceding pending tool_call
+                                    if t_type == "tool_response" and t_name:
+                                        with engine.begin() as conn:
+                                            res = conn.execute(
+                                                text("""
+                                                    UPDATE agent_inference_traces
+                                                    SET tool_output = :tool_out
+                                                    WHERE id = (
+                                                        SELECT id FROM agent_inference_traces
+                                                        WHERE scan_id = :scan_id
+                                                          AND agent_name = :agent
+                                                          AND tool_name = :tool
+                                                          AND (tool_output IS NULL OR tool_output = '')
+                                                        ORDER BY step_number DESC
+                                                        LIMIT 1
+                                                    )
+                                                """),
+                                                {
+                                                    "scan_id": scan_id,
+                                                    "agent": t_node,
+                                                    "tool": t_name,
+                                                    "tool_out": str(t_resp)[:16000] if t_resp else None,
+                                                },
+                                            )
+                                            if res.rowcount > 0:
+                                                continue
+
+                                    parsed_t_args = _parse_tool_input(t_args) if t_args else None
                                     with engine.begin() as conn:
                                         conn.execute(
                                             text("""
@@ -835,8 +921,8 @@ def run_mantis_scan(
                                                 "agent": t_node,
                                                 "resp": t_text,
                                                 "tool": t_name,
-                                                "tool_in": json.dumps(t_args) if isinstance(t_args, (dict, list)) else json.dumps({"args": t_args}) if t_args else None,
-                                                "tool_out": str(t_resp)[:8000] if t_resp else None,
+                                                "tool_in": json.dumps(parsed_t_args) if parsed_t_args else None,
+                                                "tool_out": str(t_resp)[:16000] if t_resp else None,
                                             },
                                         )
                                 except Exception:

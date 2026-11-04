@@ -150,6 +150,50 @@ export default function SwarmTraceViewer({
     return num.toLocaleString();
   };
 
+  const formatToolInput = (inp: any) => {
+    if (!inp) return {};
+    if (typeof inp === "string") {
+      try {
+        return JSON.parse(inp);
+      } catch {
+        return inp;
+      }
+    }
+    if (inp && typeof inp === "object" && inp.args && typeof inp.args === "string") {
+      try {
+        return JSON.parse(inp.args);
+      } catch {
+        try {
+          const jsonStr = inp.args
+            .replace(/'/g, '"')
+            .replace(/True/g, 'true')
+            .replace(/False/g, 'false')
+            .replace(/None/g, 'null');
+          return JSON.parse(jsonStr);
+        } catch {
+          return inp.args;
+        }
+      }
+    }
+    return inp;
+  };
+
+  const resolveToolOutput = (trace: TraceStep | null) => {
+    if (!trace) return null;
+    if (trace.tool_output && trace.tool_output.trim()) return trace.tool_output;
+    // Check if the adjacent step has the response
+    const next = traces.find(
+      (t) =>
+        t.agent_name === trace.agent_name &&
+        t.tool_name === trace.tool_name &&
+        t.step_number === trace.step_number + 1 &&
+        t.tool_output &&
+        t.tool_output.trim()
+    );
+    if (next && next.tool_output) return next.tool_output;
+    return null;
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Forensic & Summary Ribbon */}
@@ -558,7 +602,7 @@ export default function SwarmTraceViewer({
                     <span className="text-slate-400 text-[11px] block mb-1">Tool Invocations &amp; Arguments:</span>
                     <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-blue-300 font-mono text-[11px] overflow-x-auto">
                       <div className="font-bold text-white mb-1">Tool: {selectedTrace.tool_name}</div>
-                      <pre>{JSON.stringify(selectedTrace.tool_input || {}, null, 2)}</pre>
+                      <pre>{JSON.stringify(formatToolInput(selectedTrace.tool_input), null, 2)}</pre>
                     </div>
                   </div>
 
@@ -566,7 +610,7 @@ export default function SwarmTraceViewer({
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-slate-400 text-[11px]">Tool Return Output / Sandbox Logs:</span>
                       <button
-                        onClick={() => copyToClipboard(selectedTrace.tool_output || "", "output")}
+                        onClick={() => copyToClipboard(resolveToolOutput(selectedTrace) || "", "output")}
                         className="flex items-center space-x-1 text-slate-400 hover:text-white text-[10px]"
                       >
                         {copiedField === "output" ? (
@@ -578,7 +622,7 @@ export default function SwarmTraceViewer({
                       </button>
                     </div>
                     <pre className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-300 font-mono text-[11px] whitespace-pre-wrap max-h-[380px] overflow-y-auto">
-                      {selectedTrace.tool_output || "(Empty output)"}
+                      {resolveToolOutput(selectedTrace) || (selectedTrace.tool_name ? "(Awaiting tool execution or empty response)" : "(No output recorded)")}
                     </pre>
                   </div>
                 </div>
