@@ -64,7 +64,10 @@ export default function ScanDetailPage() {
 
   // SSE streaming logs
   const [streamLogs, setStreamLogs] = useState<string[]>([]);
-  const logEndRef = useRef<HTMLDivElement>(null);
+  const previewScrollContainerRef = useRef<HTMLDivElement>(null);
+  const fullConsoleScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [autoScrollLogs, setAutoScrollLogs] = useState(false);
+  const [showConsolePreview, setShowConsolePreview] = useState(true);
 
   // Expanded cards
   const [expandedPoc, setExpandedPoc] = useState<Record<string, boolean>>({});
@@ -246,10 +249,16 @@ export default function ScanDetailPage() {
     return () => clearInterval(interval);
   }, [scan?.status, id]);
 
-  // Auto-scroll logs
+  // Isolated internal console auto-scroll (NEVER steals window scroll position)
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [streamLogs]);
+    if (!autoScrollLogs) return;
+    if (previewScrollContainerRef.current) {
+      previewScrollContainerRef.current.scrollTop = previewScrollContainerRef.current.scrollHeight;
+    }
+    if (fullConsoleScrollContainerRef.current) {
+      fullConsoleScrollContainerRef.current.scrollTop = fullConsoleScrollContainerRef.current.scrollHeight;
+    }
+  }, [streamLogs, autoScrollLogs]);
 
   const handleCancel = async () => {
     if (!confirm("Are you sure you want to abort this security audit?")) return;
@@ -603,32 +612,59 @@ export default function ScanDetailPage() {
       </div>
 
       {/* Live SSE Execution Console Preview (hidden when user is on the full Logs tab) */}
-      {activeTab !== "logs" && (scan.status === "running" || scan.status === "queued" || scan.status === "failed") && (
+      {activeTab !== "logs" && (scan.status === "running" || scan.status === "queued") && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
           <div className="px-4 py-2.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center space-x-2 font-mono">
               <Terminal className="w-3.5 h-3.5 text-purple-400" />
               <span className="text-slate-200 font-bold">Live Execution Stream</span>
+              <span className="text-[10px] text-purple-300 font-mono">({streamLogs.length} events)</span>
             </span>
-            <button
-              onClick={() => setActiveTab("logs")}
-              className="text-[11px] text-purple-300 font-mono hover:underline"
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setAutoScrollLogs(!autoScrollLogs)}
+                className={`text-[10px] px-2 py-0.5 rounded font-mono border transition-colors cursor-pointer ${
+                  autoScrollLogs
+                    ? "bg-purple-900/60 border-purple-500 text-purple-200 font-bold"
+                    : "bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200"
+                }`}
+                title="Toggle internal auto-scroll to latest log event"
+              >
+                Auto-scroll: {autoScrollLogs ? "ON" : "OFF"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowConsolePreview(!showConsolePreview)}
+                className="text-[11px] text-slate-400 hover:text-slate-200 font-mono"
+              >
+                {showConsolePreview ? "Hide Preview" : "Show Preview"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("logs")}
+                className="text-[11px] text-purple-300 font-mono hover:underline"
+              >
+                Full Console &rarr;
+              </button>
+            </div>
+          </div>
+          {showConsolePreview && (
+            <div
+              ref={previewScrollContainerRef}
+              className="p-3 max-h-36 overflow-y-auto font-mono text-xs text-slate-300 space-y-1 bg-[#0b0f17]"
             >
-              Open Full Console &rarr;
-            </button>
-          </div>
-          <div className="p-3 max-h-36 overflow-y-auto font-mono text-xs text-slate-300 space-y-1 bg-[#0b0f17]">
-            {streamLogs.length === 0 ? (
-              <div className="text-slate-500 italic py-1">Waiting for pipeline events...</div>
-            ) : (
-              streamLogs.slice(-8).map((log, i) => (
-                <div key={i} className="leading-relaxed hover:bg-slate-800/40">
-                  {log}
-                </div>
-              ))
-            )}
-            <div ref={logEndRef} />
-          </div>
+              {streamLogs.length === 0 ? (
+                <div className="text-slate-500 italic py-1">Waiting for pipeline events...</div>
+              ) : (
+                streamLogs.slice(-15).map((log, i) => (
+                  <div key={i} className="leading-relaxed hover:bg-slate-800/40">
+                    {log}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -834,6 +870,18 @@ export default function ScanDetailPage() {
             </span>
             <div className="flex items-center space-x-3">
               <span className="text-[11px] text-purple-300 font-mono">{streamLogs.length} events recorded</span>
+              <button
+                type="button"
+                onClick={() => setAutoScrollLogs(!autoScrollLogs)}
+                className={`text-[10px] px-2.5 py-1 rounded font-mono border transition-colors cursor-pointer ${
+                  autoScrollLogs
+                    ? "bg-purple-900/60 border-purple-500 text-purple-200 font-bold"
+                    : "bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200"
+                }`}
+                title="Toggle internal auto-scroll to latest log event"
+              >
+                Auto-scroll: {autoScrollLogs ? "ON" : "OFF"}
+              </button>
               <a
                 href={`/api/scans/${id}/export/log?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
                 download
@@ -845,7 +893,10 @@ export default function ScanDetailPage() {
               </a>
             </div>
           </div>
-          <div className="p-4 max-h-[600px] overflow-y-auto font-mono text-xs text-slate-300 space-y-1.5 bg-[#0b0f17]">
+          <div
+            ref={fullConsoleScrollContainerRef}
+            className="p-4 max-h-[600px] overflow-y-auto font-mono text-xs text-slate-300 space-y-1.5 bg-[#0b0f17]"
+          >
             {streamLogs.length === 0 ? (
               <div className="text-slate-500 italic py-6 text-center">
                 No events logged for this scan.
@@ -857,7 +908,6 @@ export default function ScanDetailPage() {
                 </div>
               ))
             )}
-            <div ref={logEndRef} />
           </div>
         </div>
       )}
