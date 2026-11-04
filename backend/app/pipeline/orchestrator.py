@@ -442,13 +442,40 @@ def run_mantis_scan(
         mantis_run_sh = MANTIS_ENGINE_DIR / "run.sh"
 
         env = os.environ.copy()
-        # Pass model credentials through — they are set via settings or environment
+        # Pass model credentials through — from settings or environment
         for key in ("GEMINI_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
                     "DEEPSEEK_API_KEY", "VERTEXAI_PROJECT", "GOOGLE_CLOUD_PROJECT",
                     "GOOGLE_APPLICATION_CREDENTIALS", "OLLAMA_API_BASE"):
             val = getattr(settings, key, None) or os.environ.get(key)
             if val:
                 env[key] = val
+
+        # Also load encrypted API keys saved via the Web UI Settings page
+        try:
+            from app.core.security import decrypt_value
+            engine = _get_sync_engine()
+            with engine.connect() as conn:
+                rows = conn.execute(text("SELECT provider, api_key_encrypted, api_base_url FROM provider_configs WHERE is_active = true")).fetchall()
+                for p_name, p_enc, p_base in rows:
+                    p_lower = str(p_name).lower()
+                    if p_enc:
+                        try:
+                            key_val = decrypt_value(p_enc)
+                            if p_lower == "openai":
+                                env["OPENAI_API_KEY"] = key_val
+                            elif p_lower in ("anthropic", "claude"):
+                                env["ANTHROPIC_API_KEY"] = key_val
+                            elif p_lower in ("gemini", "google"):
+                                env["GEMINI_API_KEY"] = key_val
+                            elif p_lower == "deepseek":
+                                env["DEEPSEEK_API_KEY"] = key_val
+                        except Exception:
+                            pass
+                    if p_base:
+                        if p_lower == "ollama":
+                            env["OLLAMA_API_BASE"] = p_base
+        except Exception as prov_err:
+            logger.warning("provider_keys_load_failed", error=str(prov_err))
 
         # Build command
         transcript_file = workspace / "transcript.jsonl"
