@@ -97,6 +97,7 @@ class ScanResponse(BaseModel):
     reasoning_effort: Optional[str] = None
     focus: Optional[str] = None
     sandbox: Optional[str] = None
+    scan_config: Optional[dict[str, Any]] = None
 
 
 class BulkDeleteRequest(BaseModel):
@@ -231,25 +232,6 @@ async def create_scan(
 
     # Fresh scan option: each scan operates in an isolated workspace under /data/scans/{scan_id}
 
-    scan = Scan(
-        name=scan_name,
-        source_type=body.source_type,
-        source_target=body.source_target,
-        branch=body.branch,
-        git_token=body.git_token,
-        triggered_by=current_user.id,
-        status="queued",
-        budget_limit_usd=body.budget_limit_usd,
-        # Mantis-native fields
-        model=body.model,
-        reasoning_effort=body.reasoning_effort,
-        focus=body.focus,
-        sandbox=body.sandbox or "static-only",
-    )
-    db.add(scan)
-    await db.flush()
-    await db.refresh(scan)
-
     scan_config = {
         "model": body.model,
         "reasoning_effort": body.reasoning_effort,
@@ -266,6 +248,27 @@ async def create_scan(
         "max_llm_calls": body.max_llm_calls,
         "api_base": body.api_base,
     }
+
+    scan = Scan(
+        name=scan_name,
+        source_type=body.source_type,
+        source_target=body.source_target,
+        branch=body.branch,
+        git_token=body.git_token,
+        triggered_by=current_user.id,
+        status="queued",
+        budget_limit_usd=body.budget_limit_usd,
+        # Mantis-native fields
+        model=body.model,
+        reasoning_effort=body.reasoning_effort,
+        focus=body.focus,
+        sandbox=body.sandbox or "static-only",
+        exclude_patterns=body.exclude or [],
+        phase_models=scan_config,
+    )
+    db.add(scan)
+    await db.flush()
+    await db.refresh(scan)
 
     # Enqueue Celery task – import here to avoid circular imports at module
     # level when the worker isn't running.
@@ -1181,6 +1184,43 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
         except Exception:
             pass
 
+    cfg = getattr(scan, "phase_models", None) or {}
+    if not isinstance(cfg, dict):
+        cfg = {}
+
+    scan_mode_val = cfg.get("scan_mode") or "auto"
+    if (scan_dir / "knowledge.db").exists():
+        try:
+            import sqlite3
+            con = sqlite3.connect(str(scan_dir / "knowledge.db"))
+            sm_row = con.execute("SELECT scan_mode FROM campaign_spend WHERE scan_mode IS NOT NULL LIMIT 1").fetchone()
+            if sm_row and sm_row[0]:
+                scan_mode_val = sm_row[0]
+            con.close()
+        except Exception:
+            pass
+
+    full_config = {
+        "model": getattr(scan, "model", None) or cfg.get("model") or "gemini-3.5-flash-lite",
+        "reasoning_effort": getattr(scan, "reasoning_effort", None) or cfg.get("reasoning_effort") or "medium",
+        "sandbox": getattr(scan, "sandbox", None) or cfg.get("sandbox") or "static-only",
+        "scan_mode": scan_mode_val,
+        "focus": getattr(scan, "focus", None) or cfg.get("focus"),
+        "exclude": getattr(scan, "exclude_patterns", None) or cfg.get("exclude") or [],
+        "max_tokens": cfg.get("max_tokens"),
+        "budget_limit_usd": scan.budget_limit_usd or cfg.get("budget_limit_usd"),
+        "objective": cfg.get("objective"),
+        "seed_report": cfg.get("seed_report"),
+        "deterministic_only": bool(cfg.get("deterministic_only", False)),
+        "no_replan": bool(cfg.get("no_replan", False)),
+        "parallel": cfg.get("parallel", 1),
+        "max_llm_calls": cfg.get("max_llm_calls"),
+        "api_base": cfg.get("api_base"),
+        "source_type": scan.source_type,
+        "source_target": scan.source_target,
+        "branch": scan.branch,
+    }
+
     return ScanResponse(
         id=scan.id,
         name=scan_name,
@@ -1209,6 +1249,7 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
         reasoning_effort=getattr(scan, "reasoning_effort", None),
         focus=getattr(scan, "focus", None),
         sandbox=getattr(scan, "sandbox", None),
+        scan_config=full_config,
     )
 
 

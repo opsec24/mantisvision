@@ -26,6 +26,12 @@ import {
   ArrowRight,
   Bug,
   Brain,
+  Sliders,
+  Settings,
+  Copy,
+  Check,
+  Target,
+  Code,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import ArchitectureGraph from "@/components/ArchitectureGraph";
@@ -63,9 +69,51 @@ export default function ScanDetailPage() {
   // Expanded cards
   const [expandedPoc, setExpandedPoc] = useState<Record<string, boolean>>({});
   const [expandedPatch, setExpandedPatch] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"findings" | "threat_model" | "review_packet" | "logs" | "trace">("findings");
+  const [activeTab, setActiveTab] = useState<"findings" | "threat_model" | "review_packet" | "logs" | "trace" | "config">("findings");
   const [tracePhaseFilter, setTracePhaseFilter] = useState<string>("all");
   const [traceQueryFilter, setTraceQueryFilter] = useState<string>("");
+  const [copiedCli, setCopiedCli] = useState(false);
+  const [copiedJson, setCopiedJson] = useState(false);
+
+  const handleCopyCli = (text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedCli(true);
+      setTimeout(() => setCopiedCli(false), 2000);
+    }
+  };
+
+  const handleCopyJson = (text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedJson(true);
+      setTimeout(() => setCopiedJson(false), 2000);
+    }
+  };
+
+  const generateCliCommand = () => {
+    const cfg = scan?.scan_config || {};
+    const parts = ["python3 -m mantis.run"];
+    const target = cfg.source_target || scan?.source_target || "<target>";
+    parts.push(`--target "${target}"`);
+    if (cfg.model || scan?.model) parts.push(`--model "${cfg.model || scan?.model}"`);
+    if (cfg.reasoning_effort || scan?.reasoning_effort) parts.push(`--reasoning-effort ${cfg.reasoning_effort || scan?.reasoning_effort}`);
+    if (cfg.scan_mode) parts.push(`--scan-mode ${cfg.scan_mode}`);
+    if (cfg.sandbox || scan?.sandbox) parts.push(`--sandbox ${cfg.sandbox || scan?.sandbox}`);
+    if (cfg.branch || scan?.branch) parts.push(`--branch "${cfg.branch || scan?.branch}"`);
+    if (cfg.focus || scan?.focus) parts.push(`--focus "${cfg.focus || scan?.focus}"`);
+    if (cfg.objective) parts.push(`--objective "${cfg.objective}"`);
+    if (cfg.seed_report) parts.push(`--seed-report "${cfg.seed_report}"`);
+    if (cfg.parallel && Number(cfg.parallel) > 1) parts.push(`--parallel ${cfg.parallel}`);
+    if (cfg.max_tokens) parts.push(`--max-tokens ${cfg.max_tokens}`);
+    if (cfg.max_llm_calls) parts.push(`--max-llm-calls ${cfg.max_llm_calls}`);
+    if (cfg.deterministic_only) parts.push(`--deterministic-only`);
+    if (cfg.no_replan) parts.push(`--no-replan`);
+    if (Array.isArray(cfg.exclude) && cfg.exclude.length > 0) {
+      cfg.exclude.forEach((pat: string) => parts.push(`--exclude "${pat}"`));
+    }
+    return parts.join(" \\\n  ");
+  };
 
   const fetchScan = async () => {
     try {
@@ -336,6 +384,40 @@ export default function ScanDetailPage() {
               </span>
             </span>
           </div>
+
+          {/* Quick Config Badges */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Model">
+              <Cpu className="w-3 h-3 text-purple-600" />
+              <span>{scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}</span>
+            </span>
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Reasoning Effort">
+              <Sliders className="w-3 h-3 text-indigo-600" />
+              <span>effort: {scan.scan_config?.reasoning_effort || scan.reasoning_effort || "medium"}</span>
+            </span>
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Scan Mode">
+              <Layers className="w-3 h-3 text-cyan-600" />
+              <span>mode: {scan.scan_config?.scan_mode || "file-by-file"}</span>
+            </span>
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Sandbox">
+              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+              <span>sandbox: {scan.scan_config?.sandbox || scan.sandbox || "static-only"}</span>
+            </span>
+            {(scan.scan_config?.focus || scan.focus) && (
+              <span className="flex items-center space-x-1 font-mono text-[11px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200" title="Focus">
+                <Target className="w-3 h-3 text-amber-600" />
+                <span>focus: {scan.scan_config?.focus || scan.focus}</span>
+              </span>
+            )}
+            <button
+              onClick={() => setActiveTab("config")}
+              className="flex items-center space-x-1 font-mono text-[11px] font-medium text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded border border-purple-200 transition-colors cursor-pointer"
+              title="Inspect full scan parameters and execution strategy"
+            >
+              <Settings className="w-3 h-3 text-purple-600" />
+              <span>View Full Config &rarr;</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
@@ -601,6 +683,18 @@ export default function ScanDetailPage() {
         </button>
 
         <button
+          onClick={() => { setActiveTab("config"); }}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "config"
+              ? "bg-purple-700 text-white shadow-xs"
+              : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-900"
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>Scan Configuration</span>
+        </button>
+
+        <button
           onClick={() => { setActiveTab("logs"); }}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === "logs"
@@ -764,6 +858,254 @@ export default function ScanDetailPage() {
               ))
             )}
             <div ref={logEndRef} />
+          </div>
+        </div>
+      )}
+
+      {/* Tab Panel: Scan Configuration & Execution Strategy */}
+      {activeTab === "config" && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <Sliders className="w-5 h-5 text-purple-700" />
+                <h3 className="text-base font-bold text-slate-900">
+                  Autonomous Scan Configuration &amp; Orchestration Parameters
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500">
+                Detailed runtime parameters, AI reasoning engine specs, sandboxing constraints, and equivalent Google Mantis ADK CLI command.
+              </p>
+            </div>
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                onClick={() => handleCopyCli(generateCliCommand())}
+                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition-all cursor-pointer shadow-xs"
+              >
+                {copiedCli ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-purple-600" />}
+                <span>{copiedCli ? "CLI Copied!" : "Copy CLI Command"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Core Parameter Cards in Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Card 1: AI Model & Reasoning Engine */}
+            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+                <Cpu className="w-4 h-4 text-purple-600" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-900">
+                  AI Model &amp; Reasoning Engine
+                </h4>
+              </div>
+              <dl className="grid grid-cols-1 gap-3 text-xs">
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Model Architecture</dt>
+                  <dd className="font-mono font-bold text-purple-900 bg-purple-50 px-2.5 py-0.5 rounded border border-purple-200/80">
+                    {scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Reasoning Effort Tier</dt>
+                  <dd className="font-mono font-bold text-slate-800 capitalize bg-slate-100 px-2 py-0.5 rounded">
+                    {scan.scan_config?.reasoning_effort || scan.reasoning_effort || "medium"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Max LLM Calls / Turns</dt>
+                  <dd className="font-mono text-slate-700">
+                    {scan.scan_config?.max_llm_calls ? `${scan.scan_config.max_llm_calls} turns` : "Self-calibrated (unlimited)"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <dt className="text-slate-500 font-medium">API Base Gateway</dt>
+                  <dd className="font-mono text-[11px] text-slate-600 truncate max-w-[240px]" title={scan.scan_config?.api_base || "Default Google AI Studio Gateway"}>
+                    {scan.scan_config?.api_base || "Google AI Studio (Default)"}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            {/* Card 2: Execution & Sandboxing Strategy */}
+            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
+                  Execution &amp; Sandboxing Strategy
+                </h4>
+              </div>
+              <dl className="grid grid-cols-1 gap-3 text-xs">
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Mantis Scan Mode</dt>
+                  <dd className="font-mono font-bold text-cyan-900 bg-cyan-50 px-2.5 py-0.5 rounded border border-cyan-200/80">
+                    {scan.scan_config?.scan_mode || "file-by-file"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Sandbox Environment</dt>
+                  <dd className="font-mono font-bold text-emerald-900 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200/80">
+                    {scan.scan_config?.sandbox || scan.sandbox || "static-only"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Parallel Campaigns</dt>
+                  <dd className="font-mono text-slate-800">
+                    {scan.scan_config?.parallel || 1} worker{Number(scan.scan_config?.parallel || 1) > 1 ? "s" : ""}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <dt className="text-slate-500 font-medium">Dynamic Replanning</dt>
+                  <dd className="font-mono text-slate-800">
+                    {scan.scan_config?.no_replan ? (
+                      <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Disabled (Static)</span>
+                    ) : (
+                      <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Enabled (Adaptive)</span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            {/* Card 3: Scope & Steering */}
+            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+                <Target className="w-4 h-4 text-indigo-600" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900">
+                  Audit Scope &amp; Steering Focus
+                </h4>
+              </div>
+              <dl className="grid grid-cols-1 gap-3 text-xs">
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Target Repository</dt>
+                  <dd className="font-mono text-slate-900 truncate max-w-[240px]" title={scan.scan_config?.source_target || scan.source_target}>
+                    {scan.scan_config?.source_target || scan.source_target}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Branch / Revision</dt>
+                  <dd className="font-mono text-slate-700">
+                    {scan.scan_config?.branch || scan.branch || "HEAD / Default"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Vulnerability Focus</dt>
+                  <dd className="font-mono text-slate-800">
+                    {scan.scan_config?.focus || scan.focus || "Broad spectrum (All CWE categories)"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Seed Report / Lead</dt>
+                  <dd className="font-mono text-slate-600">
+                    {scan.scan_config?.seed_report || "None (Cold-start audit)"}
+                  </dd>
+                </div>
+                <div className="flex flex-col space-y-1 py-1">
+                  <dt className="text-slate-500 font-medium">Excluded Patterns</dt>
+                  <dd className="font-mono text-[11px] text-slate-600">
+                    {Array.isArray(scan.scan_config?.exclude) && scan.scan_config.exclude.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {scan.scan_config.exclude.map((pat: string, idx: number) => (
+                          <span key={idx} className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                            {pat}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">None (Full workspace scope)</span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            {/* Card 4: Token Budget & Guardrails */}
+            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+                <DollarSign className="w-4 h-4 text-amber-600" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                  Token Budget &amp; Metered Guardrails
+                </h4>
+              </div>
+              <dl className="grid grid-cols-1 gap-3 text-xs">
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">USD Spend Limit</dt>
+                  <dd className="font-mono font-bold text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200">
+                    {scan.scan_config?.budget_limit_usd || scan.budget_limit_usd
+                      ? `$${Number(scan.scan_config?.budget_limit_usd || scan.budget_limit_usd).toFixed(2)}`
+                      : "Uncapped"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Max Token Ceiling</dt>
+                  <dd className="font-mono text-slate-800">
+                    {scan.scan_config?.max_tokens ? formatTokens(scan.scan_config.max_tokens) : "Uncapped"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Actual Consumption</dt>
+                  <dd className="font-mono font-bold text-indigo-900 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200">
+                    {formatTokens(scan.total_tokens || 0)} Tokens
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <dt className="text-slate-500 font-medium">Token Breakdown</dt>
+                  <dd className="font-mono text-[11px] text-slate-600">
+                    {formatTokens(scan.prompt_tokens || 0)} prompt / {formatTokens(scan.completion_tokens || 0)} completion
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <dt className="text-slate-500 font-medium">Incurred Model Spend</dt>
+                  <dd className="font-mono font-bold text-emerald-800">
+                    ${(scan.cost_spent_usd || 0).toFixed(4)} USD
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          {/* Equivalent Google Mantis CLI Invocation */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-5 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center space-x-2 font-mono">
+                <Terminal className="w-4 h-4 text-emerald-400" />
+                <span className="text-slate-200 font-bold">Equivalent Google Mantis ADK CLI Command</span>
+              </span>
+              <button
+                onClick={() => handleCopyCli(generateCliCommand())}
+                className="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs border border-slate-700 transition-colors cursor-pointer"
+              >
+                {copiedCli ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                <span>{copiedCli ? "Copied to Clipboard!" : "Copy Command"}</span>
+              </button>
+            </div>
+            <div className="p-4 bg-[#0b0f17] overflow-x-auto">
+              <pre className="font-mono text-xs text-emerald-400 whitespace-pre">
+                {generateCliCommand()}
+              </pre>
+            </div>
+          </div>
+
+          {/* Full Raw JSON Scan Config Viewer */}
+          <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <Code className="w-4 h-4 text-purple-700" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-900">
+                  Raw Scan Configuration Payload (JSON)
+                </h4>
+              </div>
+              <button
+                onClick={() => handleCopyJson(JSON.stringify(scan.scan_config || {}, null, 2))}
+                className="flex items-center space-x-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition-all cursor-pointer"
+              >
+                {copiedJson ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-purple-600" />}
+                <span>{copiedJson ? "JSON Copied!" : "Copy JSON"}</span>
+              </button>
+            </div>
+            <pre className="p-4 bg-slate-900 rounded-xl font-mono text-xs text-slate-300 border border-slate-800 overflow-x-auto max-h-80 leading-relaxed">
+              {JSON.stringify(scan.scan_config || {}, null, 2)}
+            </pre>
           </div>
         </div>
       )}
