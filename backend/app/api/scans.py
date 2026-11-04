@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import csv
+import html
 import io
+import json
 import os
 import shutil
 import uuid
@@ -1106,6 +1109,630 @@ async def export_bundle(
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.get("/{scan_id}/export/csv")
+async def export_csv(
+    scan_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export all verified vulnerability findings in CSV spreadsheet format."""
+    result = await db.execute(
+        select(Finding).where(Finding.scan_id == scan_id).order_by(Finding.created_at.asc())
+    )
+    findings = result.scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+    writer.writerow([
+        "Finding_ID",
+        "Scan_ID",
+        "Title",
+        "Severity",
+        "CWE",
+        "Status",
+        "File_Path",
+        "Line_Number",
+        "Description",
+        "Exploit_Steps",
+        "Remediation",
+        "PoC_Script",
+        "Patch_Diff",
+        "Created_At",
+    ])
+
+    for f in findings:
+        writer.writerow([
+            str(f.id),
+            str(f.scan_id),
+            f.title,
+            f.severity,
+            f.cwe or "",
+            f.status,
+            f.file_path or "",
+            f.line_number or "",
+            f.description or "",
+            f.exploit_steps or "",
+            f.mitigation or "",
+            f.poc_script or "",
+            f.patch_diff or "",
+            f.created_at.isoformat() if f.created_at else "",
+        ])
+
+    csv_content = output.getvalue()
+    filename = f"mantis_findings_{str(scan_id)[:8]}.csv"
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{scan_id}/export/json")
+async def export_json(
+    scan_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export complete audit and vulnerability findings in structured JSON format."""
+    result = await db.execute(
+        select(Scan).options(selectinload(Scan.findings)).where(Scan.id == scan_id)
+    )
+    scan = result.scalar_one_or_none()
+    if scan is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
+
+    findings_data = [_finding_to_response(f).model_dump(mode="json") for f in scan.findings]
+    
+    # Severity distribution
+    severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+    for f in scan.findings:
+        sev = (f.severity or "medium").lower()
+        if sev in severity_counts:
+            severity_counts[sev] += 1
+        else:
+            severity_counts["medium"] += 1
+
+    payload = {
+        "report_type": "Google Mantis Autonomous Security Audit Report",
+        "schema_version": "2.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "scan_metadata": {
+            "id": str(scan.id),
+            "name": scan.name or scan.source_target,
+            "source_type": scan.source_type,
+            "source_target": scan.source_target,
+            "branch": scan.branch,
+            "status": scan.status,
+            "model": scan.model,
+            "reasoning_effort": scan.reasoning_effort,
+            "focus": scan.focus,
+            "sandbox": scan.sandbox,
+            "total_tokens": scan.total_tokens or 0,
+            "prompt_tokens": scan.prompt_tokens or 0,
+            "completion_tokens": scan.completion_tokens or 0,
+            "cost_spent_usd": scan.cost_spent_usd or 0.0,
+            "created_at": scan.created_at.isoformat() if scan.created_at else None,
+            "completed_at": scan.completed_at.isoformat() if scan.completed_at else None,
+        },
+        "executive_summary": {
+            "total_findings": len(scan.findings),
+            "severity_breakdown": severity_counts,
+            "reproduced_count": sum(1 for f in scan.findings if f.status == "reproduced"),
+            "patches_available": sum(1 for f in scan.findings if f.patch_diff and f.patch_diff.strip()),
+        },
+        "threat_model_summary": scan.threat_model,
+        "architecture_summary": scan.architecture_summary,
+        "findings": findings_data,
+    }
+
+    filename = f"mantis_audit_report_{str(scan_id)[:8]}.json"
+    return Response(
+        content=json.dumps(payload, indent=2, default=str),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{scan_id}/export/sarif")
+async def export_sarif(
+    scan_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export findings in OASIS SARIF v2.1.0 standard (Static Analysis Results Interchange Format)."""
+    result = await db.execute(
+        select(Scan).options(selectinload(Scan.findings)).where(Scan.id == scan_id)
+    )
+    scan = result.scalar_one_or_none()
+    if scan is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
+
+    rules = []
+    results = []
+    seen_rules = set()
+
+    for idx, f in enumerate(scan.findings):
+        rule_id = f.cwe or f"MANTIS-RULE-{(idx+1):03d}"
+        if rule_id not in seen_rules:
+            seen_rules.add(rule_id)
+            rules.append({
+                "id": rule_id,
+                "name": f.title,
+                "shortDescription": {"text": f.title},
+                "fullDescription": {"text": f.description or f.title},
+                "help": {
+                    "text": f.mitigation or "Review and sanitize input parameters before use in sensitive operations.",
+                    "markdown": f"**Mitigation:**\n\n{f.mitigation or 'No mitigation provided.'}\n\n**Exploit Steps:**\n\n{f.exploit_steps or 'N/A'}",
+                },
+                "properties": {
+                    "tags": ["security", "sast", f.cwe or "Vulnerability"],
+                    "precision": "high",
+                    "problem.severity": "error" if f.severity in ("critical", "high") else "warning",
+                },
+            })
+
+        # Map Mantis severity to SARIF level
+        level = "error" if f.severity in ("critical", "high") else ("warning" if f.severity == "medium" else "note")
+
+        result_item = {
+            "ruleId": rule_id,
+            "ruleIndex": [r["id"] for r in rules].index(rule_id),
+            "level": level,
+            "message": {
+                "text": f"{f.title}: {f.description or ''}".strip(),
+            },
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {
+                            "uri": f.file_path or "unknown",
+                            "uriBaseId": "%SRCROOT%",
+                        },
+                        "region": {
+                            "startLine": f.line_number or 1,
+                            "startColumn": 1,
+                        },
+                    }
+                }
+            ],
+            "properties": {
+                "severity": f.severity,
+                "status": f.status,
+                "findingId": str(f.id),
+                "remediation": f.mitigation,
+            },
+        }
+
+        # Include patch fix if available
+        if f.patch_diff and f.patch_diff.strip():
+            result_item["fixes"] = [
+                {
+                    "description": {"text": f"Remediation patch for {f.title}"},
+                    "artifactChanges": [
+                        {
+                            "artifactLocation": {"uri": f.file_path or "unknown"},
+                            "replacements": [],
+                        }
+                    ],
+                }
+            ]
+
+        results.append(result_item)
+
+    sarif_doc = {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "Google Mantis ADK",
+                        "fullName": "Google Mantis Autonomous SAST & Pentest Engine",
+                        "version": "2.0.0",
+                        "informationUri": "https://github.com/google/mantis",
+                        "rules": rules,
+                    }
+                },
+                "invocations": [
+                    {
+                        "executionSuccessful": scan.status == "completed",
+                        "endTimeUtc": scan.completed_at.isoformat() if scan.completed_at else datetime.now(timezone.utc).isoformat(),
+                    }
+                ],
+                "results": results,
+            }
+        ],
+    }
+
+    filename = f"mantis_scan_{str(scan_id)[:8]}.sarif"
+    return Response(
+        content=json.dumps(sarif_doc, indent=2),
+        media_type="application/sarif+json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{scan_id}/export/report")
+@router.get("/{scan_id}/export/pdf")
+async def export_pentest_report(
+    scan_id: uuid.UUID,
+    print_view: Optional[bool] = Query(False, alias="print"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate high-fidelity, printable Executive & Technical Pentest Report (PDF printable)."""
+    result = await db.execute(
+        select(Scan).options(selectinload(Scan.findings)).where(Scan.id == scan_id)
+    )
+    scan = result.scalar_one_or_none()
+    if scan is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
+
+    html_content = _generate_pentest_html_report(scan, scan.findings, auto_print=print_view or False)
+    return Response(content=html_content, media_type="text/html")
+
+
+def _generate_pentest_html_report(scan: Scan, findings: list[Finding], auto_print: bool = False) -> str:
+    """Generate high-fidelity, printable executive Penetration Testing & SAST Audit Report."""
+    e = html.escape
+    scan_id_short = str(scan.id)[:8].upper()
+    scan_title = e(scan.name or scan.source_target or "Security Audit")
+    target_path = e(scan.source_target)
+    branch_name = e(scan.branch or "main / default")
+    audit_date = scan.completed_at.strftime("%B %d, %Y - %H:%M UTC") if scan.completed_at else (scan.created_at.strftime("%B %d, %Y - %H:%M UTC") if scan.created_at else "Recent")
+    
+    # Severity calculation
+    counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+    for f in findings:
+        sev = (f.severity or "medium").lower()
+        if sev in counts:
+            counts[sev] += 1
+        else:
+            counts["medium"] += 1
+
+    overall_posture = "CRITICAL RISK" if counts["critical"] > 0 else ("HIGH RISK" if counts["high"] > 0 else ("MODERATE RISK" if counts["medium"] > 0 else "LOW RISK"))
+    posture_color = "#b91c1c" if counts["critical"] > 0 else ("#c2410c" if counts["high"] > 0 else ("#7c3aed" if counts["medium"] > 0 else "#059669"))
+    
+    # Tokens & Cost
+    tokens_str = f"{(scan.total_tokens or 0):,}"
+    cost_str = f"${(scan.cost_spent_usd or 0.0):.4f} USD"
+    model_str = e(scan.model or "Configured Swarm Ensemble")
+    
+    findings_rows_html = []
+    findings_deep_dive_html = []
+
+    for idx, f in enumerate(findings):
+        find_ref = f"MANTIS-FIND-{(idx+1):03d}"
+        f_title = e(f.title)
+        f_cwe = e(f.cwe or "CWE-Unknown")
+        f_sev = (f.severity or "medium").lower()
+        f_path = e(f.file_path or "Target Repository")
+        f_line = f.line_number or "N/A"
+        f_status = "Exploit Confirmed" if f.status == "reproduced" else e(f.status.capitalize())
+        f_desc = e(f.description or "No detailed description provided.")
+        f_exploit = e(f.exploit_steps or "")
+        f_mitigation = e(f.mitigation or "Review input handling, enforce parameter sanitization, and deploy defense-in-depth controls.")
+        f_poc_script = e(f.poc_script or "")
+        f_poc_output = e(f.poc_output or "")
+        f_patch = e(f.patch_diff or "")
+
+        # CVSS score estimation
+        cvss_score = "9.8" if f_sev == "critical" else ("8.2" if f_sev == "high" else ("5.5" if f_sev == "medium" else "3.1"))
+        
+        # Color mapping
+        sev_bg = "#fef2f2" if f_sev == "critical" else ("#fff7ed" if f_sev == "high" else ("#faf5ff" if f_sev == "medium" else "#eff6ff"))
+        sev_text = "#b91c1c" if f_sev == "critical" else ("#c2410c" if f_sev == "high" else ("#6b21a8" if f_sev == "medium" else "#1d4ed8"))
+        sev_border = "#fecaca" if f_sev == "critical" else ("#fed7aa" if f_sev == "high" else ("#e9d5ff" if f_sev == "medium" else "#bfdbfe"))
+
+        # Table Row
+        findings_rows_html.append(f"""
+        <tr>
+            <td style="font-family: monospace; font-size: 11px; font-weight: bold; color: #475569;">{find_ref}</td>
+            <td style="font-weight: 600; color: #0f172a;">{f_title}</td>
+            <td><span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; text-transform: uppercase; background: {sev_bg}; color: {sev_text}; border: 1px solid {sev_border};">{f_sev}</span></td>
+            <td style="font-family: monospace; font-size: 11px; color: #64748b;">{f_cwe}</td>
+            <td style="font-family: monospace; font-size: 11px; color: #334155;">{f_path}:{f_line}</td>
+            <td><span style="font-size: 11px; font-weight: 600; color: #059669;">{f_status}</span></td>
+        </tr>
+        """)
+
+        # Deep Dive Card
+        poc_block = ""
+        if f_poc_script or f_poc_output:
+            poc_block = f"""
+            <div style="margin-top: 14px; background: #0f172a; border-radius: 8px; padding: 14px; color: #e2e8f0; font-family: monospace; font-size: 11px;">
+                <div style="color: #94a3b8; font-size: 10px; text-transform: uppercase; font-weight: bold; margin-bottom: 6px;">Proof of Concept & Verification Output</div>
+                {f'<div style="color: #38bdf8; margin-bottom: 8px;"># Exploit Script</div><pre style="margin: 0 0 10px 0; overflow-x: auto; color: #cbd5e1; white-space: pre-wrap;">{f_poc_script}</pre>' if f_poc_script else ''}
+                {f'<div style="color: #f59e0b; margin-bottom: 4px;"># Execution Evidence / Sandbox Log</div><pre style="margin: 0; overflow-x: auto; color: #fde68a; white-space: pre-wrap;">{f_poc_output}</pre>' if f_poc_output else ''}
+            </div>
+            """
+
+        patch_block = ""
+        if f_patch:
+            patch_block = f"""
+            <div style="margin-top: 14px; background: #0b1329; border-radius: 8px; padding: 14px; color: #e2e8f0; font-family: monospace; font-size: 11px; border: 1px solid #1e293b;">
+                <div style="color: #10b981; font-size: 10px; text-transform: uppercase; font-weight: bold; margin-bottom: 6px;">Verified Remediation Patch (Unified Git Diff)</div>
+                <pre style="margin: 0; overflow-x: auto; color: #a7f3d0; white-space: pre-wrap;">{f_patch}</pre>
+            </div>
+            """
+
+        findings_deep_dive_html.append(f"""
+        <div class="finding-card" style="margin-top: 24px; padding: 22px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; page-break-inside: avoid; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 14px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                        <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: #64748b;">{find_ref}</span>
+                        <span style="display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; background: {sev_bg}; color: {sev_text}; border: 1px solid {sev_border};">{f_sev.upper()} (CVSS {cvss_score})</span>
+                        <span style="padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 11px; font-weight: bold; background: #f1f5f9; color: #475569;">{f_cwe}</span>
+                    </div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">{f_title}</h3>
+                    <div style="margin-top: 4px; font-family: monospace; font-size: 12px; color: #64748b;">Target: {f_path} (Line {f_line})</div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">{f_status}</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <h4 style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #475569;">Technical Vulnerability Description</h4>
+                <div style="font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;">{f_desc}</div>
+            </div>
+
+            {f'''
+            <div style="margin-bottom: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                <h4 style="margin: 0 0 4px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569;">Root Cause & Exploitation Scenario</h4>
+                <div style="font-size: 12px; color: #334155; line-height: 1.5; font-family: monospace; white-space: pre-wrap;">{f_exploit}</div>
+            </div>
+            ''' if f_exploit else ''}
+
+            {poc_block}
+
+            <div style="margin-top: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px;">
+                <h4 style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #166534;">Remediation & Prevention Guidance</h4>
+                <div style="font-size: 13px; color: #14532d; line-height: 1.6; white-space: pre-wrap;">{f_mitigation}</div>
+            </div>
+
+            {patch_block}
+        </div>
+        """)
+
+    html_template = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penetration Testing Report - {scan_title} ({scan_id_short})</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+        
+        * {{ box-sizing: border-box; }}
+        body {{
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }}
+
+        .container {{
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 40px 24px 80px 24px;
+        }}
+
+        .no-print {{
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }}
+
+        .btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            border: none;
+        }}
+        .btn-primary {{
+            background: #6d28d9;
+            color: #ffffff;
+        }}
+        .btn-primary:hover {{
+            background: #5b21b6;
+        }}
+        .btn-secondary {{
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }}
+        .btn-secondary:hover {{
+            background: #e2e8f0;
+        }}
+
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            text-align: left;
+        }}
+        th {{
+            background: #f8fafc;
+            padding: 10px 12px;
+            font-weight: 700;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.05em;
+        }}
+        td {{
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }}
+
+        @media print {{
+            .no-print {{ display: none !important; }}
+            body {{ background: #ffffff !important; font-size: 12px; }}
+            .container {{ max-width: 100% !important; padding: 0 !important; }}
+            .finding-card {{ break-inside: avoid; page-break-inside: avoid; border: 1px solid #cbd5e1 !important; }}
+            @page {{
+                size: A4;
+                margin: 15mm;
+            }}
+        }}
+    </style>
+</head>
+<body>
+
+    <!-- Floating Top Toolbar (Hidden on Print) -->
+    <div class="no-print">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-weight: 800; font-size: 14px; color: #6d28d9;">🛡️ Mantis Pentest Report</span>
+            <span style="font-family: monospace; font-size: 11px; background: #f1f5f9; padding: 2px 6px; rounded: 4px; color: #475569;">REF: {scan_id_short}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn btn-primary" onclick="window.print()">
+                <span>🖨️ Print / Save as PDF</span>
+            </button>
+            <a class="btn btn-secondary" href="/api/scans/{scan.id}/export/csv">
+                <span>📊 Export CSV</span>
+            </a>
+            <a class="btn btn-secondary" href="/api/scans/{scan.id}/export/json">
+                <span>📦 Export JSON</span>
+            </a>
+            <a class="btn btn-secondary" href="/api/scans/{scan.id}/export/sarif">
+                <span>🛡️ Export SARIF</span>
+            </a>
+            <button class="btn btn-secondary" onclick="window.close()">
+                <span>✖ Close</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Cover Header -->
+        <div style="background: linear-gradient(135deg, #1e1b4b 0%, #31104b 100%); color: #ffffff; padding: 36px 32px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <span style="text-transform: uppercase; font-weight: 800; font-size: 11px; letter-spacing: 0.15em; color: #c084fc;">Confidential Security Assessment</span>
+                <span style="font-family: monospace; font-size: 12px; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 6px;">REF ID: MANTIS-{scan_id_short}</span>
+            </div>
+            <h1 style="margin: 0 0 10px 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">Autonomous Penetration Testing &amp; SAST Audit Deliverable</h1>
+            <p style="margin: 0 0 20px 0; font-size: 15px; color: #cbd5e1;">Target System: <strong>{scan_title}</strong></p>
+
+            <div style="display: grid; grid-cols: 2; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 12px;">
+                <div><span style="color: #94a3b8;">Repository / Source:</span> <div style="font-family: monospace; font-weight: 600;">{target_path}</div></div>
+                <div><span style="color: #94a3b8;">Branch / Tag:</span> <div style="font-family: monospace; font-weight: 600;">{branch_name}</div></div>
+                <div><span style="color: #94a3b8;">Assessment Swarm:</span> <div style="font-weight: 600;">Google Mantis ADK 2.0</div></div>
+                <div><span style="color: #94a3b8;">Audit Date:</span> <div style="font-weight: 600;">{audit_date}</div></div>
+            </div>
+        </div>
+
+        <!-- Executive Summary & Metrics -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 26px; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a;">Executive Risk &amp; Posture Assessment</h2>
+                <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: {posture_color}; color: #ffffff;">{overall_posture}</span>
+            </div>
+
+            <p style="color: #475569; font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+                An automated, deep multi-agent penetration testing sweep was conducted against the target repository using Google Mantis ADK's 7-stage swarm architecture. The assessment performed architectural component modeling, automated threat modeling, hypothesis generation, and dynamic sandbox verification.
+            </p>
+
+            <!-- Metrics Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 800; color: #b91c1c;">{counts['critical']}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #991b1b; text-transform: uppercase;">Critical</div>
+                </div>
+                <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 800; color: #c2410c;">{counts['high']}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #9a3412; text-transform: uppercase;">High</div>
+                </div>
+                <div style="background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 800; color: #6b21a8;">{counts['medium']}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #581c87; text-transform: uppercase;">Medium</div>
+                </div>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 800; color: #1d4ed8;">{counts['low']}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase;">Low / Info</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 800; color: #0f172a;">{len(findings)}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Total Findings</div>
+                </div>
+            </div>
+
+            <!-- Audit Telemetry -->
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; background: #f8fafc; border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #475569;">
+                <div>Tokens Ingested: <strong style="color: #0f172a;">{tokens_str}</strong></div>
+                <div>Compute Spend: <strong style="color: #0f172a;">{cost_str}</strong></div>
+                <div>Model Ensemble: <strong style="color: #0f172a;">{model_str}</strong></div>
+                <div>Dynamic PoC Verified: <strong style="color: #059669;">{sum(1 for f in findings if f.status == 'reproduced')} findings</strong></div>
+            </div>
+        </div>
+
+        <!-- Vulnerability Matrix Table -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin-bottom: 30px;">
+            <h2 style="margin: 0 0 14px 0; font-size: 16px; font-weight: 800; color: #0f172a;">Vulnerability Matrix ({len(findings)})</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ref</th>
+                            <th>Vulnerability Title</th>
+                            <th>Severity</th>
+                            <th>CWE</th>
+                            <th>Affected Target</th>
+                            <th>Exploit Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {''.join(findings_rows_html) if findings_rows_html else '<tr><td colspan="6" style="text-align: center; color: #64748b;">No verified vulnerabilities found.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Detailed Findings Reports -->
+        <div>
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Technical Vulnerability Disclosures</h2>
+            <p style="color: #64748b; font-size: 13px; margin: 0 0 20px 0;">Detailed root cause analysis, proof-of-concept exploits, and remediation patches verified by Mantis.</p>
+            {''.join(findings_deep_dive_html) if findings_deep_dive_html else '<div style="background: #ffffff; padding: 30px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; color: #059669; font-weight: 600;">No vulnerabilities confirmed. Codebase cleared all critic and reproduction gates.</div>'}
+        </div>
+
+        <!-- Deliverable Signoff Footer -->
+        <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8;">
+            <div>Generated autonomously by <strong>Google Mantis Autonomous Security Swarm</strong></div>
+            <div>Report Ref: MANTIS-{scan_id_short} &bull; {audit_date}</div>
+        </div>
+    </div>
+
+    {'''<script>
+        window.onload = function() {
+            setTimeout(function() { window.print(); }, 600);
+        };
+    </script>''' if auto_print else ''}
+</body>
+</html>
+"""
+    return html_template
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

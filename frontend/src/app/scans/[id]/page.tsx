@@ -32,11 +32,16 @@ import {
   Check,
   Target,
   Code,
+  Printer,
+  FileSpreadsheet,
+  FileJson,
+  Share2,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import ArchitectureGraph from "@/components/ArchitectureGraph";
 import ThreatModelGraph from "@/components/ThreatModelGraph";
 import SwarmTraceViewer from "@/components/SwarmTraceViewer";
+import PentestFindingModal from "@/components/PentestFindingModal";
 
 const PHASES = [
   { id: "ingest", label: "01 Ingest", nodes: ["setup", "clone", "ready", "ingest"] },
@@ -77,6 +82,8 @@ export default function ScanDetailPage() {
   const [traceQueryFilter, setTraceQueryFilter] = useState<string>("");
   const [copiedCli, setCopiedCli] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
+  const [selectedPentestFinding, setSelectedPentestFinding] = useState<any | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleCopyCli = (text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -430,7 +437,134 @@ export default function ScanDetailPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {/* Download Unified Patch */}
+          {/* Export Deliverables Menu (PDF, CSV, JSON, SARIF) */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:border-purple-300 hover:bg-purple-50/50 transition-all shadow-xs cursor-pointer"
+              title="Export pentest reports in PDF, CSV, JSON, and SARIF formats"
+            >
+              <Download className="w-3.5 h-3.5 text-purple-600" />
+              <span>Export Deliverables</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showExportMenu ? "rotate-180" : ""}`} />
+            </button>
+
+            {showExportMenu && (
+              <div className="absolute right-0 top-full mt-1.5 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Audit &amp; Pentest Reports
+                </div>
+
+                {/* Pentest Report (PDF / Print) */}
+                <a
+                  href={`/api/scans/${id}/export/report?print=1&token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowExportMenu(false)}
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                >
+                  <Printer className="w-4 h-4 text-purple-600 shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>Pentest PDF Report</span>
+                      <span className="text-[10px] font-mono text-purple-700 bg-purple-100 px-1 rounded font-bold">PDF / Print</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-normal">Executive &amp; Technical Disclosures</div>
+                  </div>
+                </a>
+
+                {/* CSV Spreadsheet */}
+                <a
+                  href={`/api/scans/${id}/export/csv?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
+                  download
+                  onClick={() => setShowExportMenu(false)}
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>CSV Spreadsheet</span>
+                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded font-bold">.csv</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-normal">Spreadsheet finding matrix</div>
+                  </div>
+                </a>
+
+                {/* JSON Audit Report */}
+                <a
+                  href={`/api/scans/${id}/export/json?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
+                  download
+                  onClick={() => setShowExportMenu(false)}
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                >
+                  <FileJson className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>JSON Audit Report</span>
+                      <span className="text-[10px] font-mono text-indigo-700 bg-indigo-50 px-1 rounded font-bold">.json</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-normal">Full machine-readable metadata</div>
+                  </div>
+                </a>
+
+                {/* SARIF Standard ("sansarif") */}
+                <a
+                  href={`/api/scans/${id}/export/sarif?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
+                  download
+                  onClick={() => setShowExportMenu(false)}
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>SARIF v2.1.0</span>
+                      <span className="text-[10px] font-mono text-sky-700 bg-sky-50 px-1 rounded font-bold">.sarif</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-normal">OASIS standard (sansarif) for CI/CD</div>
+                  </div>
+                </a>
+
+                <div className="border-t border-slate-100 pt-1 my-1"></div>
+
+                {/* Patch Diff */}
+                <a
+                  href={`/api/scans/${id}/export/patch?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
+                  download
+                  onClick={() => setShowExportMenu(false)}
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                >
+                  <FileCode className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>Unified Patch</span>
+                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded">.diff</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-normal">Verified Git patches for all findings</div>
+                  </div>
+                </a>
+
+                {/* Complete ZIP Bundle */}
+                <a
+                  href={`/api/scans/${id}/export/bundle?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
+                  download
+                  onClick={() => setShowExportMenu(false)}
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                >
+                  <Download className="w-4 h-4 text-purple-600 shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>Complete ZIP Bundle</span>
+                      <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-1 rounded">.zip</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-normal">Findings, patches, logs, reproducers</div>
+                  </div>
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Download Patch */}
           <a
             href={`/api/scans/${id}/export/patch?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
             download
@@ -438,18 +572,7 @@ export default function ScanDetailPage() {
             title="Download unified git patch (.diff)"
           >
             <FileCode className="w-3.5 h-3.5 text-emerald-700" />
-            <span>Download .patch</span>
-          </a>
-
-          {/* Export Bundle */}
-          <a
-            href={`/api/scans/${id}/export/bundle?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
-            download
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-purple-50 hover:text-purple-900 transition-all shadow-xs"
-            title="Download complete audit ZIP bundle (findings, patch, review packet, logs)"
-          >
-            <Download className="w-3.5 h-3.5 text-purple-600" />
-            <span>Export Bundle</span>
+            <span>.patch</span>
           </a>
 
           {/* Deep link into Swarm Trace Inspector */}
@@ -1209,7 +1332,16 @@ export default function ScanDetailPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => setSelectedPentestFinding(f)}
+                        className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-[11px] font-bold text-white bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 transition-all shadow-xs cursor-pointer"
+                        title="Open official Pentest Report & Advisory disclosure view for this finding"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 text-purple-200" />
+                        <span>Pentest Report View</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           setTraceQueryFilter(f.title || f.file_path || "");
@@ -1222,6 +1354,7 @@ export default function ScanDetailPage() {
                         <Brain className="w-3 h-3 text-purple-600" />
                         <span>Trace &amp; Reasoning</span>
                       </button>
+
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${
                           f.status === "reproduced"
@@ -1409,6 +1542,21 @@ export default function ScanDetailPage() {
           </div>
         )}
       </div>
+      )}
+      {/* Pentest Report Modal for Individual Findings */}
+      {selectedPentestFinding && (
+        <PentestFindingModal
+          finding={selectedPentestFinding}
+          onClose={() => setSelectedPentestFinding(null)}
+          onJumpToTrace={(q) => {
+            setTraceQueryFilter(q);
+            setTracePhaseFilter("all");
+            setActiveTab("trace");
+          }}
+          scanTarget={scan?.source_target}
+          scanName={scan?.name}
+          scanId={id}
+        />
       )}
     </div>
   );

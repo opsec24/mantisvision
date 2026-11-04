@@ -216,15 +216,18 @@ def _ingest_findings(scan_id: str, workspace_dir: Path) -> int:
                     except Exception:
                         pass
 
+                    rca_summary = row["rca_summary"] if "rca_summary" in row.keys() else None
+                    remediation = row["remediation"] if "remediation" in row.keys() else None
+
                     with engine.begin() as conn:
                         conn.execute(
                             text("""
                                 INSERT INTO findings
                                   (scan_id, title, cwe, severity, status, file_path, line_number,
-                                   description, patch_diff)
+                                   description, patch_diff, mitigation, exploit_steps)
                                 VALUES
                                   (:scan_id, :title, :cwe, :severity, 'open', :file_path, :line_number,
-                                   :description, :patch_diff)
+                                   :description, :patch_diff, :mitigation, :exploit_steps)
                             """),
                             {
                                 "scan_id": scan_id,
@@ -235,6 +238,8 @@ def _ingest_findings(scan_id: str, workspace_dir: Path) -> int:
                                 "line_number": line_number,
                                 "description": row["description"] or row["triage_reasoning"] or "",
                                 "patch_diff": row["patch_diff"],
+                                "mitigation": remediation,
+                                "exploit_steps": rca_summary,
                             },
                         )
                     count += 1
