@@ -22,6 +22,10 @@ import {
   Filter,
   Box,
   RefreshCw,
+  Info,
+  Target,
+  Crosshair,
+  HelpCircle,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -478,7 +482,7 @@ export default function NewScanPage() {
         </div>
       )}
 
-      <form onSubmit={handleLaunch} className="space-y-6">
+      <form onSubmit={handleLaunch} className="space-y-6" autoComplete="off">
         {/* Section 0: Audit Identification */}
         <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 space-y-4 shadow-xs backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -538,39 +542,96 @@ export default function NewScanPage() {
           {/* Quick Target Presets */}
           <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
             <span className="text-[11px] font-semibold text-slate-400">Quick Test Targets:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setSourceType("local");
-                setSourceTarget("/app/mantis_engine/test_targets");
-                setScanName("Built-in Test Suite (Flask & Vault)");
-              }}
-              className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-mono font-medium transition-colors"
-            >
-              🧪 test_targets
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSourceType("local");
-                setSourceTarget("/app/mantis_engine/evals/research_target");
-                setScanName("Mantis 26-File Seeded Corpus");
-              }}
-              className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-mono font-medium transition-colors"
-            >
-              🎯 research_target
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSourceType("git");
-                setSourceTarget("https://github.com/juice-shop/juice-shop.git");
-                setScanName("OWASP Juice Shop Audit");
-              }}
-              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium transition-colors"
-            >
-              🧃 Juice Shop
-            </button>
+            
+            {/* test_targets preset */}
+            <div className="relative group">
+              <button
+                type="button"
+                onClick={() => {
+                  setSourceType("local");
+                  setSourceTarget("/app/mantis_engine/test_targets");
+                  setScanName("Built-in Test Suite (Flask & Vault)");
+                }}
+                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+              >
+                🧪 test_targets
+              </button>
+              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none transition-all">
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                  <span className="font-bold text-xs text-purple-300">🧪 Built-in Test Targets</span>
+                  <span className="text-[10px] font-mono bg-purple-900/80 text-purple-200 px-1.5 py-0.5 rounded border border-purple-700/50">Micro Suite</span>
+                </div>
+                <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
+                  Local test harness containing micro Flask APIs, synthetic credentials, and vault routines for rapid smoke testing of Mantis engine primitives.
+                </p>
+                <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-purple-300 font-mono">
+                  Path: /app/mantis_engine/test_targets
+                </div>
+              </div>
+            </div>
+
+            {/* research_target preset with comprehensive explanation hover card */}
+            <div className="relative group">
+              <button
+                type="button"
+                onClick={() => {
+                  setSourceType("local");
+                  setSourceTarget("/app/mantis_engine/evals/research_target");
+                  setScanName("Mantis 26-File Seeded Corpus");
+                }}
+                className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 text-indigo-700 text-xs font-mono font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer ring-1 ring-indigo-200"
+              >
+                <span>🎯 research_target</span>
+                <HelpCircle className="w-3 h-3 text-indigo-400 group-hover:text-indigo-600 transition-colors" />
+              </button>
+              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-80 p-3.5 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-indigo-500/40 z-50 pointer-events-none transition-all">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="font-bold text-xs text-indigo-300">🎯 Mantis Seeded Benchmark</span>
+                  </div>
+                  <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">
+                    16 Ground-Truth Flaws
+                  </span>
+                </div>
+                <div className="mt-2 space-y-1.5 text-[11px] text-slate-300 leading-relaxed">
+                  <p>
+                    Google Mantis's canonical evaluation application (a <strong>26-file Document Portal Flask app</strong>).
+                  </p>
+                  <p className="text-slate-400">
+                    Seeded with <strong>16 verified vulnerabilities</strong>: SQL Injection, Command Injection, SSRF, Deserialization, Path Traversal, Broken Access Control, and IDOR.
+                  </p>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px]">
+                  <span className="text-indigo-300 font-mono">/app/mantis_engine/evals/research_target</span>
+                  <span className="text-emerald-400 font-medium">⚡ Local &bull; ~5-10m</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Juice Shop preset */}
+            <div className="relative group">
+              <button
+                type="button"
+                onClick={() => {
+                  setSourceType("git");
+                  setSourceTarget("https://github.com/juice-shop/juice-shop.git");
+                  setScanName("OWASP Juice Shop Audit");
+                }}
+                className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+              >
+                🧃 Juice Shop
+              </button>
+              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none transition-all">
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                  <span className="font-bold text-xs text-emerald-300">🧃 OWASP Juice Shop</span>
+                  <span className="text-[10px] font-mono bg-emerald-900/80 text-emerald-200 px-1.5 py-0.5 rounded border border-emerald-700/50">Full Web App</span>
+                </div>
+                <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
+                  The official OWASP vulnerable JavaScript / TypeScript web application. Cloned from GitHub for complete multi-agent repository exploration and threat modeling.
+                </p>
+              </div>
+            </div>
+
             <Link
               href="/benchmarks"
               className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-mono font-medium transition-colors flex items-center space-x-1"
@@ -582,6 +643,10 @@ export default function NewScanPage() {
 
           {sourceType === "git" ? (
             <div className="space-y-4">
+              {/* Dummy hidden inputs to soak up browser password manager autofill heuristics */}
+              <input type="text" name="fake_username_remember" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" autoComplete="off" />
+              <input type="password" name="fake_password_remember" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" autoComplete="new-password" />
+
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Git Repository URL
@@ -589,6 +654,11 @@ export default function NewScanPage() {
                 <input
                   type="text"
                   required
+                  name="git_repository_url"
+                  id="git_repository_url"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
                   value={sourceTarget}
                   onChange={(e) => setSourceTarget(e.target.value)}
                   placeholder="https://github.com/juice-shop/juice-shop.git"
@@ -603,6 +673,15 @@ export default function NewScanPage() {
                   </label>
                   <input
                     type="text"
+                    id="git_branch_tag"
+                    name="git_branch_tag"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
                     placeholder="e.g. main, master (optional)"
@@ -619,6 +698,15 @@ export default function NewScanPage() {
                     <Key className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                     <input
                       type="password"
+                      id="git_personal_access_token"
+                      name="git_personal_access_token"
+                      autoComplete="new-password"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-form-type="other"
                       value={gitToken}
                       onChange={(e) => setGitToken(e.target.value)}
                       placeholder="ghp_••••••••••••••••••••"
@@ -761,21 +849,34 @@ export default function NewScanPage() {
 
           {/* Focus */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700 flex items-center space-x-1">
-              <Search className="w-3.5 h-3.5 text-purple-600" />
-              <span>Focus Directive</span>
-              <span className="text-[11px] text-slate-400 font-normal ml-1">Optional</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                <Search className="w-3.5 h-3.5 text-purple-600" />
+                <span>Focus Directive (--focus)</span>
+                <span className="text-[10px] font-mono font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200">
+                  Tactical CWE Filter
+                </span>
+              </label>
+              <span className="text-[11px] text-slate-400 font-normal">Optional</span>
+            </div>
             <input
               type="text"
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
-              placeholder="e.g. look for IDOR and broken authentication, find SSRF vulnerabilities"
+              placeholder="e.g. SQL injection, SSRF, IDOR, deserialization, command injection"
               className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
             />
-            <p className="text-[11px] text-slate-500">
-              Direct Mantis to focus on specific vulnerability classes or attack surfaces.
-            </p>
+            <div className="text-[11px] text-slate-500 leading-relaxed space-y-1">
+              <p>
+                <strong>Tactical CWE Filter:</strong> Directs Mantis's hypothesis generator and critic swarms to isolate specific vulnerability classes or attack vectors.
+              </p>
+              <div className="text-[11px] text-purple-800 bg-purple-50/80 rounded-xl p-2.5 border border-purple-100 flex items-start space-x-2">
+                <Info className="w-3.5 h-3.5 text-purple-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Focus vs Objective:</strong> <em>Focus</em> restricts <strong>what defect classes</strong> are hunted (e.g., SQLi, SSRF, IDOR). <em>Objective</em> (under Advanced Flags below) guides <strong>what attacker goal</strong> to achieve (e.g., unauthenticated privilege escalation to tenant admin).
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Exclude Patterns */}
@@ -912,19 +1013,34 @@ export default function NewScanPage() {
 
                 {/* Campaign Objective */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Natural Language Objective (--objective)
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                      <Crosshair className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Natural Language Objective (--objective)</span>
+                      <span className="text-[10px] font-mono font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200">
+                        Strategic Scenario Goal
+                      </span>
+                    </label>
+                    <span className="text-[10px] text-slate-400">Optional</span>
+                  </div>
                   <input
                     type="text"
                     value={objective}
                     onChange={(e) => setObjective(e.target.value)}
-                    placeholder="e.g. Find privilege escalation from customer to tenant admin"
+                    placeholder="e.g. Find privilege escalation from unauthenticated visitor to tenant admin"
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:border-purple-600"
                   />
-                  <p className="text-[10px] text-slate-400">
-                    Steers research graph synthesis towards a specific security goal.
-                  </p>
+                  <div className="text-[10px] text-slate-500 space-y-1 leading-relaxed">
+                    <p>
+                      <strong>Strategic Campaign Goal:</strong> Steers multi-agent research graph synthesis toward an attacker mission outcome.
+                    </p>
+                    <div className="text-indigo-800 bg-indigo-50/80 rounded-lg p-2 border border-indigo-100 flex items-start space-x-1.5">
+                      <Info className="w-3 h-3 text-indigo-600 shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Objective vs Focus:</strong> <em>Objective</em> steers <strong>attacker business logic milestones</strong> (e.g., reaching admin panel without MFA). <em>Focus</em> (above) specifies <strong>detector bug classes</strong> (e.g., SQLi, SSRF).
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Seed Report */}
