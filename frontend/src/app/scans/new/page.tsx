@@ -658,32 +658,76 @@ export default function NewScanPage() {
           </div>
 
           {/* Model Selection */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700">
-              Model
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {MODEL_PRESETS.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setModelPreset(m.id)}
-                  className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all ${
-                    modelPreset === m.id
-                      ? "bg-purple-700 border-purple-700 text-white"
-                      : "bg-slate-50 border-slate-200 text-slate-700 hover:border-purple-300"
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-slate-700">
+                Model Architecture
+              </label>
+              {providers.find((p) => p.provider === "ollama")?.is_active && (
+                <span className="flex items-center space-x-1.5 text-[11px] font-mono text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Ollama Cloud Connected (https://ollama.com)</span>
+                </span>
+              )}
             </div>
+
+            {/* Whitelisted Models from Settings (Ollama Cloud & Google) */}
+            {availableModels.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Your Configured &amp; Whitelisted Models ({availableModels.length})
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {availableModels.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setModelPreset(m.id)}
+                      className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all ${
+                        modelPreset === m.id
+                          ? "bg-purple-700 border-purple-700 text-white shadow-xs ring-2 ring-purple-300"
+                          : "bg-white border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-purple-50/50"
+                      }`}
+                    >
+                      <div className="font-bold truncate">{m.display_name || m.id}</div>
+                      <div className={`text-[10px] font-mono truncate mt-0.5 ${modelPreset === m.id ? "text-purple-200" : "text-slate-400"}`}>
+                        {m.provider} &bull; {m.id}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Standard Cloud Presets */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                Standard Cloud Presets
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {MODEL_PRESETS.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setModelPreset(m.id)}
+                    className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all ${
+                      modelPreset === m.id
+                        ? "bg-purple-700 border-purple-700 text-white shadow-xs ring-2 ring-purple-300"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-white"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {modelPreset === "custom" && (
               <input
                 type="text"
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
-                placeholder="e.g. openai/gpt-4o-mini, vertex_ai/gemini-pro"
+                placeholder="e.g. ollama/deepseek-v4.1-flash, openai/gpt-4o-mini"
                 className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all mt-1"
               />
             )}
