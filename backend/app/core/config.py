@@ -32,7 +32,14 @@ class Settings(BaseSettings):
     # ── Encryption ────────────────────────────────────────────────────
     SETTINGS_ENCRYPTION_KEY: str = "generate-with-python-cryptography-fernet"
 
-    # ── LLM / Ollama ──────────────────────────────────────────────────
+    # ── LLM Provider API Keys ─────────────────────────────────────────
+    GEMINI_API_KEY: Optional[str] = None
+    ANTHROPIC_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: Optional[str] = None
+    VERTEXAI_PROJECT: Optional[str] = None
+    GOOGLE_CLOUD_PROJECT: Optional[str] = None
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
     OLLAMA_API_BASE: Optional[str] = None
 
     # ── Langfuse Observability ────────────────────────────────────────

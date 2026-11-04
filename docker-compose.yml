@@ -37,6 +37,14 @@ services:
       - REQUIRE_TOTP=${REQUIRE_TOTP:-false}
       - SANDBOX_CONCURRENCY=${SANDBOX_CONCURRENCY:-10}
       - SANDBOX_MEM_LIMIT=${SANDBOX_MEM_LIMIT:-256m}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - VERTEXAI_PROJECT=${VERTEXAI_PROJECT:-}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+      - OLLAMA_API_BASE=${OLLAMA_API_BASE:-http://host.docker.internal:11434}
     volumes:
       - ./backend:/app
       - /var/run/docker.sock:/var/run/docker.sock
@@ -47,8 +55,11 @@ services:
   worker:
     build: ./backend
     command: >
-      celery -A app.pipeline.orchestrator.celery_app worker
-      --loglevel=info --concurrency=2
+      sh -c "
+        pip install -r /app/mantis_engine/requirements.in --quiet 2>/dev/null || true &&
+        celery -A app.pipeline.orchestrator.celery_app worker
+        --loglevel=info --concurrency=2
+      "
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,14 +71,22 @@ services:
       - JWT_SECRET=${JWT_SECRET:-change-this-in-production-use-openssl-rand-hex-32}
       - SETTINGS_ENCRYPTION_KEY=${SETTINGS_ENCRYPTION_KEY:-generate-with-python-cryptography-fernet}
       - REQUIRE_TOTP=${REQUIRE_TOTP:-false}
-      - OLLAMA_API_BASE=${OLLAMA_API_BASE:-https://ollama.com}
+      - OLLAMA_API_BASE=${OLLAMA_API_BASE:-http://host.docker.internal:11434}
       - OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
       - SANDBOX_CONCURRENCY=${SANDBOX_CONCURRENCY:-10}
       - SANDBOX_MEM_LIMIT=${SANDBOX_MEM_LIMIT:-256m}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - VERTEXAI_PROJECT=${VERTEXAI_PROJECT:-}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./backend:/app
+      - ./backend/mantis_engine:/app/mantis_engine:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - scan_data:/data/scans
       - host_repos:/data/repos:ro

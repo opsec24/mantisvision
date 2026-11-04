@@ -37,9 +37,16 @@ class ScanCreateRequest(BaseModel):
     source_target: str
     branch: Optional[str] = None
     git_token: Optional[str] = None
-    phase_models: Optional[dict] = None
-    budget_limit_usd: Optional[float] = None
-    fresh: Optional[bool] = False  # If True, purge historical knowledge base and start from clean slate
+    # Mantis-native flags
+    model: Optional[str] = None                    # e.g. "openai/gpt-4o", "claude-3-5-sonnet"
+    reasoning_effort: Optional[str] = "medium"     # "low", "medium", "high"
+    focus: Optional[str] = None                    # e.g. "look for IDOR", "find SSRF"
+    exclude: Optional[list[str]] = None            # e.g. ["vendor", "testdata", "*.min.js"]
+    max_tokens: Optional[int] = None               # token budget ceiling
+    budget_limit_usd: Optional[float] = None       # USD budget ceiling
+    sandbox: Optional[str] = "static-only"         # "static-only", "microsandbox", "gvisor"
+    resume: Optional[bool] = False                 # resume from last checkpoint
+    fresh: Optional[bool] = False                  # wipe workspace and start clean
 
 
 class ScanResponse(BaseModel):
@@ -66,6 +73,11 @@ class ScanResponse(BaseModel):
     created_at: datetime
     completed_at: Optional[datetime] = None
     triggered_by: uuid.UUID
+    # Mantis-native fields
+    model: Optional[str] = None
+    reasoning_effort: Optional[str] = None
+    focus: Optional[str] = None
+    sandbox: Optional[str] = None
 
 
 class BulkDeleteRequest(BaseModel):
@@ -198,9 +210,7 @@ async def create_scan(
     if not scan_name:
         scan_name = os.path.basename(body.source_target.rstrip("/").removesuffix(".git")) or body.source_target
 
-    phase_models_dict = dict(body.phase_models or {})
     if body.fresh:
-        phase_models_dict["fresh"] = True
         try:
             from app.pipeline.orchestrator import _get_repo_id, _purge_repo_knowledge_base
             _purge_repo_knowledge_base(_get_repo_id(body.source_target))
@@ -215,12 +225,25 @@ async def create_scan(
         git_token=body.git_token,
         triggered_by=current_user.id,
         status="queued",
-        phase_models=phase_models_dict,
         budget_limit_usd=body.budget_limit_usd,
+        # Mantis-native fields
+        model=body.model,
+        reasoning_effort=body.reasoning_effort,
+        focus=body.focus,
+        sandbox=body.sandbox or "static-only",
     )
     db.add(scan)
     await db.flush()
     await db.refresh(scan)
+
+    scan_config = {
+        "model": body.model,
+        "reasoning_effort": body.reasoning_effort,
+        "focus": body.focus,
+        "exclude": body.exclude or [],
+        "max_tokens": body.max_tokens,
+        "sandbox": body.sandbox or "static-only",
+    }
 
     # Enqueue Celery task – import here to avoid circular imports at module
     # level when the worker isn't running.
@@ -233,6 +256,8 @@ async def create_scan(
             source_target=body.source_target,
             branch=body.branch,
             git_token=body.git_token,
+            resume=body.resume or False,
+            scan_config=scan_config,
         )
     except Exception as exc:
         logger.warning("celery_dispatch_failed", error=str(exc))
@@ -1057,6 +1082,10 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
         created_at=scan.created_at,
         completed_at=scan.completed_at,
         triggered_by=scan.triggered_by,
+        model=getattr(scan, "model", None),
+        reasoning_effort=getattr(scan, "reasoning_effort", None),
+        focus=getattr(scan, "focus", None),
+        sandbox=getattr(scan, "sandbox", None),
     )
 
 

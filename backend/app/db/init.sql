@@ -36,6 +36,13 @@ CREATE TABLE IF NOT EXISTS scans (
     hunting_plan    TEXT,
     review_packet   TEXT,
     exploit_chains  JSONB,
+    -- Mantis-native flags
+    model           VARCHAR(255),
+    reasoning_effort VARCHAR(20),
+    focus           TEXT,
+    exclude_patterns JSONB,
+    sandbox         VARCHAR(50) DEFAULT 'static-only',
+    mantis_run_id   VARCHAR(100),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     completed_at    TIMESTAMPTZ
 );
@@ -184,4 +191,25 @@ CREATE INDEX IF NOT EXISTS ix_agent_traces_scan_step ON agent_inference_traces (
 CREATE INDEX IF NOT EXISTS ix_agent_traces_tool      ON agent_inference_traces (scan_id, tool_name);
 CREATE INDEX IF NOT EXISTS ix_agent_traces_decision  ON agent_inference_traces (scan_id, decision_status);
 CREATE INDEX IF NOT EXISTS ix_agent_traces_phase     ON agent_inference_traces (scan_id, phase);
+
+-- ── Mantis-native columns (idempotent for existing databases) ─────────────────
+
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS model VARCHAR(255);
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS reasoning_effort VARCHAR(20);
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS focus TEXT;
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS exclude_patterns JSONB;
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS sandbox VARCHAR(50) DEFAULT 'static-only';
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS mantis_run_id VARCHAR(100);
+
+-- ── Extended findings columns (idempotent) ────────────────────────────────────
+
+ALTER TABLE findings ADD COLUMN IF NOT EXISTS source_sink_trace JSONB;
+ALTER TABLE findings ADD COLUMN IF NOT EXISTS exploit_steps TEXT;
+ALTER TABLE findings ADD COLUMN IF NOT EXISTS mitigation TEXT;
+
+-- ── Scan token totals (idempotent) ────────────────────────────────────────────
+
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS total_tokens INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS prompt_tokens INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE scans ADD COLUMN IF NOT EXISTS completion_tokens INTEGER NOT NULL DEFAULT 0;
 
