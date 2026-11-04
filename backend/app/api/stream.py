@@ -80,6 +80,10 @@ async def _event_generator(scan_id: str, scan: Scan):
                             "timestamp": r.created_at.isoformat() if r.created_at else "",
                             "message": msg,
                             "decision_status": r.decision_status,
+                            "cost": scan.cost_spent_usd,
+                            "total_tokens": scan.total_tokens,
+                            "prompt_tokens": scan.prompt_tokens,
+                            "completion_tokens": scan.completion_tokens,
                         })
                         yield f"data: {payload}\n\n"
             except Exception as fb_err:

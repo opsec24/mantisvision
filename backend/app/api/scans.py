@@ -23,7 +23,7 @@ from app.api.auth import get_current_user
 from app.core.audit import log_user_action
 from app.core.database import get_db
 from app.core.models import AgentInferenceTrace, Finding, Scan, User
-from app.pipeline.orchestrator import NODE_TO_PHASE, _format_threat_model_md
+from app.pipeline.orchestrator import NODE_TO_PHASE, _format_threat_model_md, calculate_cost_usd
 
 PHASE_NODE_MAP = {
     "ingest": ["setup", "clone", "ready", "ingest", "orchestrator"],
@@ -580,11 +580,38 @@ async def get_scan(
                 elif not scan.review_packet and not db_updates.get("review_packet") and ("review_packet" in fpath or "report.json" in fpath) and content:
                     scan.review_packet = content
                     db_updates["review_packet"] = content
-            if db_updates:
-                await db.execute(update(Scan).where(Scan.id == scan_id).values(**db_updates))
-                await db.commit()
         except Exception as kb_err:
             logger.warning("get_scan_kb_sync_failed", scan_id=str(scan_id), error=str(kb_err))
+
+    # On-demand sync of token spend and calculated USD cost from knowledge.db if missing or 0
+    if kb_path.exists() and (not scan.total_tokens or scan.total_tokens == 0 or not scan.cost_spent_usd or scan.cost_spent_usd == 0.0):
+        try:
+            import sqlite3
+            con = sqlite3.connect(str(kb_path))
+            spend_row = con.execute("SELECT COALESCE(SUM(tokens), 0), COALESCE(SUM(llm_calls), 0) FROM campaign_spend").fetchone()
+            con.close()
+            if spend_row and spend_row[0] > 0:
+                ttok = int(spend_row[0])
+                ptok = int(ttok * 0.75)
+                ctok = ttok - ptok
+                cost_val = calculate_cost_usd(scan.model, ttok, ptok, ctok)
+                scan.total_tokens = ttok
+                scan.prompt_tokens = ptok
+                scan.completion_tokens = ctok
+                scan.cost_spent_usd = cost_val
+                db_updates["total_tokens"] = ttok
+                db_updates["prompt_tokens"] = ptok
+                db_updates["completion_tokens"] = ctok
+                db_updates["cost_spent_usd"] = cost_val
+        except Exception as spend_err:
+            logger.warning("get_scan_spend_sync_failed", scan_id=str(scan_id), error=str(spend_err))
+
+    if db_updates:
+        try:
+            await db.execute(update(Scan).where(Scan.id == scan_id).values(**db_updates))
+            await db.commit()
+        except Exception:
+            pass
 
     stage_obs: dict[str, str] = {}
     stage_counts: dict[str, int] = {}
@@ -1135,6 +1162,25 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
         except Exception:
             pass
 
+    ttok = getattr(scan, "total_tokens", 0) or 0
+    ptok = getattr(scan, "prompt_tokens", 0) or 0
+    ctok = getattr(scan, "completion_tokens", 0) or 0
+    cost = getattr(scan, "cost_spent_usd", 0.0) or 0.0
+
+    if ttok == 0 and (scan_dir / "knowledge.db").exists():
+        try:
+            import sqlite3
+            con = sqlite3.connect(str(scan_dir / "knowledge.db"))
+            spend_row = con.execute("SELECT COALESCE(SUM(tokens), 0), COALESCE(SUM(llm_calls), 0) FROM campaign_spend").fetchone()
+            con.close()
+            if spend_row and spend_row[0] > 0:
+                ttok = int(spend_row[0])
+                ptok = int(ttok * 0.75)
+                ctok = ttok - ptok
+                cost = calculate_cost_usd(getattr(scan, "model", None), ttok, ptok, ctok)
+        except Exception:
+            pass
+
     return ScanResponse(
         id=scan.id,
         name=scan_name,
@@ -1145,7 +1191,7 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
         current_phase=scan.current_phase,
         phase_models=scan.phase_models,
         budget_limit_usd=scan.budget_limit_usd,
-        cost_spent_usd=scan.cost_spent_usd,
+        cost_spent_usd=cost,
         findings_count=findings_cnt,
         error_message=scan.error_message,
         architecture_summary=arch,
@@ -1153,9 +1199,9 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
         hunting_plan=hp,
         review_packet=rp,
         exploit_chains=ec,
-        total_tokens=getattr(scan, "total_tokens", 0) or 0,
-        prompt_tokens=getattr(scan, "prompt_tokens", 0) or 0,
-        completion_tokens=getattr(scan, "completion_tokens", 0) or 0,
+        total_tokens=ttok,
+        prompt_tokens=ptok,
+        completion_tokens=ctok,
         created_at=scan.created_at,
         completed_at=scan.completed_at,
         triggered_by=scan.triggered_by,

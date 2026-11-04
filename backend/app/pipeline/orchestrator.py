@@ -374,6 +374,56 @@ def _format_threat_model_md(content: str) -> str:
         return content
 
 
+def calculate_cost_usd(
+    model: Optional[str],
+    total_tokens: int,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+) -> float:
+    """Calculate USD spend based on token counts and model pricing."""
+    if not total_tokens or total_tokens <= 0:
+        return 0.0
+
+    if prompt_tokens <= 0 and completion_tokens <= 0:
+        prompt_tokens = int(total_tokens * 0.75)
+        completion_tokens = total_tokens - prompt_tokens
+
+    m_lower = (model or "").lower()
+
+    # Try litellm cost lookup if available
+    try:
+        import litellm
+        clean_model = m_lower.removeprefix("gemini/").removeprefix("openai/").removeprefix("anthropic/")
+        info = litellm.model_cost.get(m_lower) or litellm.model_cost.get(clean_model)
+        if info:
+            in_cost = float(info.get("input_cost_per_token") or 0.0)
+            out_cost = float(info.get("output_cost_per_token") or 0.0)
+            if in_cost > 0 or out_cost > 0:
+                return round(prompt_tokens * in_cost + completion_tokens * out_cost, 4)
+    except Exception:
+        pass
+
+    # Standard model tier pricing (prices per 1M tokens)
+    if any(k in m_lower for k in ("flash-lite", "1.5-flash-8b")):
+        return round((prompt_tokens * 0.075 + completion_tokens * 0.30) / 1_000_000, 4)
+    elif any(k in m_lower for k in ("flash", "3.8-flash", "2.5-flash")):
+        return round((prompt_tokens * 0.15 + completion_tokens * 0.60) / 1_000_000, 4)
+    elif "pro" in m_lower:
+        return round((prompt_tokens * 1.25 + completion_tokens * 5.00) / 1_000_000, 4)
+    elif "gpt-4o-mini" in m_lower:
+        return round((prompt_tokens * 0.15 + completion_tokens * 0.60) / 1_000_000, 4)
+    elif "gpt-4o" in m_lower:
+        return round((prompt_tokens * 2.50 + completion_tokens * 10.00) / 1_000_000, 4)
+    elif "sonnet" in m_lower:
+        return round((prompt_tokens * 3.00 + completion_tokens * 15.00) / 1_000_000, 4)
+    elif "haiku" in m_lower:
+        return round((prompt_tokens * 0.80 + completion_tokens * 4.00) / 1_000_000, 4)
+    elif "ollama" in m_lower:
+        return 0.0
+    else:
+        return round(total_tokens * (0.20 / 1_000_000), 4)
+
+
 # ── Mantis Workspace ──────────────────────────────────────────────────────────
 
 SCAN_DATA_ROOT = Path(os.getenv("SCAN_DATA_ROOT", "/data/scans"))
@@ -470,6 +520,10 @@ def run_mantis_scan(
         return {"status": "skipped_duplicate", "scan_id": scan_id}
 
     step_counter = 0
+    current_total_tokens = 0
+    current_prompt_tokens = 0
+    current_completion_tokens = 0
+    current_cost_usd = 0.0
 
     def emit(phase: str, node: str, event_type: str, data: dict):
         nonlocal step_counter
@@ -480,6 +534,10 @@ def run_mantis_scan(
             "node": node,
             "event_type": event_type,
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "cost": current_cost_usd,
+            "total_tokens": current_total_tokens,
+            "prompt_tokens": current_prompt_tokens,
+            "completion_tokens": current_completion_tokens,
             **data,
         }
         _publish_progress(scan_id, payload)
@@ -811,6 +869,28 @@ def run_mantis_scan(
                                 review_saved = True
                         if kb_updates:
                             _update_scan(scan_id, **kb_updates)
+
+                        # 3. Extract accumulated token spend and calculate live USD cost from knowledge.db
+                        spend_row = con.execute("SELECT COALESCE(SUM(tokens), 0), COALESCE(SUM(llm_calls), 0) FROM campaign_spend").fetchone()
+                        if spend_row and spend_row[0] > 0:
+                            toks_sum = int(spend_row[0])
+                            if toks_sum != current_total_tokens:
+                                current_total_tokens = toks_sum
+                                current_prompt_tokens = int(current_total_tokens * 0.75)
+                                current_completion_tokens = current_total_tokens - current_prompt_tokens
+                                current_cost_usd = calculate_cost_usd(
+                                    model,
+                                    current_total_tokens,
+                                    current_prompt_tokens,
+                                    current_completion_tokens,
+                                )
+                                _update_scan(
+                                    scan_id,
+                                    total_tokens=current_total_tokens,
+                                    prompt_tokens=current_prompt_tokens,
+                                    completion_tokens=current_completion_tokens,
+                                    cost_spent_usd=current_cost_usd,
+                                )
                     except Exception:
                         pass
 
@@ -859,6 +939,18 @@ def run_mantis_scan(
                         hunting_plan_text = content
                     elif not review_packet_text and ("review_packet" in fpath or "report.json" in fpath) and content:
                         review_packet_text = content
+
+                spend_row = con.execute("SELECT COALESCE(SUM(tokens), 0), COALESCE(SUM(llm_calls), 0) FROM campaign_spend").fetchone()
+                if spend_row and spend_row[0] > 0:
+                    current_total_tokens = int(spend_row[0])
+                    current_prompt_tokens = int(current_total_tokens * 0.75)
+                    current_completion_tokens = current_total_tokens - current_prompt_tokens
+                    current_cost_usd = calculate_cost_usd(
+                        model,
+                        current_total_tokens,
+                        current_prompt_tokens,
+                        current_completion_tokens,
+                    )
                 con.close()
             except Exception:
                 pass
@@ -870,6 +962,10 @@ def run_mantis_scan(
             "status": "completed",
             "current_phase": "completed",
             "completed_at": datetime.now(timezone.utc).isoformat(),
+            "total_tokens": current_total_tokens,
+            "prompt_tokens": current_prompt_tokens,
+            "completion_tokens": current_completion_tokens,
+            "cost_spent_usd": current_cost_usd,
         }
         if threat_model_text:
             update_fields["threat_model"] = threat_model_text
