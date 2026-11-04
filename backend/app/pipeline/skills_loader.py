@@ -34,12 +34,17 @@ def load_skill(skill_name: str) -> str:
     FileNotFoundError
         If the skill file doesn't exist.
     """
-    filename = f"{skill_name}.md"
-    skill_path = _SKILLS_DIR / filename
+    # Check Mantis directory format (skills/<name>/SKILL.md) first, then fallback to flat file (<name>.md)
+    mantis_skill_path = _SKILLS_DIR / skill_name / "SKILL.md"
+    flat_skill_path = _SKILLS_DIR / f"{skill_name}.md"
 
-    if not skill_path.is_file():
+    if mantis_skill_path.is_file():
+        skill_path = mantis_skill_path
+    elif flat_skill_path.is_file():
+        skill_path = flat_skill_path
+    else:
         raise FileNotFoundError(
-            f"Skill file not found: {skill_path}  "
+            f"Skill file not found: checked {mantis_skill_path} and {flat_skill_path} "
             f"(resolved from SKILLS_DIR={_SKILLS_DIR})"
         )
 

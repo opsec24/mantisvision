@@ -57,7 +57,29 @@ async def health_check() -> dict:
 
     # ── Overall ───────────────────────────────────────────────────────
     all_ok = all(v == "ok" for v in checks.values())
+
+    active_count = 0
+    queued_count = 0
+    db_status = "connected" if checks.get("postgres") == "ok" else "disconnected"
+    redis_status = "connected" if checks.get("redis") == "ok" else "disconnected"
+    docker_status = "connected" if checks.get("docker") == "ok" else "unavailable"
+
+    if checks.get("postgres") == "ok":
+        try:
+            async with engine.begin() as conn:
+                res_act = await conn.execute(text("SELECT COUNT(*) FROM scans WHERE status = 'running'"))
+                active_count = res_act.scalar() or 0
+                res_q = await conn.execute(text("SELECT COUNT(*) FROM scans WHERE status = 'queued'"))
+                queued_count = res_q.scalar() or 0
+        except Exception:
+            pass
+
     return {
         "status": "healthy" if all_ok else "degraded",
+        "database": db_status,
+        "redis": redis_status,
+        "docker": docker_status,
+        "active_scans": active_count,
+        "queued_scans": queued_count,
         "checks": checks,
     }

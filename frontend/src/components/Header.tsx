@@ -12,6 +12,7 @@ import {
   ExternalLink,
   LogOut,
   User as UserIcon,
+  GitCompare,
 } from "lucide-react";
 import { api, getToken, removeToken } from "@/lib/api";
 
@@ -61,6 +62,7 @@ export default function Header() {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: Activity },
     { label: "New Scan", href: "/scans/new", icon: PlusCircle },
+    { label: "Compare", href: "/scans/compare", icon: GitCompare },
     { label: "Audit Log", href: "/audit", icon: History },
     { label: "Settings", href: "/settings", icon: Settings },
   ];
@@ -121,18 +123,15 @@ export default function Header() {
             </div>
           )}
 
-          {/* Langfuse Observability Link */}
-          <a
-            href={langfuseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100 transition-colors shadow-xs"
-            title="Open Self-Hosted Langfuse LLM Observability"
+          {/* Swarm Observability Link */}
+          <Link
+            href="/dashboard"
+            className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100 transition-colors shadow-2xs"
+            title="Native Swarm Observability & Trace Forensics"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            <span>Langfuse</span>
-            <ExternalLink className="w-3 h-3 text-amber-700" />
-          </a>
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+            <span>Swarm Forensics</span>
+          </Link>
 
           {/* User state */}
           {user ? (

@@ -77,6 +77,32 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 }
 
+export interface TraceStep {
+  id: string;
+  scan_id: string;
+  step_number: number;
+  phase: string;
+  agent_name: string;
+  model?: string;
+  has_thinking: boolean;
+  thinking_preview?: string;
+  thinking_content?: string;
+  prompt_raw?: string;
+  response_raw?: string;
+  tool_name?: string;
+  tool_input?: Record<string, any>;
+  tool_output?: string;
+  candidate_vuln_title?: string;
+  decision_status: string;
+  decision_reason?: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  latency_ms: number;
+  cost_usd: number;
+  created_at: string;
+}
+
 export const api = {
   // Auth
   register: (data: { email: string; password: string }) =>
@@ -124,6 +150,7 @@ export const api = {
   listScans: () =>
     request<Array<{
       id: string;
+      name?: string;
       source_type: string;
       source_target: string;
       branch?: string;
@@ -133,22 +160,33 @@ export const api = {
       cost_spent_usd: number;
       created_at: string;
       completed_at?: string;
+      architecture_summary?: string;
+      threat_model?: string;
+      hunting_plan?: string;
+      review_packet?: string;
+      exploit_chains?: any;
       findings_count?: number;
     }>>("/api/scans"),
 
   getScan: (id: string) =>
     request<{
       id: string;
+      name?: string;
       source_type: string;
       source_target: string;
       branch?: string;
       status: string;
       current_phase?: string;
-      phase_models?: Record<string, string>;
+      phase_models?: Record<string, any>;
       budget_limit_usd?: number;
       cost_spent_usd: number;
       created_at: string;
       completed_at?: string;
+      architecture_summary?: string;
+      threat_model?: string;
+      hunting_plan?: string;
+      review_packet?: string;
+      exploit_chains?: any;
       findings: Array<{
         id: string;
         title: string;
@@ -162,23 +200,147 @@ export const api = {
         poc_output?: string;
         patch_diff?: string;
       }>;
+      stage_observations?: Record<string, string>;
+      stage_observation_counts?: Record<string, number>;
     }>(`/api/scans/${id}`),
 
+  getScanTraces: (
+    id: string,
+    params?: { phase?: string; tool?: string; status?: string; q?: string; limit?: number; offset?: number }
+  ) => {
+    const sp = new URLSearchParams();
+    if (params?.phase) sp.set("phase", params.phase);
+    if (params?.tool) sp.set("tool", params.tool);
+    if (params?.status) sp.set("status", params.status);
+    if (params?.q) sp.set("q", params.q);
+    if (params?.limit) sp.set("limit", String(params.limit));
+    if (params?.offset) sp.set("offset", String(params.offset));
+    const qs = sp.toString() ? `?${sp.toString()}` : "";
+    return request<{
+      scan_id: string;
+      total: number;
+      traces: Array<TraceStep>;
+    }>(`/api/scans/${id}/traces${qs}`);
+  },
+
+  getScanTracesSummary: (id: string) =>
+    request<{
+      scan_id: string;
+      total_steps: number;
+      total_reasoning_tokens: number;
+      tools_breakdown: Record<string, number>;
+      candidates_breakdown: Record<string, number>;
+      phases_breakdown: Record<string, number>;
+    }>(`/api/scans/${id}/traces/summary`),
+
+  getSingleTrace: (scanId: string, traceId: string) =>
+    request<TraceStep>(`/api/scans/${scanId}/traces/${traceId}`),
+
   createScan: (data: {
+    name?: string;
     source_type: "git" | "local";
     source_target: string;
     branch?: string;
     git_token?: string;
     budget_limit_usd?: number;
-    phase_models?: Record<string, string>;
+    phase_models?: Record<string, any>;
+    fresh?: boolean;
   }) =>
-    request<{ id: string; status: string }>("/api/scans", {
+    request<{ id: string; status: string; name?: string }>("/api/scans", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  purgeKnowledgeBase: (data: { source_target?: string; all_targets?: boolean }) =>
+    request<{ message: string }>("/api/scans/purge-knowledge-base", {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
   cancelScan: (id: string) =>
     request<{ message: string }>(`/api/scans/${id}/cancel`, { method: "POST" }),
+
+  retryScan: (id: string) =>
+    request<{ id: string; status: string }>(`/api/scans/${id}/retry`, { method: "POST" }),
+
+  resumeScan: (id: string) =>
+    request<{ id: string; status: string }>(`/api/scans/${id}/resume`, { method: "POST" }),
+
+  deleteScan: (id: string) =>
+    request<{ message: string; id: string }>(`/api/scans/${id}`, { method: "DELETE" }),
+
+  bulkDeleteScans: (scan_ids: string[]) =>
+    request<{ message: string; deleted_count: number; deleted_ids: string[] }>(
+      "/api/scans/bulk-delete",
+      {
+        method: "POST",
+        body: JSON.stringify({ scan_ids }),
+      }
+    ),
+
+  compareScans: (scan_ids: string[]) =>
+    request<{
+      same_repository: boolean;
+      scans: Array<{
+        id: string;
+        name: string;
+        source_type: string;
+        source_target: string;
+        branch?: string;
+        status: string;
+        phase_models?: Record<string, any>;
+        cost_spent_usd: number;
+        duration_seconds?: number;
+        created_at: string;
+        completed_at?: string;
+        findings_count: number;
+        reproduced_count: number;
+        critical_count: number;
+        high_count: number;
+        medium_count: number;
+        low_count: number;
+      }>;
+      phase_models: Record<string, Record<string, string>>;
+      common_findings: Array<{
+        id: string;
+        title: string;
+        cwe?: string;
+        file_path?: string;
+        line_number?: number;
+        severity: string;
+        detected_in_scan_ids: string[];
+        scan_statuses: Record<string, string>;
+        has_poc: Record<string, boolean>;
+        has_patch: Record<string, boolean>;
+        description?: string;
+      }>;
+      exclusive_findings: Record<string, Array<{
+        id: string;
+        title: string;
+        cwe?: string;
+        file_path?: string;
+        line_number?: number;
+        severity: string;
+        detected_in_scan_ids: string[];
+        scan_statuses: Record<string, string>;
+        has_poc: Record<string, boolean>;
+        has_patch: Record<string, boolean>;
+        description?: string;
+      }>>;
+      all_findings: Array<{
+        id: string;
+        title: string;
+        cwe?: string;
+        file_path?: string;
+        line_number?: number;
+        severity: string;
+        detected_in_scan_ids: string[];
+        scan_statuses: Record<string, string>;
+        has_poc: Record<string, boolean>;
+        has_patch: Record<string, boolean>;
+        description?: string;
+      }>;
+    }>(`/api/scans/compare?ids=${scan_ids.join(",")}`),
 
   // Settings: Providers & Models
   getProviders: () =>
@@ -296,6 +458,54 @@ export const api = {
   clearAllModels: () =>
     request<{ message: string }>("/api/settings/models", {
       method: "DELETE",
+    }),
+
+  // Google Mantis Upstream Synchronizer
+  getMantisStatus: () =>
+    request<{
+      commit_hash: string;
+      short_hash: string;
+      commit_message: string;
+      commit_date: string;
+      synced_at: string;
+      upstream_repo: string;
+      upstream_branch: string;
+      skills_count: number;
+      skills: Array<{ name: string; has_skill_md: boolean; size_bytes: number }>;
+      engine: { type: string; precision: string; schema_version: number; status: string };
+    }>("/api/settings/mantis/status"),
+
+  checkMantisUpdates: (force: boolean = false) =>
+    request<{
+      has_updates: boolean;
+      status: "UP_TO_DATE" | "UPDATES_AVAILABLE";
+      safety_verdict: "SAFE" | "BREAKING_CHANGE" | "ADVISORY_WARNING";
+      assessment: string;
+      message?: string;
+      breaking_issues?: string[];
+      skills_delta?: {
+        added: string[];
+        modified: string[];
+        removed: string[];
+        total_upstream: number;
+      };
+      files_changed?: Array<{ path: string; additions: number; deletions: number }>;
+      commit_log?: Array<{ commit_hash: string; short_hash: string; author: string; date: string; message: string }>;
+      diff_snippet?: string;
+      current_version: any;
+      upstream_version: any;
+    }>(`/api/settings/mantis/check-updates?force=${force}`, {
+      method: "POST",
+    }),
+
+  applyMantisUpdate: (targetCommit?: string) =>
+    request<{
+      success: boolean;
+      message: string;
+      version: any;
+    }>("/api/settings/mantis/apply-update", {
+      method: "POST",
+      body: JSON.stringify({ target_commit: targetCommit }),
     }),
 
   // Audit Logs

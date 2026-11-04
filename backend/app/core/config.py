@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # ── JWT & Authentication ──────────────────────────────────────────
     JWT_SECRET: str = "change-this-in-production-use-openssl-rand-hex-32"
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days for long-running audit session persistence
     REQUIRE_TOTP: bool = False
 
     # ── Encryption ────────────────────────────────────────────────────

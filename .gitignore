@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+.caffeinate.pid
 
 # ─── Python ───
 __pycache__/

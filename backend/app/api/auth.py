@@ -7,7 +7,7 @@ from typing import Optional
 
 import structlog
 import httpx
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, Response, status
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
@@ -79,14 +79,18 @@ class RegisterRequest(BaseModel):
 async def get_current_user(
     authorization: Optional[str] = Header(None),
     session_token: Optional[str] = Cookie(None),
+    token_param: Optional[str] = Query(None, alias="token"),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    """Extract and validate the JWT from the ``Authorization`` header or
-    ``session_token`` cookie and return the corresponding ``User`` row."""
+    """Extract and validate the JWT from the ``Authorization`` header,
+    ``token`` query parameter, or ``session_token`` cookie and return the
+    corresponding ``User`` row."""
     token: Optional[str] = None
 
     if authorization and authorization.startswith("Bearer "):
         token = authorization.removeprefix("Bearer ").strip()
+    elif token_param:
+        token = token_param.strip()
     elif session_token:
         token = session_token
 
@@ -145,47 +149,11 @@ async def get_current_user(
 
 
 async def sync_langfuse_session(email: str, password: str, response: Response) -> None:
-    """Synchronize authentication with Langfuse so the session is shared via reverse proxy."""
-    try:
-        async with httpx.AsyncClient(base_url="http://langfuse:3000", timeout=4.0) as client:
-            csrf_resp = await client.get("/api/auth/csrf")
-            csrf_token = csrf_resp.json().get("csrfToken")
-            if not csrf_token:
-                return
-
-            login_resp = await client.post(
-                "/api/auth/callback/credentials",
-                data={"csrfToken": csrf_token, "email": email, "password": password},
-                cookies=csrf_resp.cookies,
-                follow_redirects=False,
-            )
-            session_token = login_resp.cookies.get("next-auth.session-token")
-            if session_token:
-                # Set cookie on .localhost so it is automatically shared across both localhost and langfuse.localhost
-                response.set_cookie(
-                    key="next-auth.session-token",
-                    value=session_token,
-                    domain=".localhost",
-                    path="/",
-                    httponly=True,
-                    samesite="lax",
-                    max_age=30 * 24 * 3600,
-                )
-                logger.info("langfuse_sso_cookie_set", email=email)
-    except Exception as exc:
-        logger.warning("langfuse_sso_sync_failed", error=str(exc))
+    pass
 
 
 async def sync_langfuse_signup(email: str, password: str) -> None:
-    """Ensure user exists in Langfuse with matching credentials."""
-    try:
-        async with httpx.AsyncClient(base_url="http://langfuse:3000", timeout=4.0) as client:
-            await client.post(
-                "/api/auth/signup",
-                json={"name": email.split("@")[0], "email": email, "password": password},
-            )
-    except Exception as exc:
-        logger.warning("langfuse_signup_sync_failed", error=str(exc))
+    pass
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -311,54 +279,9 @@ async def logout(
 @router.get("/sso/langfuse")
 async def langfuse_sso_gateway(
     request: Request,
-    redirect: str = "/",
-    token: Optional[str] = None,
-    db: AsyncSession = Depends(get_db),
 ):
-    """Seamless 1-click SSO gateway into Langfuse.
-    Authenticates internally and sets the session cookie directly on langfuse.localhost.
-    """
-    email = "admin@company.internal"
-    password = "AdminSecure2026!"
-
-    if token:
-        try:
-            payload = decode_access_token(token)
-            if payload.get("email"):
-                email = payload.get("email")
-        except Exception:
-            pass
-
-    try:
-        async with httpx.AsyncClient(base_url="http://langfuse:3000", timeout=5.0) as client:
-            csrf_resp = await client.get("/api/auth/csrf")
-            csrf_token = csrf_resp.json().get("csrfToken")
-            login_resp = await client.post(
-                "/api/auth/callback/credentials",
-                data={"csrfToken": csrf_token, "email": email, "password": password},
-                cookies=csrf_resp.cookies,
-                follow_redirects=False,
-            )
-            session_token = login_resp.cookies.get("next-auth.session-token")
-            if session_token:
-                dest = redirect if redirect.startswith("/") else f"/{redirect}"
-                dest_url = f"http://langfuse.localhost{dest}"
-                response = RedirectResponse(url=dest_url, status_code=status.HTTP_302_FOUND)
-                # Host-only cookie directly on langfuse.localhost
-                response.set_cookie(
-                    key="next-auth.session-token",
-                    value=session_token,
-                    path="/",
-                    httponly=True,
-                    samesite="lax",
-                    max_age=30 * 24 * 3600,
-                )
-                logger.info("langfuse_sso_redirect_success", email=email, dest=dest_url)
-                return response
-    except Exception as exc:
-        logger.error("langfuse_sso_gateway_error", error=str(exc))
-
-    return RedirectResponse(url="http://langfuse.localhost/", status_code=status.HTTP_302_FOUND)
+    """Redirect to dashboard."""
+    return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
 
 
 @router.post("/verify-totp", response_model=TokenResponse)

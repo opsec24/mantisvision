@@ -918,3 +918,61 @@ def _model_to_response(m: WhitelistedModel) -> ModelResponse:
         cost_per_m_out=m.cost_per_m_out,
         created_at=m.created_at,
     )
+
+
+# ── Google Mantis Upstream Synchronizer Endpoints ──────────────────────────────
+
+
+@router.get("/mantis/status", status_code=status.HTTP_200_OK)
+async def get_mantis_status(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Retrieve current vendored Google Mantis version, commit, and installed skills."""
+    from app.pipeline.mantis import sync_service
+    return sync_service.get_version_info()
+
+
+@router.post("/mantis/check-updates", status_code=status.HTTP_200_OK)
+async def check_mantis_updates(
+    force: bool = False,
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Check upstream google/mantis for updates, perform diff and safety analysis."""
+    from app.pipeline.mantis import sync_service
+    try:
+        return sync_service.check_upstream_updates(force_diff=force)
+    except Exception as ex:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to check upstream Google Mantis updates: {ex}",
+        )
+
+
+@router.post("/mantis/apply-update", status_code=status.HTTP_200_OK)
+async def apply_mantis_update(
+    request: FastAPIRequest,
+    background_tasks: BackgroundTasks,
+    payload: Optional[dict[str, Any]] = None,
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Apply upstream Google Mantis update with automatic backup and rollback."""
+    from app.pipeline.mantis import sync_service
+    target_commit = payload.get("target_commit") if payload else None
+    try:
+        result = sync_service.apply_upstream_update(target_commit=target_commit)
+        log_user_action(
+            background_tasks=background_tasks,
+            request=request,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            action="mantis.synced_upstream",
+            resource_type="mantis",
+            resource_id=result.get("version", {}).get("short_hash", "unknown"),
+        )
+        return result
+    except Exception as ex:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(ex),
+        )
+

@@ -4,9 +4,6 @@
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Isolated schema for self-hosted Langfuse to prevent table collisions (e.g. users)
-CREATE SCHEMA IF NOT EXISTS langfuse;
-
 -- ── Users ────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS users (
@@ -22,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS scans (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            VARCHAR(255),
     source_type     VARCHAR(20) NOT NULL,
     source_target   TEXT NOT NULL,
     branch          VARCHAR(255),
@@ -33,6 +31,11 @@ CREATE TABLE IF NOT EXISTS scans (
     budget_limit_usd DOUBLE PRECISION,
     cost_spent_usd  DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     error_message   TEXT,
+    architecture_summary TEXT,
+    threat_model    TEXT,
+    hunting_plan    TEXT,
+    review_packet   TEXT,
+    exploit_chains  JSONB,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     completed_at    TIMESTAMPTZ
 );
@@ -55,6 +58,7 @@ CREATE TABLE IF NOT EXISTS findings (
     poc_script  TEXT,
     poc_output  TEXT,
     patch_diff  TEXT,
+    observation_id TEXT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -149,3 +153,35 @@ CREATE TABLE IF NOT EXISTS llm_traces (
 
 CREATE INDEX IF NOT EXISTS ix_llm_traces_scan_id ON llm_traces (scan_id);
 CREATE INDEX IF NOT EXISTS ix_llm_traces_phase   ON llm_traces (phase);
+
+-- ── Agent Inference Traces (Low-Level Forensic Observability) ─────────────────
+
+CREATE TABLE IF NOT EXISTS agent_inference_traces (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    scan_id              UUID NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
+    step_number          INTEGER NOT NULL,
+    phase                VARCHAR(50) NOT NULL,
+    agent_name           VARCHAR(100) NOT NULL,
+    model                VARCHAR(255),
+    thinking_content     TEXT,
+    prompt_raw           TEXT,
+    response_raw         TEXT,
+    tool_name            VARCHAR(100),
+    tool_input           JSONB,
+    tool_output          TEXT,
+    candidate_vuln_title VARCHAR(255),
+    decision_status      VARCHAR(50) NOT NULL DEFAULT 'PROGRESS',
+    decision_reason      TEXT,
+    prompt_tokens        INTEGER NOT NULL DEFAULT 0,
+    completion_tokens    INTEGER NOT NULL DEFAULT 0,
+    total_tokens         INTEGER NOT NULL DEFAULT 0,
+    latency_ms           INTEGER NOT NULL DEFAULT 0,
+    cost_usd             DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ix_agent_traces_scan_step ON agent_inference_traces (scan_id, step_number);
+CREATE INDEX IF NOT EXISTS ix_agent_traces_tool      ON agent_inference_traces (scan_id, tool_name);
+CREATE INDEX IF NOT EXISTS ix_agent_traces_decision  ON agent_inference_traces (scan_id, decision_status);
+CREATE INDEX IF NOT EXISTS ix_agent_traces_phase     ON agent_inference_traces (scan_id, phase);
+

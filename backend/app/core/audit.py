@@ -40,7 +40,7 @@ async def write_audit_log(
                          resource_id, ip_address, user_agent, metadata)
                     VALUES
                         (:id, :user_id, :user_email, :action, :resource_type,
-                         :resource_id, :ip_address, :user_agent, :metadata::jsonb)
+                         :resource_id, :ip_address, :user_agent, CAST(:metadata AS jsonb))
                     """
                 ),
                 {

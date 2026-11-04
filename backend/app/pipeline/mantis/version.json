@@ -1,0 +1,12 @@
+{
+  "commit_hash": "f3162c039ecd9c9d5d8bc404dd1373c7ca3152f7",
+  "short_hash": "f3162c0",
+  "commit_message": "feat(llm): continue a thinking turn the provider ends mid-thought",
+  "commit_date": "Sun Oct 25 16:48:48 2026 +0000",
+  "commit_author": "Nick Galloway",
+  "synced_at": "2026-10-30T20:34:21.318787+00:00",
+  "upstream_repo": "https://github.com/google/mantis.git",
+  "upstream_branch": "main",
+  "skills_count": 19,
+  "last_status": "synced"
+}

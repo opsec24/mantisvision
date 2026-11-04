@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldAlert,
   Activity,
@@ -16,13 +17,19 @@ import {
   CheckCircle2,
   XCircle,
   Cpu,
+  Trash2,
+  GitCompare,
+  RotateCcw,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [scans, setScans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchScans = async () => {
     try {
@@ -40,6 +47,72 @@ export default function DashboardPage() {
     const interval = setInterval(fetchScans, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === scans.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(scans.map((s) => s.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const handleDeleteOne = async (scan: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const scanTitle = scan.name || scan.source_target;
+    if (!window.confirm(`Are you sure you want to delete scan "${scanTitle}"? This will permanently remove all findings and artifacts.`)) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await api.deleteScan(scan.id);
+      setSelectedIds((prev) => prev.filter((id) => id !== scan.id));
+      await fetchScans();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete scan.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRetryOne = async (scan: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      setActionLoading(true);
+      await api.retryScan(scan.id);
+      await fetchScans();
+    } catch (err: any) {
+      alert(err.message || "Failed to retry scan.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Are you sure you want to permanently delete the ${selectedIds.length} selected scan(s)? All findings and test harnesses will be erased.`)) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await api.bulkDeleteScans(selectedIds);
+      setSelectedIds([]);
+      await fetchScans();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete selected scans.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // Compute metrics
   const activeScans = scans.filter((s) => s.status === "running" || s.status === "queued").length;
@@ -227,15 +300,70 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Bulk Action Floating Toolbar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-slate-900 text-white px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center space-x-3">
+            <span className="font-extrabold text-xs bg-purple-600 text-white px-3 py-1 rounded-full shadow-xs">
+              {selectedIds.length} Selected
+            </span>
+            <span className="text-xs text-slate-300 font-medium">
+              Perform bulk operations across selected scans
+            </span>
+          </div>
+          <div className="flex items-center space-x-2.5 w-full sm:w-auto">
+            <Link
+              href={`/scans/compare?ids=${selectedIds.join(",")}`}
+              className={`flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs ${
+                selectedIds.length >= 2
+                  ? "bg-amber-500 hover:bg-amber-400 text-slate-950 hover:shadow-md cursor-pointer"
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed pointer-events-none border border-slate-700"
+              }`}
+              title={selectedIds.length < 2 ? "Select at least 2 scans to compare" : "Compare selected scans"}
+            >
+              <GitCompare className="w-3.5 h-3.5" />
+              <span>Compare Scans {selectedIds.length < 2 ? "(Select ≥ 2)" : `(${selectedIds.length})`}</span>
+            </Link>
+            <button
+              onClick={handleBulkDelete}
+              disabled={actionLoading}
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete ({selectedIds.length})</span>
+            </button>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-2.5 py-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Scans Table */}
       <div className="bg-white/95 border border-purple-100/90 rounded-2xl overflow-hidden shadow-xs">
         <div className="px-6 py-4 border-b border-purple-100/90 flex items-center justify-between bg-purple-50/20">
           <div className="flex items-center space-x-2">
-            <h2 className="text-sm font-bold text-slate-900">Repository Audits</h2>
+            <h2 className="text-sm font-bold text-slate-900">Security Scans &amp; Audits</h2>
             <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-800">
               {scans.length} Total Runs
             </span>
           </div>
+          {scans.length >= 2 && (
+            <Link
+              href={
+                selectedIds.length >= 2
+                  ? `/scans/compare?ids=${selectedIds.join(",")}`
+                  : `/scans/compare?ids=${scans.slice(0, 2).map((s) => s.id).join(",")}`
+              }
+              className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center space-x-1 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl border border-purple-200 transition-all"
+            >
+              <GitCompare className="w-3.5 h-3.5" />
+              <span>Compare Scans</span>
+            </Link>
+          )}
         </div>
 
         {loading ? (
@@ -266,7 +394,16 @@ export default function DashboardPage() {
             <table className="w-full text-left text-sm text-slate-700">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-3.5 font-bold">Target Repository</th>
+                  <th className="w-10 px-4 py-3.5 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === scans.length && scans.length > 0}
+                      onChange={toggleSelectAll}
+                      title="Select all scans"
+                      className="w-4 h-4 rounded text-purple-600 accent-purple-600 cursor-pointer"
+                    />
+                  </th>
+                  <th className="px-6 py-3.5 font-bold">Scan Name &amp; Target</th>
                   <th className="px-6 py-3.5 font-bold">Status &amp; Phase</th>
                   <th className="px-6 py-3.5 font-bold">Verified Bugs</th>
                   <th className="px-6 py-3.5 font-bold">LLM Cost</th>
@@ -275,80 +412,127 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {scans.map((scan) => (
-                  <tr key={scan.id} className="hover:bg-purple-50/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-purple-50 rounded-xl border border-purple-200 text-purple-700">
-                          {scan.source_type === "git" ? (
-                            <GitBranch className="w-4 h-4 text-purple-700" />
-                          ) : (
-                            <Folder className="w-4 h-4 text-amber-600" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-900 max-w-md truncate">
-                            {scan.source_target}
-                          </div>
-                          {scan.branch && (
-                            <span className="text-[11px] text-purple-800 font-mono bg-purple-50 px-2 py-0.5 rounded border border-purple-200/80 inline-block mt-0.5">
-                              branch: {scan.branch}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
+                {scans.map((scan) => {
+                  const isSelected = selectedIds.includes(scan.id);
+                  return (
+                    <tr
+                      key={scan.id}
+                      className={`transition-colors ${
+                        isSelected ? "bg-purple-50/60" : "hover:bg-slate-50/60"
+                      }`}
+                    >
+                      <td className="w-10 px-4 py-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectOne(scan.id)}
+                          className="w-4 h-4 rounded text-purple-600 accent-purple-600 cursor-pointer"
+                        />
+                      </td>
 
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div>{getStatusBadge(scan.status)}</div>
-                        {scan.current_phase && scan.status === "running" && (
-                          <div className="text-[11px] text-purple-700 font-mono capitalize">
-                            Phase: {scan.current_phase.replace("_", " ")}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-purple-50 rounded-xl border border-purple-200 text-purple-700 shrink-0">
+                            {scan.source_type === "git" ? (
+                              <GitBranch className="w-4 h-4 text-purple-700" />
+                            ) : (
+                              <Folder className="w-4 h-4 text-amber-600" />
+                            )}
                           </div>
+                          <div>
+                            <Link
+                              href={`/scans/${scan.id}`}
+                              className="font-bold text-slate-900 text-sm max-w-md truncate hover:text-purple-700 hover:underline block"
+                            >
+                              {scan.name || scan.source_target}
+                            </Link>
+                            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                              {scan.name && scan.name !== scan.source_target && (
+                                <span className="text-[11px] font-mono text-slate-400 max-w-sm truncate">
+                                  {scan.source_target}
+                                </span>
+                              )}
+                              {scan.branch && (
+                                <span className="text-[10px] text-purple-800 font-mono bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200/80 inline-block">
+                                  {scan.branch}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <div>{getStatusBadge(scan.status)}</div>
+                          {scan.current_phase && scan.status === "running" && (
+                            <div className="text-[11px] text-purple-700 font-mono capitalize">
+                              Phase: {scan.current_phase.replace("_", " ")}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {scan.findings_count && scan.findings_count > 0 ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                            {scan.findings_count} Exploits
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 font-medium">0</span>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="px-6 py-4">
-                      {scan.findings_count && scan.findings_count > 0 ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
-                          {scan.findings_count} Exploits
+                      <td className="px-6 py-4 font-mono text-xs">
+                        <span className="text-amber-800 font-semibold">
+                          ${(scan.cost_spent_usd || 0).toFixed(4)}
                         </span>
-                      ) : (
-                        <span className="text-xs text-slate-400 font-medium">0</span>
-                      )}
-                    </td>
+                        {scan.budget_limit_usd && (
+                          <span className="text-slate-400 text-[10px] block">
+                            cap: ${scan.budget_limit_usd.toFixed(2)}
+                          </span>
+                        )}
+                      </td>
 
-                    <td className="px-6 py-4 font-mono text-xs">
-                      <span className="text-amber-800 font-semibold">
-                        ${(scan.cost_spent_usd || 0).toFixed(4)}
-                      </span>
-                      {scan.budget_limit_usd && (
-                        <span className="text-slate-400 text-[10px] block">
-                          cap: ${scan.budget_limit_usd.toFixed(2)}
-                        </span>
-                      )}
-                    </td>
+                      <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
+                        <div className="flex items-center space-x-1.5">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{new Date(scan.created_at).toLocaleString()}</span>
+                        </div>
+                      </td>
 
-                    <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
-                      <div className="flex items-center space-x-1.5">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{new Date(scan.created_at).toLocaleString()}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <Link
-                        href={`/scans/${scan.id}`}
-                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-700 text-purple-700 hover:text-white border border-purple-200 text-xs font-bold transition-all shadow-xs"
-                      >
-                        <span>View Audit</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-6 py-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end space-x-2">
+                          <Link
+                            href={`/scans/${scan.id}`}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-700 text-purple-700 hover:text-white border border-purple-200 text-xs font-bold transition-all shadow-xs"
+                          >
+                            <span>View Audit</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
+                          {(scan.status === "failed" || scan.status === "error" || scan.status === "cancelled" || scan.status === "budget_exceeded") && (
+                            <button
+                              onClick={(e) => handleRetryOne(scan, e)}
+                              disabled={actionLoading}
+                              title="Retry this scan"
+                              className="p-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors border border-transparent hover:border-purple-200"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => handleDeleteOne(scan, e)}
+                            disabled={actionLoading}
+                            title="Delete this scan"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
