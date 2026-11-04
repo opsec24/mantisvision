@@ -210,12 +210,7 @@ async def create_scan(
     if not scan_name:
         scan_name = os.path.basename(body.source_target.rstrip("/").removesuffix(".git")) or body.source_target
 
-    if body.fresh:
-        try:
-            from app.pipeline.orchestrator import _get_repo_id, _purge_repo_knowledge_base
-            _purge_repo_knowledge_base(_get_repo_id(body.source_target))
-        except Exception as kb_err:
-            logger.warning("purge_kb_on_create_failed", error=str(kb_err))
+    # Fresh scan option: each scan operates in an isolated workspace under /data/scans/{scan_id}
 
     scan = Scan(
         name=scan_name,

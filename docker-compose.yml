@@ -55,11 +55,8 @@ services:
   worker:
     build: ./backend
     command: >
-      sh -c "
-        pip install -r /app/mantis_engine/requirements.in --quiet 2>/dev/null || true &&
-        celery -A app.pipeline.orchestrator.celery_app worker
-        --loglevel=info --concurrency=2
-      "
+      celery -A app.pipeline.orchestrator.celery_app worker
+      --loglevel=info --concurrency=2
     depends_on:
       postgres:
         condition: service_healthy

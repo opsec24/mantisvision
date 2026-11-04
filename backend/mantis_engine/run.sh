@@ -35,11 +35,9 @@ shift || true
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-if [ ! -d ".venv" ]; then
-    echo "Virtual environment not found. Please run ./install.sh first."
-    exit 1
+if [ -d ".venv" ]; then
+    source .venv/bin/activate
 fi
 
-source .venv/bin/activate
 export PYTHONUNBUFFERED=1
 python3 scripts/launch.py "$TARGET" "$@"

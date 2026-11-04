@@ -195,33 +195,39 @@ def _ingest_findings(scan_id: str, workspace_dir: Path) -> int:
                 con = sqlite3.connect(str(kb_path))
                 con.row_factory = sqlite3.Row
                 cur = con.execute("""
-                    SELECT title, cwe, severity, file_path, line_start, description,
-                           poc_script, poc_output, patch_diff
+                    SELECT title, cwe, severity, filepath, line_numbers, description,
+                           remediation, patch_diff, triage_reasoning, mantis_risk_score
                     FROM findings
                     WHERE status NOT IN ('rejected', 'duplicate')
-                    ORDER BY rowid
+                    ORDER BY id
                 """)
                 for row in cur.fetchall():
+                    line_number = None
+                    try:
+                        lns = json.loads(row["line_numbers"]) if row["line_numbers"] else []
+                        if lns and isinstance(lns, list) and len(lns) > 0:
+                            line_number = int(lns[0])
+                    except Exception:
+                        pass
+
                     with engine.begin() as conn:
                         conn.execute(
                             text("""
                                 INSERT INTO findings
                                   (scan_id, title, cwe, severity, status, file_path, line_number,
-                                   description, poc_script, poc_output, patch_diff)
+                                   description, patch_diff)
                                 VALUES
                                   (:scan_id, :title, :cwe, :severity, 'open', :file_path, :line_number,
-                                   :description, :poc_script, :poc_output, :patch_diff)
+                                   :description, :patch_diff)
                             """),
                             {
                                 "scan_id": scan_id,
                                 "title": row["title"] or "Untitled Finding",
                                 "cwe": row["cwe"],
-                                "severity": row["severity"] or "medium",
-                                "file_path": row["file_path"],
-                                "line_number": row["line_start"],
-                                "description": row["description"],
-                                "poc_script": row["poc_script"],
-                                "poc_output": row["poc_output"],
+                                "severity": (row["severity"] or "medium").lower(),
+                                "file_path": row["filepath"],
+                                "line_number": line_number,
+                                "description": row["description"] or row["triage_reasoning"] or "",
                                 "patch_diff": row["patch_diff"],
                             },
                         )
@@ -230,6 +236,59 @@ def _ingest_findings(scan_id: str, workspace_dir: Path) -> int:
             except Exception as exc:
                 logger.warning("kb_ingest_failed", scan_id=scan_id, error=str(exc))
 
+    return count
+
+
+def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
+    """Parse Mantis JSONL transcript rows into agent_inference_traces."""
+    transcript_path = workspace_dir / "transcript.jsonl"
+    if not transcript_path.exists():
+        return 0
+    engine = _get_sync_engine()
+    count = 0
+    try:
+        with open(transcript_path, "r", encoding="utf-8") as f:
+            for idx, line in enumerate(f):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                    node = row.get("node") or row.get("author") or "mantis"
+                    r_type = row.get("type", "text")
+                    tool_name = row.get("name") if r_type in ("tool_call", "tool_response") else None
+                    tool_input = row.get("args") if r_type == "tool_call" else None
+                    tool_output = row.get("response") if r_type == "tool_response" else None
+                    resp_text = row.get("text") if r_type == "text" else None
+
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO agent_inference_traces
+                                  (scan_id, step_number, phase, agent_name,
+                                   response_raw, tool_name, tool_input, tool_output,
+                                   decision_status)
+                                VALUES
+                                  (:scan_id, :step, :phase, :agent,
+                                   :resp, :tool, :tool_in::jsonb, :tool_out,
+                                   'PROGRESS')
+                            """),
+                            {
+                                "scan_id": scan_id,
+                                "step": 10000 + idx,
+                                "phase": node,
+                                "agent": node,
+                                "resp": resp_text,
+                                "tool": tool_name,
+                                "tool_in": json.dumps(tool_input) if isinstance(tool_input, (dict, list)) else json.dumps({"args": tool_input}) if tool_input else None,
+                                "tool_out": tool_output,
+                            },
+                        )
+                    count += 1
+                except Exception:
+                    pass
+    except Exception as exc:
+        logger.warning("transcript_ingest_failed", scan_id=scan_id, error=str(exc))
     return count
 
 
@@ -392,12 +451,14 @@ def run_mantis_scan(
                 env[key] = val
 
         # Build command
+        transcript_file = workspace / "transcript.jsonl"
         cmd = [
             "bash", str(mantis_run_sh),
             str(target_dir),
             "--workflow", str(MANTIS_ENGINE_DIR / "workflow.json"),
-            "--local", str(workspace / "workflow.local.json"),
             "--db", str(workspace / "knowledge.db"),
+            "--transcript-out", str(transcript_file),
+            "--yes",
         ]
 
         if focus:
@@ -474,6 +535,7 @@ def run_mantis_scan(
         emit("ingesting", "orchestrator", "ingest", {"message": "Ingesting Mantis findings into database"})
 
         findings_count = _ingest_findings(scan_id, workspace)
+        _ingest_transcript(scan_id, workspace)
 
         # 7. Ingest threat model and architecture summary from KB
         kb_dir = workspace / "workspace" / "kb"

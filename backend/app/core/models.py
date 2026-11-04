@@ -91,6 +91,12 @@ class Scan(Base):
     total_tokens: Mapped[int] = mapped_column(BigInteger, default=0, server_default=text("0"))
     prompt_tokens: Mapped[int] = mapped_column(BigInteger, default=0, server_default=text("0"))
     completion_tokens: Mapped[int] = mapped_column(BigInteger, default=0, server_default=text("0"))
+    model: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    reasoning_effort: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    focus: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    exclude_patterns: Mapped[Optional[Any]] = mapped_column(JSONB, nullable=True)
+    sandbox: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default="static-only")
+    mantis_run_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

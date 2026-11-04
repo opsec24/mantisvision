@@ -1,13 +1,15 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git && \
+    apt-get install -y --no-install-recommends git build-essential && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY mantis_engine/requirements.in mantis_requirements.in
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r mantis_requirements.in
 
 COPY . .
 
