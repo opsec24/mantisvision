@@ -245,57 +245,57 @@ export default function DashboardPage() {
             <h3 className="text-2xl font-extrabold text-slate-900 mt-0.5">
               ${totalSpend.toFixed(3)}
             </h3>
-            <p className="text-[11px] text-amber-700 font-medium">Observability via Langfuse</p>
+            <p className="text-[11px] text-purple-700 font-medium">Native Swarm Traces &amp; Forensics</p>
           </div>
         </div>
       </div>
 
-      {/* 7-Stage Pipeline Status Ribbon */}
+      {/* Mantis ADK Pipeline Overview */}
       <div className="bg-white/90 border border-purple-100/90 rounded-2xl p-5 shadow-xs">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <Cpu className="w-4 h-4 text-purple-700" />
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-900">7-Stage Agentic Verification Pipeline</span>
-            <span className="text-xs text-slate-400">&bull; Mantis Engine</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-900">Google Mantis ADK Pipeline</span>
+            <span className="text-xs text-slate-400">&bull; Event-Driven Graph</span>
           </div>
-          <span className="text-xs text-slate-500 font-mono">Formal Precision: 99.6%</span>
+          <span className="text-xs text-slate-500 font-mono">ADK Graph: 15 Nodes</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
           <div className="p-2.5 rounded-xl border border-purple-200/80 bg-purple-50/40 text-center">
             <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-purple-700">01 &bull; Ingest</div>
-            <div className="text-xs font-semibold text-slate-800 mt-0.5">AST Parsing</div>
+            <div className="text-xs font-semibold text-slate-800 mt-0.5">Repo Staging</div>
+            <div className="text-[10px] text-purple-600 font-medium mt-1">Inode Guard</div>
+          </div>
+          <div className="p-2.5 rounded-xl border border-purple-200/80 bg-purple-50/40 text-center">
+            <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-purple-700">02 &bull; Index</div>
+            <div className="text-xs font-semibold text-slate-800 mt-0.5">AST &amp; Call Graph</div>
             <div className="text-[10px] text-emerald-600 font-bold mt-1">&check; Tree-sitter</div>
           </div>
           <div className="p-2.5 rounded-xl border border-purple-200/80 bg-purple-50/40 text-center">
-            <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-purple-700">02 &bull; Recon</div>
-            <div className="text-xs font-semibold text-slate-800 mt-0.5">Taint Flow</div>
-            <div className="text-[10px] text-emerald-600 font-bold mt-1">&check; Sinks Mapped</div>
-          </div>
-          <div className="p-2.5 rounded-xl border border-purple-200/80 bg-purple-50/40 text-center">
             <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-purple-700">03 &bull; Threat</div>
-            <div className="text-xs font-semibold text-slate-800 mt-0.5">Reachability</div>
-            <div className="text-[10px] text-emerald-600 font-bold mt-1">&check; Call Graph</div>
+            <div className="text-xs font-semibold text-slate-800 mt-0.5">Threat Model</div>
+            <div className="text-[10px] text-purple-600 font-medium mt-1">KB Synthesis</div>
           </div>
           <div className="p-2.5 rounded-xl border border-purple-200/80 bg-purple-50/40 text-center">
             <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-purple-700">04 &bull; Research</div>
-            <div className="text-xs font-semibold text-slate-800 mt-0.5">Symbolic SMT</div>
-            <div className="text-[10px] text-emerald-600 font-bold mt-1">&check; Z3 Solved</div>
+            <div className="text-xs font-semibold text-slate-800 mt-0.5">Taint Walk</div>
+            <div className="text-[10px] text-purple-600 font-medium mt-1">Catalog Tools</div>
           </div>
           <div className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 text-center">
             <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-amber-800">05 &bull; Critic</div>
-            <div className="text-xs font-semibold text-slate-800 mt-0.5">Prune FPs</div>
-            <div className="text-[10px] text-amber-700 font-bold mt-1">&bull; Context Check</div>
+            <div className="text-xs font-semibold text-slate-800 mt-0.5">Triage &amp; Dedupe</div>
+            <div className="text-[10px] text-amber-700 font-bold mt-1">Anti-Hallucination</div>
           </div>
           <div className="p-2.5 rounded-xl border border-purple-200 bg-purple-50 text-center shadow-xs">
             <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-purple-800">06 &bull; Reproduce</div>
-            <div className="text-xs font-bold text-purple-950 mt-0.5">Docker PoC</div>
-            <div className="text-[10px] text-purple-700 font-bold mt-1">Harness Active</div>
+            <div className="text-xs font-bold text-purple-950 mt-0.5">Dynamic PoC</div>
+            <div className="text-[10px] text-purple-700 font-bold mt-1">Sandbox Exec</div>
           </div>
           <div className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-center">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">07 &bull; Patch</div>
-            <div className="text-xs font-medium text-slate-600 mt-0.5">Auto-Fix PR</div>
-            <div className="text-[10px] text-slate-400 mt-1">Zero Regression</div>
+            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">07 &bull; Patch</div>
+            <div className="text-xs font-medium text-slate-700 mt-0.5">Patch &amp; Calibrate</div>
+            <div className="text-[10px] text-emerald-600 font-medium mt-1">SARIF Report</div>
           </div>
         </div>
       </div>

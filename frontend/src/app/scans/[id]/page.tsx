@@ -33,13 +33,13 @@ import ThreatModelGraph from "@/components/ThreatModelGraph";
 import SwarmTraceViewer from "@/components/SwarmTraceViewer";
 
 const PHASES = [
-  { id: "ingest", label: "01 Ingest" },
-  { id: "recon", label: "02 Recon" },
-  { id: "threat_model", label: "03 Threat" },
-  { id: "research", label: "04 Research" },
-  { id: "critic", label: "05 Critic" },
-  { id: "reproduce", label: "06 Reproduce" },
-  { id: "patch", label: "07 Patch" },
+  { id: "ingest", label: "01 Ingest", nodes: ["setup", "clone", "ready", "ingest"] },
+  { id: "indexing", label: "02 Index & History", nodes: ["history", "structural_index", "indexing"] },
+  { id: "threat_model", label: "03 Threat Model", nodes: ["architect", "threat_modeler", "threat_model"] },
+  { id: "research", label: "04 Plan & Research", nodes: ["planner", "researcher", "research"] },
+  { id: "critic", label: "05 Review & Critic", nodes: ["deduplicator", "reviewer", "critic", "findings_gate"] },
+  { id: "reproduce", label: "06 Dynamic PoC", nodes: ["reproducer", "chainer", "reproduce"] },
+  { id: "patch", label: "07 Patch & Calibrate", nodes: ["patcher", "calibrator", "reflector", "reporter", "patch", "completed"] },
 ];
 
 function formatTokens(n: number = 0): string {
@@ -250,7 +250,8 @@ export default function ScanDetailPage() {
 
   const getPhaseIndex = (phase?: string) => {
     if (!phase) return -1;
-    return PHASES.findIndex((p) => p.id === phase.toLowerCase());
+    const clean = phase.toLowerCase();
+    return PHASES.findIndex((p) => p.id === clean || p.nodes.includes(clean));
   };
 
   const currentPhaseIdx = getPhaseIndex(scan?.current_phase);
@@ -358,16 +359,14 @@ export default function ScanDetailPage() {
             <span>Export Bundle</span>
           </a>
 
-          {/* Deep link into Langfuse */}
-          <a
-            href={`http://langfuse.localhost/sso?redirect=/project/proj_newgensast/traces/${scan.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-all shadow-xs"
+          {/* Deep link into Swarm Trace Inspector */}
+          <button
+            onClick={() => setActiveTab("trace")}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100 transition-all shadow-xs cursor-pointer"
           >
-            <span>Inspect in Langfuse</span>
-            <ExternalLink className="w-3.5 h-3.5 text-amber-700" />
-          </a>
+            <Brain className="w-3.5 h-3.5 text-purple-700" />
+            <span>Inspect Swarm Traces</span>
+          </button>
 
           {/* Resume and Restart Buttons (for failed, cancelled, or error scans) */}
           {(scan.status === "failed" || scan.status === "cancelled" || scan.status === "error" || scan.status === "budget_exceeded") && (
@@ -452,8 +451,8 @@ export default function ScanDetailPage() {
             </span>
           </div>
           <span className="text-xs font-mono text-slate-500 flex items-center space-x-1.5">
-            <span>Click any stage box to inspect LLM generation logs in Langfuse</span>
-            <ExternalLink className="w-3 h-3 text-purple-600" />
+            <span>Click any stage box to filter Swarm Traces, reasoning &amp; tool calls</span>
+            <Brain className="w-3 h-3 text-purple-600" />
           </span>
         </div>
 
@@ -461,13 +460,7 @@ export default function ScanDetailPage() {
           {PHASES.map((p, idx) => {
             const isDone = scan.status === "completed" || idx < currentPhaseIdx;
             const isCurrent = scan.status === "running" && idx === currentPhaseIdx;
-            const obsId = scan.stage_observations?.[p.id];
             const obsCount = scan.stage_observation_counts?.[p.id];
-
-            const redirectTarget = obsId
-              ? `/project/proj_newgensast/traces/${scan.id}?observation=${obsId}`
-              : `/project/proj_newgensast/traces/${scan.id}`;
-            const langfuseStageUrl = `http://langfuse.localhost/sso?redirect=${encodeURIComponent(redirectTarget)}`;
 
             return (
               <button

@@ -245,6 +245,13 @@ export const api = {
     budget_limit_usd?: number;
     phase_models?: Record<string, any>;
     fresh?: boolean;
+    model?: string;
+    reasoning_effort?: string;
+    focus?: string;
+    exclude?: string[];
+    max_tokens?: number;
+    sandbox?: string;
+    resume?: boolean;
   }) =>
     request<{ id: string; status: string; name?: string }>("/api/scans", {
       method: "POST",
