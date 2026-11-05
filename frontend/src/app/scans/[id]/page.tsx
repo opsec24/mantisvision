@@ -43,6 +43,77 @@ import ThreatModelGraph from "@/components/ThreatModelGraph";
 import SwarmTraceViewer from "@/components/SwarmTraceViewer";
 import PentestFindingModal from "@/components/PentestFindingModal";
 
+interface MantisNodeDef {
+  id: string;
+  num: string;
+  name: string;
+  shortName: string;
+  type: "agent" | "classifier";
+  squadKey: string;
+  squadName: string;
+  desc: string;
+}
+
+const MANTIS_19_NODES: MantisNodeDef[] = [
+  { id: "history", num: "01", name: "History Miner", shortName: "History", type: "agent", squadKey: "recon", squadName: "Recon & Surface", desc: "Historical Learnings & Git Delta Miner" },
+  { id: "structural_index", num: "02", name: "AST Indexer", shortName: "AST Index", type: "agent", squadKey: "recon", squadName: "Recon & Surface", desc: "Tree-Sitter AST & Symbol Grounding" },
+  { id: "architect", num: "03", name: "Architect", shortName: "Architect", type: "agent", squadKey: "recon", squadName: "Recon & Surface", desc: "System Architecture & Ingress Surface Mapper" },
+  { id: "threat_modeler", num: "04", name: "Threat Modeler", shortName: "Threat Model", type: "agent", squadKey: "threat_model", squadName: "Threat & Strategy", desc: "STRIDE Threat Matrix & Security Sink Identification" },
+  { id: "planner", num: "05", name: "Planner", shortName: "Planner", type: "agent", squadKey: "threat_model", squadName: "Threat & Strategy", desc: "Audit Campaign Strategist & Hunting Plan" },
+  { id: "researcher", num: "06", name: "Researcher", shortName: "Researcher", type: "agent", squadKey: "research", squadName: "Vulnerability Audit", desc: "Deep Taint Flow & Exploit Hypothesis Generator" },
+  { id: "findings_gate", num: "07", name: "Findings Gate", shortName: "Findings Gate", type: "classifier", squadKey: "research", squadName: "Vulnerability Audit", desc: "Candidate Findings Validation Gate (Zero-LLM)" },
+  { id: "deduplicator", num: "08", name: "Deduplicator", shortName: "Dedupe", type: "agent", squadKey: "critic", squadName: "Adversarial Triage", desc: "Finding Deduplication & Clustering" },
+  { id: "reviewer", num: "09", name: "Reviewer", shortName: "Reviewer", type: "agent", squadKey: "critic", squadName: "Adversarial Triage", desc: "Mechanical Pre-Verification Reviewer" },
+  { id: "reviewer_classifier", num: "10", name: "Review Gate", shortName: "Review Gate", type: "classifier", squadKey: "critic", squadName: "Adversarial Triage", desc: "Reviewer Confirmation Routing Gate (Zero-LLM)" },
+  { id: "critic", num: "11", name: "Critic", shortName: "Critic", type: "agent", squadKey: "critic", squadName: "Adversarial Triage", desc: "Adversarial Red-Team Falsifier & Stress-Tester" },
+  { id: "critic_classifier", num: "12", name: "Critic Gate", shortName: "Critic Gate", type: "classifier", squadKey: "critic", squadName: "Adversarial Triage", desc: "Critic Viability Routing Gate (Zero-LLM)" },
+  { id: "reproducer", num: "13", name: "Reproducer", shortName: "Reproducer", type: "agent", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Dynamic Sandboxed PoC Exploit Reproducer" },
+  { id: "repro_classifier", num: "14", name: "Repro Gate", shortName: "Repro Gate", type: "classifier", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "PoC Verification Routing Gate (Zero-LLM)" },
+  { id: "chainer", num: "15", name: "Chainer", shortName: "Chainer", type: "agent", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Multi-Step Exploit Chainer" },
+  { id: "patcher", num: "16", name: "Patcher", shortName: "Patcher", type: "agent", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Autonomous Zero-Regression Patch Synthesizer" },
+  { id: "calibrator", num: "17", name: "Calibrator", shortName: "Calibrator", type: "agent", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "CVSS 4.0 Risk & Blast-Radius Scorer" },
+  { id: "reflector", num: "18", name: "Reflector", shortName: "Reflector", type: "agent", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Meta-Learner & Knowledge Distillation" },
+  { id: "reporter", num: "19", name: "Reporter", shortName: "Reporter", type: "agent", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Pentest Advisory & SARIF 2.1.0 Reporter" },
+];
+
+const MANTIS_SQUADS = [
+  {
+    key: "recon",
+    num: "SQUAD 01",
+    name: "Recon & Surface Mapping",
+    nodes: ["history", "structural_index", "architect"],
+    desc: "AST structural indexing & historical delta tracking",
+  },
+  {
+    key: "threat_model",
+    num: "SQUAD 02",
+    name: "Threat Modeling & Strategy",
+    nodes: ["threat_modeler", "planner"],
+    desc: "STRIDE matrix, trust boundary mapping & hunting plans",
+  },
+  {
+    key: "research",
+    num: "SQUAD 03",
+    name: "Deep Vulnerability Audit",
+    nodes: ["researcher", "findings_gate"],
+    desc: "Taint flow tracing, SMT constraint solving & exploit hypothesis",
+  },
+  {
+    key: "critic",
+    num: "SQUAD 04",
+    name: "Adversarial Triage & Falsification",
+    nodes: ["deduplicator", "reviewer", "reviewer_classifier", "critic", "critic_classifier"],
+    desc: "Adversarial stress testing, deduplication & FP elimination",
+  },
+  {
+    key: "reproduce",
+    num: "SQUAD 05",
+    name: "Exploit Verification & Remediation",
+    nodes: ["reproducer", "repro_classifier", "chainer", "patcher", "calibrator", "reflector", "reporter"],
+    desc: "Dynamic PoC execution, patch synthesis & CVSS scoring",
+  },
+];
+
 const PHASES = [
   { id: "ingest", label: "01 Ingest", nodes: ["setup", "clone", "ready", "ingest"] },
   { id: "indexing", label: "02 Index & History", nodes: ["history", "structural_index", "indexing"] },
@@ -312,15 +383,28 @@ export default function ScanDetailPage() {
     }
   };
 
-  const getPhaseIndex = (phase?: string) => {
+  const [pipelineViewMode, setPipelineViewMode] = useState<"all19" | "squads">("all19");
+
+  const getNodeIndex = (phase?: string) => {
     if (!phase) return 0;
     const clean = phase.toLowerCase();
-    if (clean === "running") return 0;
-    const idx = PHASES.findIndex((p) => p.id === clean || p.nodes.includes(clean));
-    return idx >= 0 ? idx : 0;
+    if (clean === "running" || clean === "setup" || clean === "ingest") return 0;
+    if (clean === "completed") return MANTIS_19_NODES.length;
+    const idx = MANTIS_19_NODES.findIndex((n) => n.id === clean);
+    if (idx >= 0) return idx;
+    const legacyToNodeIdx: Record<string, number> = {
+      indexing: 0,
+      threat_model: 3,
+      research: 5,
+      critic: 10,
+      reproduce: 12,
+      patch: 15,
+    };
+    return legacyToNodeIdx[clean] ?? 0;
   };
 
-  const currentPhaseIdx = getPhaseIndex(scan?.current_phase);
+  const currentNodeIdx = getNodeIndex(scan?.current_phase);
+  const currentPhaseIdx = currentNodeIdx;
 
   if (loading) {
     return (
@@ -661,81 +745,200 @@ export default function ScanDetailPage() {
         </div>
       )}
 
-      {/* Visual Funnel Stepper */}
+      {/* Visual Funnel Stepper - 19 Mantis Swarm Nodes */}
       <div className="glass-card rounded-2xl p-5 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
-          <div className="flex items-center space-x-2">
-            <Cpu className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold uppercase text-amber-300 tracking-wider font-mono">
-              Autonomous Verification Funnel
-            </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <Cpu className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-bold uppercase text-white tracking-wider font-mono">
+                  Mantis ADK 2.0 Autonomous Verification Swarm
+                </span>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  19 NODES
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                15 specialized cognitive agents &amp; 4 deterministic validation gates in Google ADK pipeline
+              </p>
+            </div>
           </div>
-          <span className="text-xs font-mono text-slate-400 flex items-center space-x-1.5">
-            <span>Click any stage box to filter Swarm Traces, reasoning &amp; tool calls</span>
-            <Brain className="w-3 h-3 text-amber-400" />
-          </span>
-        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-          {PHASES.map((p, idx) => {
-            const isDone = scan.status === "completed" || idx < currentPhaseIdx;
-            const isCurrent = scan.status === "running" && idx === currentPhaseIdx;
-            const obsCount = scan.stage_observation_counts?.[p.id];
-
-            return (
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center p-0.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono">
               <button
-                key={p.id}
-                onClick={() => {
-                  setTracePhaseFilter(p.id);
-                  setActiveTab("trace");
-                }}
-                title={
-                  obsCount
-                    ? `Inspect ${p.label} Swarm traces, model thinking & tool calls (${obsCount} step${obsCount > 1 ? "s" : ""})`
-                    : `Inspect ${p.label} in Swarm Trace Inspector`
-                }
-                className={`group relative p-3 rounded-xl border text-center transition-all duration-150 cursor-pointer hover:shadow-md hover:-translate-y-0.5 block w-full ${
-                  isCurrent
-                    ? "bg-amber-950/80 border-amber-500 text-amber-300 ring-2 ring-amber-500/30 shadow-md font-bold glow-amber-btn"
-                    : isDone
-                    ? "bg-emerald-950/40 border-emerald-800/80 text-emerald-300 font-semibold hover:border-amber-400/70 hover:bg-emerald-950/60"
-                    : "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/40"
+                onClick={() => setPipelineViewMode("all19")}
+                className={`px-2.5 py-1 rounded-md transition-all font-semibold ${
+                  pipelineViewMode === "all19"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold shadow-xs glow-amber-btn"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1 px-0.5">
-                  <div className="flex items-center space-x-1">
-                    {isDone ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : isCurrent ? (
-                      <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-                    ) : (
-                      <span className="w-3 h-3 text-[10px] text-slate-500 font-mono">{idx + 1}</span>
-                    )}
-                  </div>
-                  <Brain className="w-3 h-3 text-slate-500 group-hover:text-amber-400 opacity-60 group-hover:opacity-100 transition-all" />
-                </div>
-                <span className="text-xs font-semibold block truncate group-hover:text-amber-300 transition-colors">
-                  {p.label}
-                </span>
-                <div className="mt-1 flex items-center justify-center">
-                  {obsCount ? (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/60 font-medium group-hover:bg-amber-900/80 transition-colors">
-                      {obsCount} step{obsCount > 1 ? "s" : ""}
-                    </span>
-                  ) : p.id === "ingest" ? (
-                    <span className="text-[10px] font-mono text-slate-500 group-hover:text-slate-400">
-                      git clone
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono text-slate-500 group-hover:text-amber-400">
-                      view trace
-                    </span>
-                  )}
-                </div>
+                All 19 Nodes
               </button>
-            );
-          })}
+              <button
+                onClick={() => setPipelineViewMode("squads")}
+                className={`px-2.5 py-1 rounded-md transition-all font-semibold ${
+                  pipelineViewMode === "squads"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold shadow-xs glow-amber-btn"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                5 Security Squads
+              </button>
+            </div>
+          </div>
         </div>
+
+        {pipelineViewMode === "all19" ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-10 gap-2">
+            {MANTIS_19_NODES.map((node, idx) => {
+              const isDone = scan.status === "completed" || idx < currentNodeIdx;
+              const isCurrent = scan.status === "running" && idx === currentNodeIdx;
+              const obsCount = scan.stage_observation_counts?.[node.id];
+              const isGate = node.type === "classifier";
+              const assignedModel =
+                node.id === "structural_index"
+                  ? "Tree-Sitter AST"
+                  : isGate
+                  ? "Zero-LLM Gate"
+                  : scan?.phase_models?.[node.id] ||
+                    scan?.phase_models?.[node.squadKey] ||
+                    scan?.model ||
+                    "Gemini Flash";
+
+              return (
+                <button
+                  key={node.id}
+                  onClick={() => {
+                    setTracePhaseFilter(node.id);
+                    setActiveTab("trace");
+                  }}
+                  title={`${node.num} ${node.name}: ${node.desc} (${obsCount ? `${obsCount} steps recorded` : "Click to view forensic trace"})`}
+                  className={`group relative p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer hover:shadow-md hover:-translate-y-0.5 block w-full ${
+                    isCurrent
+                      ? "bg-amber-950/80 border-amber-500 text-amber-300 ring-2 ring-amber-500/30 shadow-md font-bold glow-amber-btn"
+                      : isDone
+                      ? "bg-emerald-950/30 border-emerald-800/80 text-emerald-300 font-semibold hover:border-amber-400/70 hover:bg-emerald-950/50"
+                      : isGate
+                      ? "bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-sky-500/50 hover:bg-sky-950/20"
+                      : "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/40"
+                  }`}
+                >
+                  {/* Top: Status & Type Badge */}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center space-x-1 font-mono text-[10px]">
+                      {isDone ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      ) : isCurrent ? (
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+                      ) : (
+                        <span className="text-slate-500 font-mono">#{node.num}</span>
+                      )}
+                    </div>
+                    <span
+                      className={`text-[9px] font-mono px-1.5 py-0.2 rounded uppercase font-semibold ${
+                        isGate
+                          ? "bg-sky-950/80 text-sky-300 border border-sky-800/60"
+                          : "bg-amber-950/80 text-amber-300 border border-amber-800/60"
+                      }`}
+                    >
+                      {isGate ? "Gate" : "Agent"}
+                    </span>
+                  </div>
+
+                  {/* Node Name */}
+                  <div className="text-xs font-bold text-white block truncate group-hover:text-amber-300 transition-colors">
+                    {node.shortName}
+                  </div>
+
+                  {/* Model / Role Pill */}
+                  <div className="mt-1 text-[10px] font-mono text-slate-400 truncate opacity-85">
+                    {assignedModel.replace("vertex_ai/", "").replace("openai/", "").replace("gemini/", "")}
+                  </div>
+
+                  {/* Bottom: Step Count */}
+                  <div className="mt-1.5 pt-1 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-slate-500">{obsCount ? `${obsCount} steps` : isGate ? "auto-route" : "idle"}</span>
+                    <Brain className="w-3 h-3 text-slate-600 group-hover:text-amber-400 transition-colors" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            {MANTIS_SQUADS.map((squad) => {
+              const squadNodes = MANTIS_19_NODES.filter((n) => squad.nodes.includes(n.id));
+              const allDone = squadNodes.every(
+                (n) => scan.status === "completed" || MANTIS_19_NODES.indexOf(n) < currentNodeIdx
+              );
+              const isCurrent = squadNodes.some(
+                (n) => scan.status === "running" && MANTIS_19_NODES.indexOf(n) === currentNodeIdx
+              );
+              const totalObs = squadNodes.reduce(
+                (acc, n) => acc + (scan.stage_observation_counts?.[n.id] || 0),
+                0
+              );
+
+              return (
+                <div
+                  key={squad.key}
+                  className={`p-3.5 rounded-xl border transition-all ${
+                    isCurrent
+                      ? "bg-amber-950/40 border-amber-500/80 ring-1 ring-amber-500/40"
+                      : allDone
+                      ? "bg-emerald-950/20 border-emerald-800/60"
+                      : "bg-slate-900/60 border-slate-800"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono text-amber-400 font-bold uppercase">{squad.num}</span>
+                    <span className="text-[10px] font-mono text-slate-400">{totalObs} steps</span>
+                  </div>
+                  <div className="text-xs font-bold text-white mb-1">{squad.name}</div>
+                  <p className="text-[11px] text-slate-400 mb-2.5 line-clamp-2">{squad.desc}</p>
+
+                  {/* Constituent Nodes Chips */}
+                  <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                    {squadNodes.map((n) => {
+                      const nIdx = MANTIS_19_NODES.indexOf(n);
+                      const nDone = scan.status === "completed" || nIdx < currentNodeIdx;
+                      const nCurrent = scan.status === "running" && nIdx === currentNodeIdx;
+                      const nObs = scan.stage_observation_counts?.[n.id];
+
+                      return (
+                        <button
+                          key={n.id}
+                          onClick={() => {
+                            setTracePhaseFilter(n.id);
+                            setActiveTab("trace");
+                          }}
+                          className={`w-full flex items-center justify-between px-2 py-1 rounded-md text-[10px] font-mono transition-all text-left ${
+                            nCurrent
+                              ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40"
+                              : nDone
+                              ? "bg-emerald-950/40 text-emerald-300 hover:bg-emerald-950/70"
+                              : "bg-slate-950 text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          <span className="flex items-center space-x-1.5 truncate">
+                            <span className="text-slate-500">#{n.num}</span>
+                            <span>{n.shortName}</span>
+                          </span>
+                          <span>{nObs ? `${nObs}s` : n.type === "classifier" ? "gate" : "-"}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Live SSE Execution Console Preview (hidden when user is on the full Logs tab) */}

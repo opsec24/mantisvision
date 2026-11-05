@@ -30,11 +30,12 @@ from app.pipeline.orchestrator import NODE_TO_PHASE, _format_threat_model_md, ca
 
 PHASE_NODE_MAP = {
     "ingest": ["setup", "clone", "ready", "ingest", "orchestrator"],
-    "indexing": ["history", "structural_index", "indexing"],
-    "threat_model": ["architect", "threat_modeler", "threat_model"],
-    "research": ["planner", "researcher", "research"],
-    "critic": ["deduplicator", "reviewer", "critic", "findings_gate"],
-    "reproduce": ["reproducer", "chainer", "reproduce"],
+    "recon": ["history", "structural_index", "architect", "indexing", "recon"],
+    "indexing": ["history", "structural_index", "indexing", "recon"],
+    "threat_model": ["architect", "threat_modeler", "planner", "threat_model"],
+    "research": ["planner", "researcher", "research", "findings_gate"],
+    "critic": ["deduplicator", "reviewer", "critic", "findings_gate", "reviewer_classifier", "critic_classifier"],
+    "reproduce": ["reproducer", "chainer", "reproduce", "repro_classifier"],
     "patch": ["patcher", "calibrator", "reflector", "reporter", "patch", "completed"],
 }
 
@@ -659,6 +660,9 @@ async def get_scan(
             if row.phase:
                 stage_obs[row.phase] = str(row.first_trace_id)
                 stage_counts[row.phase] = stage_counts.get(row.phase, 0) + c
+            if raw_agent:
+                stage_obs[raw_agent] = str(row.first_trace_id)
+                stage_counts[raw_agent] = stage_counts.get(raw_agent, 0) + c
     except Exception as exc:
         logger.warning("fetch_stage_traces_failed", scan_id=str(scan_id), error=str(exc))
 

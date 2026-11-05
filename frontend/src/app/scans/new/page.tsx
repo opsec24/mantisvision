@@ -59,6 +59,90 @@ const SANDBOX_OPTIONS = [
   { id: "gvisor", label: "gVisor", desc: "Kernel-level isolation for PoC" },
 ];
 
+interface SwarmAgentDef {
+  id: string;
+  num: string;
+  name: string;
+  squadKey: string;
+  squadName: string;
+  desc: string;
+  isDeterministic?: boolean;
+}
+
+const SWARM_15_AGENTS: SwarmAgentDef[] = [
+  { id: "history", num: "01", name: "History Miner", squadKey: "recon", squadName: "Recon & Surface", desc: "Historical Learnings & Git Delta Miner" },
+  { id: "structural_index", num: "02", name: "AST Indexer", squadKey: "recon", squadName: "Recon & Surface", desc: "Tree-Sitter AST & Symbol Grounding", isDeterministic: true },
+  { id: "architect", num: "03", name: "System Architect", squadKey: "recon", squadName: "Recon & Surface", desc: "System Architecture & Ingress Surface Mapper" },
+  { id: "threat_modeler", num: "04", name: "Threat Modeler", squadKey: "threat_model", squadName: "Threat & Strategy", desc: "STRIDE Threat Matrix & Security Sink Identification" },
+  { id: "planner", num: "05", name: "Campaign Planner", squadKey: "threat_model", squadName: "Threat & Strategy", desc: "Audit Campaign Strategist & Hunting Plan" },
+  { id: "researcher", num: "06", name: "Vulnerability Researcher", squadKey: "research", squadName: "Vulnerability Audit", desc: "Deep Taint Flow & Exploit Hypothesis Generator" },
+  { id: "deduplicator", num: "08", name: "Deduplicator", squadKey: "critic", squadName: "Adversarial Triage", desc: "Finding Deduplication & Clustering" },
+  { id: "reviewer", num: "09", name: "Mechanical Reviewer", squadKey: "critic", squadName: "Adversarial Triage", desc: "Mechanical Pre-Verification Reviewer" },
+  { id: "critic", num: "11", name: "Adversarial Critic", squadKey: "critic", squadName: "Adversarial Triage", desc: "Adversarial Red-Team Falsifier & Stress-Tester" },
+  { id: "reproducer", num: "13", name: "Exploit Reproducer", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Dynamic Sandboxed PoC Exploit Reproducer" },
+  { id: "chainer", num: "15", name: "Exploit Chainer", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Multi-Step Exploit Chainer" },
+  { id: "patcher", num: "16", name: "Automated Patcher", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Autonomous Zero-Regression Patch Synthesizer" },
+  { id: "calibrator", num: "17", name: "Risk Calibrator", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "CVSS 4.0 Risk & Blast-Radius Scorer" },
+  { id: "reflector", num: "18", name: "Meta-Learner", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Meta-Learner & Knowledge Distillation" },
+  { id: "reporter", num: "19", name: "Advisory Reporter", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Pentest Advisory & SARIF 2.1.0 Reporter" },
+];
+
+interface SwarmSquadDef {
+  key: string;
+  num: string;
+  name: string;
+  nodes: string;
+  desc: string;
+  agentIds: string[];
+  gates?: string;
+}
+
+const SWARM_SQUADS: SwarmSquadDef[] = [
+  {
+    key: "recon",
+    num: "SQUAD 01",
+    name: "Recon & Surface Mapping",
+    nodes: "history, structural_index, architect",
+    desc: "AST structural indexing & historical delta tracking",
+    agentIds: ["history", "structural_index", "architect"],
+  },
+  {
+    key: "threat_model",
+    num: "SQUAD 02",
+    name: "Threat Modeling & Strategy",
+    nodes: "threat_modeler, planner",
+    desc: "STRIDE matrix, trust boundary mapping & hunting plans",
+    agentIds: ["threat_modeler", "planner"],
+  },
+  {
+    key: "research",
+    num: "SQUAD 03",
+    name: "Deep Vulnerability Audit",
+    nodes: "researcher",
+    desc: "Taint flow tracing, SMT constraint solving & exploit hypothesis",
+    agentIds: ["researcher"],
+    gates: "07 findings_gate",
+  },
+  {
+    key: "critic",
+    num: "SQUAD 04",
+    name: "Adversarial Triage & Falsification",
+    nodes: "deduplicator, reviewer, critic",
+    desc: "Adversarial stress testing, deduplication & FP elimination",
+    agentIds: ["deduplicator", "reviewer", "critic"],
+    gates: "10 reviewer_classifier, 12 critic_classifier",
+  },
+  {
+    key: "reproduce",
+    num: "SQUAD 05",
+    name: "Exploitation & Remediation",
+    nodes: "reproducer, chainer, patcher, calibrator, reflector, reporter",
+    desc: "Dynamic PoC execution, patch synthesis & CVSS scoring",
+    agentIds: ["reproducer", "chainer", "patcher", "calibrator", "reflector", "reporter"],
+    gates: "14 repro_classifier",
+  },
+];
+
 interface SwarmStageDef {
   key: string;
   num: string;
@@ -153,15 +237,32 @@ export default function NewScanPage() {
   const [availableModels, setAvailableModels] = useState<any[]>([]);
   const [preset, setPreset] = useState<string>("ollama");
   const [showCustomPhases, setShowCustomPhases] = useState(false);
+  const [swarmConfigMode, setSwarmConfigMode] = useState<"squads" | "agents">("squads");
 
-  // Per-phase model assignments
+  // Per-phase / Per-agent model assignments
   const [phaseModels, setPhaseModels] = useState<Record<string, string>>({
+    // Squads
     recon: "gemini/gemini-3.5-flash-lite",
     threat_model: "gemini/gemini-3.8-flash",
     research: "claude-3-5-sonnet-20241022",
-    critic: "openai/gpt-4o",
     reproduce: "claude-3-5-sonnet-20241022",
     patch: "gemini/gemini-3.8-flash",
+    // 15 Individual Agents
+    history: "gemini/gemini-3.5-flash-lite",
+    structural_index: "gemini/gemini-3.5-flash-lite",
+    architect: "gemini/gemini-3.8-flash",
+    threat_modeler: "gemini/gemini-3.8-flash",
+    planner: "gemini/gemini-3.8-flash",
+    researcher: "claude-3-5-sonnet-20241022",
+    deduplicator: "gemini/gemini-3.5-flash-lite",
+    reviewer: "gemini/gemini-3.8-flash",
+    critic: "openai/gpt-4o",
+    reproducer: "claude-3-5-sonnet-20241022",
+    chainer: "openai/gpt-4o",
+    patcher: "claude-3-5-sonnet-20241022",
+    calibrator: "gemini/gemini-3.8-flash",
+    reflector: "gemini/gemini-3.5-flash-lite",
+    reporter: "gemini/gemini-3.8-flash",
   });
 
   const [customStageModels, setCustomStageModels] = useState<Record<string, string>>({
@@ -173,14 +274,28 @@ export default function NewScanPage() {
     patch: "",
   });
 
-  // Per-phase reasoning efforts
+  // Per-phase / Per-agent reasoning efforts
   const [phaseEfforts, setPhaseEfforts] = useState<Record<string, "low" | "medium" | "high">>({
     recon: "low",
     threat_model: "medium",
     research: "high",
-    critic: "high",
     reproduce: "high",
     patch: "high",
+    history: "low",
+    structural_index: "low",
+    architect: "medium",
+    threat_modeler: "medium",
+    planner: "medium",
+    researcher: "high",
+    deduplicator: "low",
+    reviewer: "medium",
+    critic: "high",
+    reproducer: "high",
+    chainer: "high",
+    patcher: "high",
+    calibrator: "medium",
+    reflector: "medium",
+    reporter: "medium",
   });
 
   const [loading, setLoading] = useState(false);
@@ -315,75 +430,124 @@ export default function NewScanPage() {
 
   const applySwarmPreset = (presetKey: string) => {
     setSwarmPreset(presetKey);
+    let sFast = "gemini/gemini-3.5-flash-lite";
+    let sSmart = "gemini/gemini-3.8-flash";
+    let sReasoning = "claude-3-5-sonnet-20241022";
+    let sCritic = "openai/gpt-4o";
+    let sRepro = "claude-3-5-sonnet-20241022";
+    let sPatch = "gemini/gemini-3.8-flash";
+
+    let eFast: "low" | "medium" | "high" = "low";
+    let eSmart: "low" | "medium" | "high" = "medium";
+    let eStrong: "low" | "medium" | "high" = "high";
+
     if (presetKey === "balanced") {
-      setPhaseModels({
-        recon: "gemini/gemini-3.5-flash-lite",
-        threat_model: "gemini/gemini-3.8-flash",
-        research: "claude-3-5-sonnet-20241022",
-        critic: "openai/gpt-4o",
-        reproduce: "claude-3-5-sonnet-20241022",
-        patch: "gemini/gemini-3.8-flash",
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      sFast = "gemini/gemini-3.5-flash-lite";
+      sSmart = "gemini/gemini-3.8-flash";
+      sReasoning = "claude-3-5-sonnet-20241022";
+      sCritic = "openai/gpt-4o";
+      sRepro = "claude-3-5-sonnet-20241022";
+      sPatch = "gemini/gemini-3.8-flash";
     } else if (presetKey === "adversarial") {
-      setPhaseModels({
-        recon: "gemini/gemini-3.5-flash-lite",
-        threat_model: "openai/gpt-4o",
-        research: "claude-3-5-sonnet-20241022",
-        critic: "openai/gpt-4o",
-        reproduce: "claude-3-5-sonnet-20241022",
-        patch: "openai/gpt-4o",
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      sFast = "gemini/gemini-3.5-flash-lite";
+      sSmart = "openai/gpt-4o";
+      sReasoning = "claude-3-5-sonnet-20241022";
+      sCritic = "openai/gpt-4o";
+      sRepro = "claude-3-5-sonnet-20241022";
+      sPatch = "openai/gpt-4o";
     } else if (presetKey === "budget") {
-      setPhaseModels({
-        recon: "gemini/gemini-3.5-flash-lite",
-        threat_model: "gemini/gemini-3.5-flash-lite",
-        research: "gemini/gemini-3.8-flash",
-        critic: "gemini/gemini-3.8-flash",
-        reproduce: "gemini/gemini-3.8-flash",
-        patch: "gemini/gemini-3.5-flash-lite",
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "low",
-        research: "medium",
-        critic: "medium",
-        reproduce: "medium",
-        patch: "low",
-      });
+      sFast = "gemini/gemini-3.5-flash-lite";
+      sSmart = "gemini/gemini-3.5-flash-lite";
+      sReasoning = "gemini/gemini-3.8-flash";
+      sCritic = "gemini/gemini-3.8-flash";
+      sRepro = "gemini/gemini-3.8-flash";
+      sPatch = "gemini/gemini-3.5-flash-lite";
+      eFast = "low";
+      eSmart = "low";
+      eStrong = "medium";
     } else if (presetKey === "frontier") {
-      setPhaseModels({
-        recon: "claude-3-5-sonnet-20241022",
-        threat_model: "claude-3-5-sonnet-20241022",
-        research: "claude-3-5-sonnet-20241022",
-        critic: "openai/gpt-4o",
-        reproduce: "claude-3-5-sonnet-20241022",
-        patch: "claude-3-5-sonnet-20241022",
-      });
-      setPhaseEfforts({
-        recon: "medium",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      sFast = "claude-3-5-sonnet-20241022";
+      sSmart = "claude-3-5-sonnet-20241022";
+      sReasoning = "claude-3-5-sonnet-20241022";
+      sCritic = "openai/gpt-4o";
+      sRepro = "claude-3-5-sonnet-20241022";
+      sPatch = "claude-3-5-sonnet-20241022";
+      eFast = "medium";
+      eSmart = "medium";
+      eStrong = "high";
     }
+
+    setPhaseModels({
+      // 5 Squads
+      recon: sFast,
+      threat_model: sSmart,
+      research: sReasoning,
+      reproduce: sRepro,
+      patch: sPatch,
+      // 15 Agents
+      history: sFast,
+      structural_index: sFast,
+      architect: sSmart,
+      threat_modeler: sSmart,
+      planner: sSmart,
+      researcher: sReasoning,
+      deduplicator: sFast,
+      reviewer: sSmart,
+      critic: sCritic,
+      reproducer: sRepro,
+      chainer: sCritic,
+      patcher: sRepro,
+      calibrator: sSmart,
+      reflector: sFast,
+      reporter: sPatch,
+    });
+
+    setPhaseEfforts({
+      recon: eFast,
+      threat_model: eSmart,
+      research: eStrong,
+      reproduce: eStrong,
+      patch: eStrong,
+      history: eFast,
+      structural_index: "low",
+      architect: eSmart,
+      threat_modeler: eSmart,
+      planner: eSmart,
+      researcher: eStrong,
+      deduplicator: eFast,
+      reviewer: eSmart,
+      critic: eStrong,
+      reproducer: eStrong,
+      chainer: eStrong,
+      patcher: eStrong,
+      calibrator: eSmart,
+      reflector: eFast,
+      reporter: eSmart,
+    });
+  };
+
+  const handleSquadModelChange = (squadKey: string, modelVal: string, agentIds: string[]) => {
+    setPhaseModels((prev) => {
+      const next = { ...prev, [squadKey]: modelVal };
+      agentIds.forEach((aid) => {
+        next[aid] = modelVal;
+      });
+      return next;
+    });
+  };
+
+  const handleSquadEffortChange = (
+    squadKey: string,
+    effortVal: "low" | "medium" | "high",
+    agentIds: string[]
+  ) => {
+    setPhaseEfforts((prev) => {
+      const next = { ...prev, [squadKey]: effortVal };
+      agentIds.forEach((aid) => {
+        next[aid] = effortVal;
+      });
+      return next;
+    });
   };
 
   const applyPreset = (selectedPreset: string, models: any[] = availableModels) => {
@@ -393,6 +557,56 @@ export default function NewScanPage() {
     const findModel = (predicate: (m: any) => boolean, fallback: string) => {
       const found = models.find(predicate);
       return found ? found.id : (models[0]?.id || fallback);
+    };
+
+    const assignSwarm = (fastM: string, smartM: string, reasoningM?: string) => {
+      const strong = reasoningM || smartM;
+      setPhaseModels({
+        // 5 Squads
+        recon: fastM,
+        threat_model: smartM,
+        research: strong,
+        reproduce: strong,
+        patch: smartM,
+        // 15 Individual Agents
+        history: fastM,
+        structural_index: fastM,
+        architect: smartM,
+        threat_modeler: smartM,
+        planner: smartM,
+        researcher: strong,
+        deduplicator: fastM,
+        reviewer: fastM,
+        critic: strong,
+        reproducer: strong,
+        chainer: smartM,
+        patcher: smartM,
+        calibrator: fastM,
+        reflector: fastM,
+        reporter: smartM,
+      });
+      setPhaseEfforts({
+        recon: "low",
+        threat_model: "medium",
+        research: "high",
+        reproduce: "high",
+        patch: "high",
+        history: "low",
+        structural_index: "low",
+        architect: "medium",
+        threat_modeler: "medium",
+        planner: "medium",
+        researcher: "high",
+        deduplicator: "low",
+        reviewer: "medium",
+        critic: "high",
+        reproducer: "high",
+        chainer: "high",
+        patcher: "high",
+        calibrator: "medium",
+        reflector: "medium",
+        reporter: "medium",
+      });
     };
 
     if (selectedPreset === "ollama") {
@@ -405,98 +619,28 @@ export default function NewScanPage() {
         (m) => m.provider === "ollama" && (m.id.includes("pro") || m.id.includes("code") || m.id.includes("large") || m.id.includes("120b")),
         ollamaModels[ollamaModels.length - 1]?.id || fast
       );
-      setPhaseModels({
-        recon: fast,
-        threat_model: smart,
-        research: smart,
-        critic: smart,
-        reproduce: smart,
-        patch: smart,
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      const deep = findModel(
+        (m) => m.provider === "ollama" && (m.id.includes("r1") || m.id.includes("deepseek")),
+        smart
+      );
+      assignSwarm(fast, smart, deep);
     } else if (selectedPreset === "openai") {
       const fast = findModel((m) => m.provider === "openai" && m.id.includes("mini"), models[0]?.id);
       const smart = findModel((m) => m.provider === "openai" && (m.id.includes("gpt-4o") || m.id.includes("o1")), fast);
-      setPhaseModels({
-        recon: fast,
-        threat_model: fast,
-        research: smart,
-        critic: smart,
-        reproduce: smart,
-        patch: smart,
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      assignSwarm(fast, smart);
     } else if (selectedPreset === "anthropic") {
       const fast = findModel((m) => m.provider === "anthropic" && m.id.includes("haiku"), models[0]?.id);
       const smart = findModel((m) => m.provider === "anthropic" && m.id.includes("sonnet"), fast);
-      setPhaseModels({
-        recon: fast,
-        threat_model: smart,
-        research: smart,
-        critic: smart,
-        reproduce: smart,
-        patch: smart,
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      assignSwarm(fast, smart);
     } else if (selectedPreset === "gemini") {
       const fast = findModel((m) => m.provider === "google" && m.id.includes("flash"), models[0]?.id);
       const smart = findModel((m) => m.provider === "google" && m.id.includes("pro"), fast);
-      setPhaseModels({
-        recon: fast,
-        threat_model: fast,
-        research: smart,
-        critic: smart,
-        reproduce: smart,
-        patch: smart,
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      assignSwarm(fast, smart);
     } else if (selectedPreset === "frontier") {
       const fast = findModel((m) => m.id.includes("flash") || m.id.includes("mini") || m.id.includes("haiku"), models[0]?.id);
       const smart = findModel((m) => m.id.includes("sonnet") || m.id.includes("gpt-4o") || m.id.includes("pro"), fast);
-      setPhaseModels({
-        recon: fast,
-        threat_model: smart,
-        research: smart,
-        critic: smart,
-        reproduce: smart,
-        patch: smart,
-      });
-      setPhaseEfforts({
-        recon: "low",
-        threat_model: "medium",
-        research: "high",
-        critic: "high",
-        reproduce: "high",
-        patch: "high",
-      });
+      const deep = findModel((m) => m.id.includes("r1") || m.id.includes("o1") || m.id.includes("o3"), smart);
+      assignSwarm(fast, smart, deep);
     }
   };
 
@@ -1113,122 +1257,306 @@ export default function NewScanPage() {
                 </div>
               </div>
 
-              {/* 6-Stage Interactive Matrix */}
+              {/* Swarm Interactive Allocation Matrix */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center space-x-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Per-Stage Model &amp; Reasoning Matrix (6 Stages)</span>
-                  </span>
-                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
-                    Phase 0 (Surveyor): Deterministic AST (0 tokens)
-                  </span>
+                {/* Switcher & Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center space-x-1.5">
+                      <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Mantis Swarm Model &amp; Reasoning Matrix</span>
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {swarmConfigMode === "squads"
+                        ? "Configure functional security squads (macro allocation)"
+                        : "Configure each autonomous LLM agent individually (granular allocation)"}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setSwarmConfigMode("squads")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        swarmConfigMode === "squads"
+                          ? "bg-amber-500 text-slate-950 shadow-xs glow-amber-btn"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>5 Squads</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSwarmConfigMode("agents")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        swarmConfigMode === "agents"
+                          ? "bg-amber-500 text-slate-950 shadow-xs glow-amber-btn"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <Cpu className="w-3.5 h-3.5" />
+                      <span>All 15 Agents</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-2.5">
-                  {SWARM_STAGES.map((st) => {
-                    const assignedModel = phaseModels[st.key] || "gemini/gemini-3.5-flash-lite";
-                    const assignedEffort = phaseEfforts[st.key] || "medium";
-                    const isCustom = assignedModel === "custom" || customStageModels[st.key];
+                {/* 4 Deterministic Routing Gates Banner */}
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-start sm:items-center space-x-2.5">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0 mt-0.5 sm:mt-0">
+                      <Box className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-white font-mono">4 Deterministic Classifiers &amp; Routing Gates</span>
+                        <span className="text-[10px] font-mono px-2 py-0.2 rounded font-semibold bg-emerald-950/70 text-emerald-300 border border-emerald-800/80">
+                          0 Tokens &bull; $0.00 &bull; Deterministic
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                        <span className="text-slate-300">07 findings_gate</span> &bull; <span className="text-slate-300">10 reviewer_classifier</span> &bull; <span className="text-slate-300">12 critic_classifier</span> &bull; <span className="text-slate-300">14 repro_classifier</span>
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono hidden md:inline">Pure Python Routing</span>
+                </div>
 
-                    return (
-                      <div
-                        key={st.key}
-                        className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-3"
-                      >
-                        {/* Stage Info */}
-                        <div className="min-w-[240px] max-w-sm">
-                          <div className="flex items-center space-x-2">
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-amber-950 text-amber-400 border border-amber-800/80">
-                              {st.num}
-                            </span>
-                            <span className="text-xs font-bold text-white font-mono">{st.name}</span>
-                            <span className="text-[9px] font-mono text-slate-400 bg-slate-950 px-1.5 py-0.2 rounded border border-slate-800">
-                              {st.nodes}
-                            </span>
+                {/* VIEW A: 5 SQUADS */}
+                {swarmConfigMode === "squads" && (
+                  <div className="space-y-2.5">
+                    {SWARM_SQUADS.map((st) => {
+                      const assignedModel = phaseModels[st.key] || "gemini/gemini-3.5-flash-lite";
+                      const assignedEffort = phaseEfforts[st.key] || "medium";
+                      const isCustom = assignedModel === "custom" || customStageModels[st.key];
+
+                      return (
+                        <div
+                          key={st.key}
+                          className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-3"
+                        >
+                          {/* Squad Info */}
+                          <div className="min-w-[260px] max-w-sm">
+                            <div className="flex items-center space-x-2">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-amber-950 text-amber-400 border border-amber-800/80">
+                                {st.num}
+                              </span>
+                              <span className="text-xs font-bold text-white font-mono">{st.name}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                              {st.desc}
+                            </p>
+                            <div className="mt-1 flex flex-wrap items-center gap-1">
+                              <span className="text-[9px] font-mono text-slate-500">Agents:</span>
+                              <span className="text-[9px] font-mono text-amber-300/80 bg-slate-950 px-1.5 py-0.2 rounded border border-slate-800">
+                                {st.nodes}
+                              </span>
+                              {st.gates && (
+                                <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/40 px-1.5 py-0.2 rounded border border-emerald-800/40">
+                                  {st.gates}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                            {st.desc}
-                          </p>
-                        </div>
 
-                        {/* Model & Reasoning Controls */}
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          {/* Model Select */}
-                          <div className="flex flex-col space-y-1">
-                            <select
-                              value={isCustom ? "custom" : assignedModel}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === "custom") {
-                                  setCustomStageModels((prev) => ({ ...prev, [st.key]: "openai/gpt-4o" }));
-                                  setPhaseModels((prev) => ({ ...prev, [st.key]: customStageModels[st.key] || "openai/gpt-4o" }));
-                                } else {
-                                  setCustomStageModels((prev) => ({ ...prev, [st.key]: "" }));
-                                  setPhaseModels((prev) => ({ ...prev, [st.key]: val }));
-                                }
-                              }}
-                              className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
-                            >
-                              <optgroup label="Whitelisted Models">
-                                {availableModels.map((m) => (
-                                  <option key={`wl_${st.key}_${m.id}`} value={m.id}>
-                                    {m.display_name || m.id} ({m.provider})
-                                  </option>
-                                ))}
-                              </optgroup>
-                              <optgroup label="Standard Cloud Models">
-                                {MODEL_PRESETS.filter((p) => p.id !== "custom").map((p) => (
-                                  <option key={`std_${st.key}_${p.id}`} value={p.id}>
-                                    {p.label}
-                                  </option>
-                                ))}
-                              </optgroup>
-                              <option value="custom">✏️ Custom Model ID...</option>
-                            </select>
-
-                            {isCustom && (
-                              <input
-                                type="text"
-                                value={customStageModels[st.key] || ""}
+                          {/* Model & Reasoning Controls */}
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            {/* Model Select */}
+                            <div className="flex flex-col space-y-1">
+                              <select
+                                value={isCustom ? "custom" : assignedModel}
                                 onChange={(e) => {
                                   const val = e.target.value;
-                                  setCustomStageModels((prev) => ({ ...prev, [st.key]: val }));
-                                  setPhaseModels((prev) => ({ ...prev, [st.key]: val }));
+                                  if (val === "custom") {
+                                    setCustomStageModels((prev) => ({ ...prev, [st.key]: "openai/gpt-4o" }));
+                                    handleSquadModelChange(st.key, customStageModels[st.key] || "openai/gpt-4o", st.agentIds);
+                                  } else {
+                                    setCustomStageModels((prev) => ({ ...prev, [st.key]: "" }));
+                                    handleSquadModelChange(st.key, val, st.agentIds);
+                                  }
                                 }}
-                                placeholder="e.g. anthropic/claude-3-5-haiku"
-                                className="px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] font-mono text-slate-200 focus:outline-none focus:border-amber-500"
-                              />
-                            )}
-                          </div>
-
-                          {/* Reasoning Effort Pills */}
-                          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-mono font-bold">
-                            {(["low", "medium", "high"] as const).map((eff) => (
-                              <button
-                                key={`eff_${st.key}_${eff}`}
-                                type="button"
-                                onClick={() => setPhaseEfforts((prev) => ({ ...prev, [st.key]: eff }))}
-                                className={`px-2 py-0.5 rounded capitalize transition-all cursor-pointer ${
-                                  assignedEffort === eff
-                                    ? "bg-amber-500 text-slate-950 font-black shadow-xs"
-                                    : "text-slate-400 hover:text-slate-200"
-                                }`}
+                                className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
                               >
-                                {eff}
-                              </button>
-                            ))}
+                                <optgroup label="Whitelisted Models">
+                                  {availableModels.map((m) => (
+                                    <option key={`wl_${st.key}_${m.id}`} value={m.id}>
+                                      {m.display_name || m.id} ({m.provider})
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="Standard Cloud Models">
+                                  {MODEL_PRESETS.filter((p) => p.id !== "custom").map((p) => (
+                                    <option key={`std_${st.key}_${p.id}`} value={p.id}>
+                                      {p.label}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                <option value="custom">✏️ Custom Model ID...</option>
+                              </select>
+
+                              {isCustom && (
+                                <input
+                                  type="text"
+                                  value={customStageModels[st.key] || ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCustomStageModels((prev) => ({ ...prev, [st.key]: val }));
+                                    handleSquadModelChange(st.key, val, st.agentIds);
+                                  }}
+                                  placeholder="e.g. anthropic/claude-3-5-haiku"
+                                  className="px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] font-mono text-slate-200 focus:outline-none focus:border-amber-500"
+                                />
+                              )}
+                            </div>
+
+                            {/* Reasoning Effort Pills */}
+                            <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-mono font-bold">
+                              {(["low", "medium", "high"] as const).map((eff) => (
+                                <button
+                                  key={`eff_${st.key}_${eff}`}
+                                  type="button"
+                                  onClick={() => handleSquadEffortChange(st.key, eff, st.agentIds)}
+                                  className={`px-2 py-0.5 rounded capitalize transition-all cursor-pointer ${
+                                    assignedEffort === eff
+                                      ? "bg-amber-500 text-slate-950 font-black shadow-xs"
+                                      : "text-slate-400 hover:text-slate-200"
+                                  }`}
+                                >
+                                  {eff}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* VIEW B: ALL 15 INDIVIDUAL AGENTS */}
+                {swarmConfigMode === "agents" && (
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                    {SWARM_15_AGENTS.map((ag) => {
+                      const isDeterministic = Boolean(ag.isDeterministic);
+                      const assignedModel = phaseModels[ag.id] || "gemini/gemini-3.5-flash-lite";
+                      const assignedEffort = phaseEfforts[ag.id] || "medium";
+                      const isCustom = assignedModel === "custom" || customStageModels[ag.id];
+
+                      return (
+                        <div
+                          key={ag.id}
+                          className={`p-3 rounded-xl border transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${
+                            isDeterministic
+                              ? "bg-slate-950/70 border-emerald-900/40"
+                              : "bg-slate-900/90 border-slate-800 hover:border-slate-700"
+                          }`}
+                        >
+                          {/* Agent Info */}
+                          <div className="min-w-[260px] max-w-sm">
+                            <div className="flex items-center space-x-2">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-amber-950 text-amber-400 border border-amber-800/80">
+                                {ag.num}
+                              </span>
+                              <span className="text-xs font-bold text-white font-mono">{ag.name}</span>
+                              <span className="text-[9px] font-mono text-slate-400 bg-slate-950 px-1.5 py-0.2 rounded border border-slate-800">
+                                {ag.squadName}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                              {ag.desc}
+                            </p>
+                          </div>
+
+                          {/* Controls or Deterministic Pill */}
+                          {isDeterministic ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="px-3 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 font-mono text-[11px] font-bold flex items-center space-x-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                <span>Tree-Sitter AST (Zero-LLM &bull; 0 Tokens &bull; Free)</span>
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-500 bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                                Effort: N/A
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              {/* Model Select */}
+                              <div className="flex flex-col space-y-1">
+                                <select
+                                  value={isCustom ? "custom" : assignedModel}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "custom") {
+                                      setCustomStageModels((prev) => ({ ...prev, [ag.id]: "openai/gpt-4o" }));
+                                      setPhaseModels((prev) => ({ ...prev, [ag.id]: customStageModels[ag.id] || "openai/gpt-4o" }));
+                                    } else {
+                                      setCustomStageModels((prev) => ({ ...prev, [ag.id]: "" }));
+                                      setPhaseModels((prev) => ({ ...prev, [ag.id]: val }));
+                                    }
+                                  }}
+                                  className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                                >
+                                  <optgroup label="Whitelisted Models">
+                                    {availableModels.map((m) => (
+                                      <option key={`wl_${ag.id}_${m.id}`} value={m.id}>
+                                        {m.display_name || m.id} ({m.provider})
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                  <optgroup label="Standard Cloud Models">
+                                    {MODEL_PRESETS.filter((p) => p.id !== "custom").map((p) => (
+                                      <option key={`std_${ag.id}_${p.id}`} value={p.id}>
+                                        {p.label}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                  <option value="custom">✏️ Custom Model ID...</option>
+                                </select>
+
+                                {isCustom && (
+                                  <input
+                                    type="text"
+                                    value={customStageModels[ag.id] || ""}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setCustomStageModels((prev) => ({ ...prev, [ag.id]: val }));
+                                      setPhaseModels((prev) => ({ ...prev, [ag.id]: val }));
+                                    }}
+                                    placeholder="e.g. anthropic/claude-3-5-haiku"
+                                    className="px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] font-mono text-slate-200 focus:outline-none focus:border-amber-500"
+                                  />
+                                )}
+                              </div>
+
+                              {/* Reasoning Effort Pills */}
+                              <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-mono font-bold">
+                                {((["low", "medium", "high"] as const)).map((eff) => (
+                                  <button
+                                    key={`eff_${ag.id}_${eff}`}
+                                    type="button"
+                                    onClick={() => setPhaseEfforts((prev) => ({ ...prev, [ag.id]: eff }))}
+                                    className={`px-2 py-0.5 rounded capitalize transition-all cursor-pointer ${
+                                      assignedEffort === eff
+                                        ? "bg-amber-500 text-slate-950 font-black shadow-xs"
+                                        : "text-slate-400 hover:text-slate-200"
+                                    }`}
+                                  >
+                                    {eff}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-900/50 flex items-start space-x-2.5 text-xs text-amber-200/90 leading-relaxed font-sans">
                   <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Heterogeneous Cross-Vendor Execution:</strong> Mantis ADK 2.0 routes requests via LiteLLM. For example, pairing a <em>Claude Researcher</em> with an <em>OpenAI GPT-4o Critic</em> introduces orthogonal cognitive models that expose false positives while preserving true exploit chains!
+                    <strong>Heterogeneous Cross-Vendor Execution:</strong> Mantis ADK 2.0 routes requests via LiteLLM. For example, pairing a <em>Claude Vulnerability Researcher</em> with an <em>OpenAI GPT-4o Adversarial Critic</em> introduces orthogonal cognitive architectures that falsify spurious hypotheses while confirming true exploit chains!
                   </div>
                 </div>
               </div>

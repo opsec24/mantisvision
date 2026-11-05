@@ -608,25 +608,33 @@ def _write_workflow_override(workspace: Path, config: dict) -> Path:
                 continue
             node_id = node.get("id")
             stage = NODE_TO_STAGE.get(node_id)
-            if stage:
-                assigned_model = clean_phase_models.get(stage) or (clean_phase_models.get("recon") if stage == "indexing" else None)
-                if assigned_model:
-                    ollama_base = config.get("ollama_api_base") or config.get("api_base") or os.environ.get("OLLAMA_API_BASE") or "http://host.docker.internal:11434"
-                    if assigned_model.startswith("ollama/"):
-                        # Route through OpenAI-compatible /v1 endpoint for 100% reliable function calling and streaming deltas
-                        raw_name = assigned_model.replace("ollama/", "", 1)
-                        node["model"] = f"openai/{raw_name}"
-                        base = ollama_base.rstrip("/")
-                        if not base.endswith("/v1"):
-                            base = f"{base}/v1"
-                        node["api_base"] = base
-                    else:
-                        node["model"] = assigned_model
-                        if "api_base" in node:
-                            node.pop("api_base", None)
-                assigned_effort = phase_efforts.get(stage) or (phase_efforts.get("recon") if stage == "indexing" else None)
-                if assigned_effort:
-                    node["reasoning_effort"] = str(assigned_effort).lower()
+            # Match specific agent node id first, then fallback to stage squad name
+            assigned_model = (
+                clean_phase_models.get(node_id)
+                or (clean_phase_models.get(stage) if stage else None)
+                or (clean_phase_models.get("recon") if stage == "indexing" else None)
+            )
+            if assigned_model:
+                ollama_base = config.get("ollama_api_base") or config.get("api_base") or os.environ.get("OLLAMA_API_BASE") or "http://host.docker.internal:11434"
+                if assigned_model.startswith("ollama/"):
+                    # Route through OpenAI-compatible /v1 endpoint for 100% reliable function calling and streaming deltas
+                    raw_name = assigned_model.replace("ollama/", "", 1)
+                    node["model"] = f"openai/{raw_name}"
+                    base = ollama_base.rstrip("/")
+                    if not base.endswith("/v1"):
+                        base = f"{base}/v1"
+                    node["api_base"] = base
+                else:
+                    node["model"] = assigned_model
+                    if "api_base" in node:
+                        node.pop("api_base", None)
+            assigned_effort = (
+                phase_efforts.get(node_id)
+                or (phase_efforts.get(stage) if stage else None)
+                or (phase_efforts.get("recon") if stage == "indexing" else None)
+            )
+            if assigned_effort:
+                node["reasoning_effort"] = str(assigned_effort).lower()
 
         # In multi-model swarm mode, keep global default_model clean (Gemini fallback)
         # and NEVER set global api_base, so nodes keep their per-node api_base routing!
@@ -978,22 +986,25 @@ def run_mantis_scan(
             # e.g.: -- mantis_vulnerability_pipeline@1/architect@1
             # or:   -- mantis_vulnerability_pipeline@1/threat_modeler@1
             node_match = re.search(
-                r"/(history|structural_index|architect|threat_modeler|planner|researcher|deduplicator|reviewer|critic|findings_gate|reproducer|chainer|patcher|calibrator|reflector|reporter)@",
+                r"/(history|structural_index|architect|threat_modeler|planner|researcher|findings_gate|deduplicator|reviewer|reviewer_classifier|critic|critic_classifier|reproducer|repro_classifier|chainer|patcher|calibrator|reflector|reporter)@",
                 line,
             )
             if node_match:
                 current_node = node_match.group(1)
-                new_phase = NODE_TO_PHASE.get(current_node, "indexing")
-                if new_phase != current_phase:
-                    current_phase = new_phase
+                if current_node != current_phase:
+                    current_phase = current_node
                     _update_scan(scan_id, current_phase=current_phase)
             elif "╔" in line or "══" in line or "node '" in line:
-                for candidate in NODE_TO_PHASE.keys():
+                for candidate in (
+                    "history", "structural_index", "architect", "threat_modeler", "planner",
+                    "researcher", "findings_gate", "deduplicator", "reviewer", "reviewer_classifier",
+                    "critic", "critic_classifier", "reproducer", "repro_classifier", "chainer",
+                    "patcher", "calibrator", "reflector", "reporter"
+                ):
                     if candidate in line.lower():
                         current_node = candidate
-                        new_phase = NODE_TO_PHASE.get(current_node, "indexing")
-                        if new_phase != current_phase:
-                            current_phase = new_phase
+                        if current_node != current_phase:
+                            current_phase = current_node
                             _update_scan(scan_id, current_phase=current_phase)
                         break
 

@@ -355,21 +355,63 @@ export default function SwarmTraceViewer({
             </button>
           </div>
 
-          {/* Phase Filter Tag */}
-          {selectedPhase !== "all" && (
-            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-amber-950/40 border border-amber-500/50 text-amber-200 text-xs font-mono">
-              <span>Phase: {selectedPhase.toUpperCase()}</span>
+          {/* Phase / Node Filter Dropdown & Tag */}
+          <div className="flex items-center space-x-2">
+            <select
+              value={selectedPhase}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedPhase(val);
+                if (val === "all" && onClearPhaseFilter) onClearPhaseFilter();
+              }}
+              className="px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"
+            >
+              <option value="all">🌐 All Agents &amp; Phases</option>
+              <optgroup label="Security Squads (5)">
+                <option value="recon">Squad 1: Recon &amp; Surface</option>
+                <option value="threat_model">Squad 2: Threat &amp; Strategy</option>
+                <option value="research">Squad 3: Vulnerability Audit</option>
+                <option value="critic">Squad 4: Adversarial Triage</option>
+                <option value="reproduce">Squad 5: Exploitation &amp; Remediation</option>
+              </optgroup>
+              <optgroup label="Mantis Agents (15)">
+                <option value="history">#01 History Miner</option>
+                <option value="structural_index">#02 AST Indexer (Tree-Sitter)</option>
+                <option value="architect">#03 System Architect</option>
+                <option value="threat_modeler">#04 Threat Modeler</option>
+                <option value="planner">#05 Campaign Planner</option>
+                <option value="researcher">#06 Vulnerability Researcher</option>
+                <option value="deduplicator">#08 Deduplicator</option>
+                <option value="reviewer">#09 Mechanical Reviewer</option>
+                <option value="critic">#11 Adversarial Critic</option>
+                <option value="reproducer">#13 Exploit Reproducer</option>
+                <option value="chainer">#15 Exploit Chainer</option>
+                <option value="patcher">#16 Automated Patcher</option>
+                <option value="calibrator">#17 Risk Calibrator</option>
+                <option value="reflector">#18 Meta-Learner</option>
+                <option value="reporter">#19 Advisory Reporter</option>
+              </optgroup>
+              <optgroup label="Deterministic Gates (4)">
+                <option value="findings_gate">#07 findings_gate</option>
+                <option value="reviewer_classifier">#10 reviewer_classifier</option>
+                <option value="critic_classifier">#12 critic_classifier</option>
+                <option value="repro_classifier">#14 repro_classifier</option>
+              </optgroup>
+            </select>
+
+            {selectedPhase !== "all" && (
               <button
                 onClick={() => {
                   setSelectedPhase("all");
                   if (onClearPhaseFilter) onClearPhaseFilter();
                 }}
-                className="hover:text-white"
+                className="p-1.5 rounded-lg bg-amber-950/60 text-amber-300 border border-amber-800/80 hover:text-white"
+                title="Reset to All"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
