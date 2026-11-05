@@ -11,7 +11,6 @@ import {
   Folder,
   DollarSign,
   Clock,
-  ExternalLink,
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
@@ -24,9 +23,6 @@ import {
   Square,
   Search,
   Layers,
-  Sparkles,
-  ArrowRight,
-  Filter,
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -417,8 +413,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 shrink-0">
-            {latestScan ? (
+          {latestScan && (
+            <div className="flex items-center space-x-2 shrink-0">
               <Link
                 href={`/scans/${latestScan.id}/flow`}
                 className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500 hover:text-slate-950 transition-all glow-amber-btn cursor-pointer"
@@ -426,16 +422,8 @@ export default function DashboardPage() {
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
                 <span>Live Dynamic Graph (DAG Flow) &rarr;</span>
               </Link>
-            ) : (
-              <Link
-                href="/scans/new"
-                className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500 hover:text-slate-950 transition-all glow-amber-btn cursor-pointer"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>Launch Swarm Audit &rarr;</span>
-              </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* 5 Security Squads Grid */}
@@ -574,40 +562,23 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Search Box & Compare Link */}
-          <div className="flex items-center space-x-2.5">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search scans, repos, branches..."
-                className="w-full pl-8 pr-7 py-1.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-
-            {scans.length >= 2 && (
-              <Link
-                href={
-                  selectedIds.length >= 2
-                    ? `/scans/compare?ids=${selectedIds.join(",")}`
-                    : `/scans/compare`
-                }
-                className="text-xs font-bold text-amber-300 hover:text-white flex items-center space-x-1.5 bg-amber-950/60 hover:bg-amber-900/80 px-3 py-1.5 rounded-xl border border-amber-800/80 transition-all font-mono shrink-0 cursor-pointer"
-                title={selectedIds.length >= 2 ? `Compare ${selectedIds.length} selected scans` : "Open scan comparison lab"}
+          {/* Search Box */}
+          <div className="relative flex-1 sm:w-72">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search scans, repos, branches..."
+              className="w-full pl-8 pr-7 py-1.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs font-mono text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer"
               >
-                <GitCompare className="w-3.5 h-3.5 text-amber-400" />
-                <span>Compare {selectedIds.length >= 2 ? `(${selectedIds.length})` : ""}</span>
-              </Link>
+                <X className="w-3 h-3" />
+              </button>
             )}
           </div>
         </div>
@@ -797,16 +768,6 @@ export default function DashboardPage() {
                             title="View Live Dynamic Swarm Graph"
                           >
                             <Zap className="w-4 h-4 text-amber-400" />
-                          </Link>
-
-                          {/* View Audit Detail */}
-                          <Link
-                            href={`/scans/${scan.id}`}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-white border border-slate-700 text-xs font-bold transition-all shadow-xs cursor-pointer"
-                            title="View Full Audit"
-                          >
-                            <span>Audit</span>
-                            <ExternalLink className="w-3 h-3 text-amber-400" />
                           </Link>
 
                           {/* Cancel if running */}
