@@ -27,8 +27,6 @@ export default function Header() {
     queued_scans: number;
   } | null>(null);
 
-  const langfuseUrl = process.env.NEXT_PUBLIC_LANGFUSE_URL || "http://langfuse.localhost/sso";
-
   useEffect(() => {
     const token = getToken();
     if (token) {
@@ -72,15 +70,20 @@ export default function Header() {
   const isAuthPage = pathname === "/login" || pathname === "/setup-totp";
 
   return (
-    <header className="border-b border-purple-100/90 bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-xs">
+    <header className="border-b border-slate-800/90 bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center space-x-6">
-          <Link href="/dashboard" className="flex items-center space-x-2.5 font-bold text-lg tracking-tight text-slate-900 hover:opacity-95 transition-opacity">
-            <div className="p-1.5 bg-purple-50 text-purple-700 rounded-xl border border-purple-200/80 shadow-xs">
-              <Shield className="w-5 h-5 text-purple-700" />
+          <Link href="/dashboard" className="flex items-center space-x-3 font-bold text-lg tracking-tight text-white hover:opacity-95 transition-opacity">
+            <div className="p-1.5 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 text-slate-950 rounded-xl shadow-md shadow-amber-500/20">
+              <Shield className="w-5 h-5 text-slate-950 stroke-[2.5]" />
             </div>
-            <span>NewGen<span className="text-purple-700">SAST</span></span>
+            <div className="flex items-center space-x-2">
+              <span>NewGen<span className="text-amber-400">SAST</span></span>
+              <span className="hidden xl:inline-block text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80">
+                MANTIS 2.0
+              </span>
+            </div>
           </Link>
 
           {!isAuthPage && (
@@ -94,11 +97,11 @@ export default function Header() {
                     href={item.href}
                     className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       active
-                        ? "bg-purple-50 text-purple-900 border border-purple-200 shadow-xs"
-                        : "text-slate-600 hover:text-purple-900 hover:bg-purple-50/50"
+                        ? "bg-amber-950/60 text-amber-300 border border-amber-500/50 shadow-xs glow-amber-btn"
+                        : "text-slate-300 hover:text-amber-300 hover:bg-slate-800/60 border border-transparent"
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${active ? "text-purple-700" : "text-slate-400"}`} />
+                    <Icon className={`w-3.5 h-3.5 ${active ? "text-amber-400" : "text-slate-400"}`} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -111,16 +114,16 @@ export default function Header() {
         <div className="flex items-center space-x-3">
           {/* System Health Pill */}
           {health && (
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-medium bg-slate-50 border border-slate-200 shadow-xs">
+            <div className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-mono font-medium bg-slate-900/90 border border-slate-800 shadow-xs text-slate-300">
               <span
                 className={`w-2 h-2 rounded-full ${
                   health.status === "ok" || health.status === "healthy"
-                    ? "bg-emerald-500 animate-pulse"
-                    : "bg-amber-500"
+                    ? "bg-emerald-400 shadow-xs shadow-emerald-400/50 animate-pulse"
+                    : "bg-amber-400 shadow-xs shadow-amber-400/50"
                 }`}
               />
-              <span className="text-slate-700 font-medium">
-                {health.active_scans > 0 ? `${health.active_scans} Active Scans` : "System Healthy"}
+              <span>
+                {health.active_scans > 0 ? `${health.active_scans} Active Scans` : "Engine Ready"}
               </span>
             </div>
           )}
@@ -128,33 +131,33 @@ export default function Header() {
           {/* Swarm Observability Link */}
           <Link
             href="/dashboard"
-            className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100 transition-colors shadow-2xs"
+            className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-amber-950/40 text-amber-300 border border-amber-800/70 hover:bg-amber-900/50 transition-colors shadow-2xs"
             title="Native Swarm Observability & Trace Forensics"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
-            <span>Swarm Forensics</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span>Swarm Telemetry</span>
           </Link>
 
           {/* User state */}
           {user ? (
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1.5 text-xs text-purple-900 bg-purple-50/80 px-2.5 py-1.5 rounded-xl border border-purple-200/70 font-semibold shadow-xs">
-                <UserIcon className="w-3.5 h-3.5 text-purple-600" />
+              <div className="flex items-center space-x-1.5 text-xs text-slate-200 bg-slate-900/90 px-2.5 py-1.5 rounded-xl border border-slate-800 font-semibold shadow-xs">
+                <UserIcon className="w-3.5 h-3.5 text-amber-400" />
                 <span className="max-w-[130px] truncate">{user.email}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-700 bg-rose-50/80 border border-rose-200 hover:bg-rose-100 hover:text-rose-800 transition-all shadow-xs"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-300 bg-rose-950/50 border border-rose-800/70 hover:bg-rose-900/60 hover:text-white transition-all shadow-xs"
                 title="Log out and invalidate all active sessions"
               >
-                <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
                 <span>Log Out</span>
               </button>
             </div>
           ) : !isAuthPage ? (
             <Link
               href="/login"
-              className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white shadow-xs transition-all hover:-translate-y-0.5"
+              className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-500/20 transition-all hover:-translate-y-0.5"
             >
               Sign In
             </Link>

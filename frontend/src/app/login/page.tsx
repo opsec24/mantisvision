@@ -81,28 +81,28 @@ function LoginForm() {
 
   return (
     <div className="flex items-center justify-center min-h-[75vh]">
-      <div className="w-full max-w-md bg-white/95 border border-purple-100/90 rounded-2xl shadow-md p-6 sm:p-8 backdrop-blur-md">
+      <div className="w-full max-w-md glass-card rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-800 text-slate-100">
         {/* Brand header */}
         <div className="flex flex-col items-center mb-6">
-          <div className="p-3 bg-purple-50 text-purple-700 rounded-2xl border border-purple-200/80 mb-3 shadow-xs">
-            <Shield className="w-8 h-8 text-purple-700" />
+          <div className="p-3 bg-amber-500/10 text-amber-400 rounded-2xl border border-amber-500/30 mb-3 shadow-lg shadow-amber-500/10">
+            <Shield className="w-8 h-8 text-amber-400" />
           </div>
-          <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-            {mode === "login" ? "Sign In to" : "Create Account on"} NewGen<span className="text-purple-700">SAST</span>
+          <h1 className="text-xl font-extrabold tracking-tight text-white">
+            {mode === "login" ? "Sign In to" : "Create Account on"} NewGen<span className="text-amber-400">SAST</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Internal Collaborative Security Platform &bull; Testing Mode
+          <p className="text-xs text-slate-400 mt-1">
+            Autonomous Multi-Agent Security Platform &bull; Obsidian Amber Edition
           </p>
         </div>
 
         {/* Tab switcher */}
         {!requiresTotp && (
-          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl mb-5 border border-slate-200">
+          <div className="grid grid-cols-2 p-1 bg-slate-900 rounded-xl mb-5 border border-slate-800">
             <button
               type="button"
               onClick={() => { setMode("login"); setError(null); }}
               className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
-                mode === "login" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                mode === "login" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs glow-amber-btn" : "text-slate-400 hover:text-slate-200"
               }`}
             >
               Sign In
@@ -111,7 +111,7 @@ function LoginForm() {
               type="button"
               onClick={() => { setMode("register"); setError(null); }}
               className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
-                mode === "register" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                mode === "register" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs glow-amber-btn" : "text-slate-400 hover:text-slate-200"
               }`}
             >
               Register
@@ -120,15 +120,15 @@ function LoginForm() {
         )}
 
         {error && (
-          <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start space-x-2 text-xs text-rose-800 shadow-xs">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="mb-4 p-3.5 bg-rose-950/60 border border-rose-800/80 rounded-xl flex items-start space-x-2 text-xs text-rose-300 shadow-xs">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
             <span className="font-medium">{error}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-2 text-xs text-emerald-800 shadow-xs">
-            <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="mb-4 p-3.5 bg-emerald-950/60 border border-emerald-800/80 rounded-xl flex items-start space-x-2 text-xs text-emerald-300 shadow-xs">
+            <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             <span className="font-medium">{successMsg}</span>
           </div>
         )}
@@ -136,35 +136,35 @@ function LoginForm() {
         {!requiresTotp ? (
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Company Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="analyst@company.internal"
-                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 font-mono transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 font-mono transition-all"
                 />
               </div>
             </div>
@@ -172,18 +172,18 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 bg-purple-700 hover:bg-purple-800 disabled:opacity-50 text-white font-bold text-sm rounded-xl flex items-center justify-center space-x-2 transition-all shadow-xs hover:-translate-y-0.5"
+              className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black text-sm rounded-xl flex items-center justify-center space-x-2 transition-all shadow-md hover:-translate-y-0.5 glow-amber-btn"
             >
               <span>{loading ? "Processing..." : mode === "login" ? "Continue" : "Create Account"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
             {/* Quick admin login helper */}
-            <div className="mt-4 pt-4 border-t border-slate-100 text-center">
+            <div className="mt-4 pt-4 border-t border-slate-800 text-center">
               <button
                 type="button"
                 onClick={fillAdmin}
-                className="text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg border border-purple-200 transition-colors"
+                className="text-xs font-semibold text-amber-400 hover:text-amber-300 bg-amber-950/40 hover:bg-amber-900/40 px-3 py-1.5 rounded-lg border border-amber-500/40 transition-colors font-mono"
               >
                 Autofill default admin credentials
               </button>
@@ -192,22 +192,22 @@ function LoginForm() {
         ) : (
           <form onSubmit={handleTotpSubmit} className="space-y-4">
             <div className="text-center mb-2">
-              <div className="inline-flex p-2.5 bg-purple-50 text-purple-700 rounded-full mb-1 border border-purple-200">
-                <KeyRound className="w-5 h-5 text-purple-700" />
+              <div className="inline-flex p-2.5 bg-amber-500/20 text-amber-400 rounded-full mb-1 border border-amber-500/40">
+                <KeyRound className="w-5 h-5 text-amber-400" />
               </div>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-slate-400">
                 Enter the 6-digit code from your authenticator app for{" "}
-                <span className="font-bold text-slate-900">{email}</span>
+                <span className="font-bold text-white font-mono">{email}</span>
               </p>
             </div>
 
             {email === "admin@company.internal" && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
-                <div className="font-bold">Admin 2FA Secret Key:</div>
-                <div className="font-mono text-slate-900 select-all bg-white px-2 py-1 rounded border border-amber-200 font-semibold">
+              <div className="p-3 bg-amber-950/40 border border-amber-500/50 rounded-xl text-xs text-amber-200 space-y-1">
+                <div className="font-bold text-amber-300">Admin 2FA Secret Key:</div>
+                <div className="font-mono text-amber-200 select-all bg-slate-950 px-2 py-1 rounded border border-amber-500/40 font-semibold">
                   DQ5BDTU3SRMJELJLRQVHQIGD7CORJ7G3
                 </div>
-                <div className="text-[11px] text-amber-700">
+                <div className="text-[11px] text-amber-400/80">
                   Add this key to Google Authenticator / 1Password if not yet added.
                 </div>
               </div>
@@ -222,14 +222,14 @@ function LoginForm() {
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
                 placeholder="123456"
-                className="w-full text-center tracking-widest text-2xl font-mono py-2.5 bg-slate-50 border border-purple-300 rounded-xl text-slate-900 focus:outline-none focus:bg-white focus:ring-2 focus:ring-purple-200"
+                className="w-full text-center tracking-widest text-2xl font-mono py-2.5 bg-slate-950 border border-amber-500/60 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading || totpCode.length < 6}
-              className="w-full py-3 px-4 bg-purple-700 hover:bg-purple-800 disabled:opacity-50 text-white font-bold text-sm rounded-xl flex items-center justify-center space-x-2 transition-all shadow-xs"
+              className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black text-sm rounded-xl flex items-center justify-center space-x-2 transition-all shadow-md glow-amber-btn"
             >
               <span>{loading ? "Verifying Token..." : "Verify & Sign In"}</span>
             </button>
@@ -240,7 +240,7 @@ function LoginForm() {
                 setRequiresTotp(false);
                 setTotpCode("");
               }}
-              className="w-full text-xs text-slate-500 hover:text-slate-800 mt-2 text-center font-medium"
+              className="w-full text-xs text-slate-400 hover:text-slate-200 mt-2 text-center font-medium"
             >
               &larr; Back to password sign-in
             </button>
@@ -256,7 +256,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-purple-700 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

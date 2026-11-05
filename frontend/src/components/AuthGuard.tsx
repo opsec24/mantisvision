@@ -61,7 +61,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[55vh] space-y-3">
-        <div className="w-8 h-8 border-2 border-purple-700 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-semibold text-slate-400">Verifying security session...</p>
       </div>
     );

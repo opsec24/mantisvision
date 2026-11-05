@@ -142,25 +142,25 @@ export default function ThreatModelGraph({ markdown, scanName = "scan" }: Threat
 
   return (
     <div
-      className={`bg-white/95 border border-purple-100/90 rounded-2xl shadow-xs overflow-hidden flex flex-col transition-all duration-300 ${
+      className={`glass-card border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col transition-all duration-300 ${
         isFullscreen ? "fixed inset-4 z-50 shadow-2xl bg-slate-950" : ""
       }`}
     >
       {/* Top Toolbar */}
-      <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-slate-50/70">
+      <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-950/80">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shadow-xs">
             <ShieldAlert className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
               Threat Model &amp; Attack Surface Flow Matrix
-              <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
-                <Move className="w-3 h-3 text-amber-700" />
+              <span className="text-[11px] font-semibold text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-500/50 flex items-center gap-1 font-mono">
+                <Move className="w-3 h-3 text-amber-400" />
                 Drag &amp; Arrange Visio Canvas
               </span>
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-400">
               Drag any threat actor, boundary, or sink card to organize attack paths. Zoom &amp; pan freely.
             </p>
           </div>
@@ -168,11 +168,11 @@ export default function ThreatModelGraph({ markdown, scanName = "scan" }: Threat
 
         <div className="flex items-center space-x-2">
           {/* View Mode Toggle */}
-          <div className="bg-slate-200/60 p-1 rounded-xl flex items-center text-xs font-semibold">
+          <div className="bg-slate-900 border border-slate-800 p-1 rounded-xl flex items-center text-xs font-semibold font-mono">
             <button
               onClick={() => setViewMode("graph")}
               className={`px-3 py-1 rounded-lg transition-all ${
-                viewMode === "graph" ? "bg-white text-amber-700 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                viewMode === "graph" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs glow-amber-btn" : "text-slate-400 hover:text-white"
               }`}
             >
               Attack Surface Canvas
@@ -180,7 +180,7 @@ export default function ThreatModelGraph({ markdown, scanName = "scan" }: Threat
             <button
               onClick={() => setViewMode("raw")}
               className={`px-3 py-1 rounded-lg transition-all ${
-                viewMode === "raw" ? "bg-white text-amber-700 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                viewMode === "raw" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs glow-amber-btn" : "text-slate-400 hover:text-white"
               }`}
             >
               Raw Threat Matrix
@@ -190,25 +190,25 @@ export default function ThreatModelGraph({ markdown, scanName = "scan" }: Threat
           {viewMode === "graph" && (
             <>
               {/* Zoom & Auto-Align Controls */}
-              <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+              <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xs font-mono">
                 <button
                   onClick={() => setZoom((z) => Math.min(z + 0.15, 2.0))}
-                  className="p-1.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  className="p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
                   title="Zoom In"
                 >
                   <ZoomIn className="w-4 h-4" />
                 </button>
-                <span className="px-2 text-[11px] font-mono text-slate-500">{Math.round(zoom * 100)}%</span>
+                <span className="px-2 text-[11px] font-mono text-slate-400">{Math.round(zoom * 100)}%</span>
                 <button
                   onClick={() => setZoom((z) => Math.max(z - 0.15, 0.4))}
-                  className="p-1.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  className="p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-4 h-4" />
                 </button>
                 <button
                   onClick={resetLayout}
-                  className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l border-slate-200 text-xs font-semibold flex items-center gap-1"
+                  className="px-2.5 py-1.5 text-slate-400 hover:bg-slate-800 hover:text-white border-l border-slate-800 text-xs font-semibold flex items-center gap-1 font-sans"
                   title="Auto-arrange and reset all elements to default positions"
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
@@ -219,7 +219,7 @@ export default function ThreatModelGraph({ markdown, scanName = "scan" }: Threat
               {/* Fullscreen Toggle */}
               <button
                 onClick={() => setIsFullscreen((f) => !f)}
-                className="p-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl shadow-2xs"
+                className="p-2 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl shadow-2xs"
                 title={isFullscreen ? "Exit Fullscreen" : "Expand Fullscreen"}
               >
                 {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -228,7 +228,7 @@ export default function ThreatModelGraph({ markdown, scanName = "scan" }: Threat
               {/* Lossless SVG Export */}
               <button
                 onClick={handleExportSvg}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-600 to-rose-600 text-white rounded-xl text-xs font-semibold shadow-xs hover:from-amber-700 hover:to-rose-700 transition-all cursor-pointer"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl text-xs font-black shadow-xs transition-all cursor-pointer glow-amber-btn"
                 title="Download this exact arrangement as an ultra-high resolution SVG vector file"
               >
                 <Download className="w-3.5 h-3.5" />

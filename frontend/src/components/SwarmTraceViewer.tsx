@@ -197,10 +197,10 @@ export default function SwarmTraceViewer({
   return (
     <div className="space-y-4">
       {/* Top Forensic & Summary Ribbon */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 shadow-md">
+      <div className="glass-card border border-slate-800 rounded-2xl p-4 text-slate-200 shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-3">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
               <Brain className="w-5 h-5" />
             </div>
             <div>
@@ -209,7 +209,7 @@ export default function SwarmTraceViewer({
                   Swarm Intelligence &amp; Forensic Trace Inspector
                 </h3>
                 {isScanning && (
-                  <span className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+                  <span className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse font-mono">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <span>LIVE INFERENCE STREAM</span>
                   </span>
@@ -223,25 +223,25 @@ export default function SwarmTraceViewer({
 
           {/* Quick Metrics */}
           <div className="flex items-center space-x-4 text-xs font-mono">
-            <div className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
+            <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
               <span className="text-slate-400">Total Steps: </span>
-              <span className="text-purple-300 font-bold">{summary?.total_steps ?? traces.length}</span>
+              <span className="text-amber-400 font-bold">{summary?.total_steps ?? traces.length}</span>
             </div>
-            <div className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
+            <div className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
               <span className="text-slate-400">Reasoning Tokens: </span>
-              <span className="text-purple-300 font-bold">
+              <span className="text-amber-400 font-bold">
                 {formatTokens(summary?.total_reasoning_tokens || 0)}
               </span>
             </div>
             {summary?.candidates_breakdown && (
               <div className="flex items-center space-x-2">
                 {summary.candidates_breakdown.VERIFIED > 0 && (
-                  <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 font-semibold border border-emerald-700/60 font-mono glow-emerald-repro">
                     🛡️ {summary.candidates_breakdown.VERIFIED} Verified
                   </span>
                 )}
                 {(summary.candidates_breakdown.REJECTED_BY_CRITIC || summary.candidates_breakdown.DISCARDED) && (
-                  <span className="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30">
+                  <span className="px-2.5 py-1 rounded-lg bg-rose-950/80 text-rose-300 font-semibold border border-rose-700/60 font-mono glow-rose-crit">
                     ⚠️ {(summary.candidates_breakdown.REJECTED_BY_CRITIC || 0) + (summary.candidates_breakdown.DISCARDED || 0)} Vetoed
                   </span>
                 )}
@@ -253,7 +253,7 @@ export default function SwarmTraceViewer({
                 fetchSummary();
               }}
               title="Refresh Traces"
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 transition-colors border border-slate-800"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -263,13 +263,13 @@ export default function SwarmTraceViewer({
         {/* Filter & Forensic Search Bar */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex-1 min-w-[280px] relative">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Forensic search: type file (e.g. login.js), tool, sink, or thinking keyword..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-hidden focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-mono"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-hidden focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono"
             />
             {searchQuery && (
               <button
@@ -285,20 +285,20 @@ export default function SwarmTraceViewer({
           <div className="flex items-center space-x-1.5 text-xs">
             <button
               onClick={() => setFilterType("all")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
                 filterType === "all"
-                  ? "bg-purple-600 text-white shadow-xs"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-xs glow-amber-btn"
+                  : "bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800"
               }`}
             >
               All ({traces.length})
             </button>
             <button
               onClick={() => setFilterType("thinking")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center space-x-1 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1 ${
                 filterType === "thinking"
-                  ? "bg-purple-600 text-white shadow-xs"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-xs glow-amber-btn"
+                  : "bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800"
               }`}
             >
               <Brain className="w-3.5 h-3.5" />
@@ -306,10 +306,10 @@ export default function SwarmTraceViewer({
             </button>
             <button
               onClick={() => setFilterType("tools")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center space-x-1 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1 ${
                 filterType === "tools"
-                  ? "bg-purple-600 text-white shadow-xs"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-xs glow-amber-btn"
+                  : "bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800"
               }`}
             >
               <Wrench className="w-3.5 h-3.5" />
@@ -317,10 +317,10 @@ export default function SwarmTraceViewer({
             </button>
             <button
               onClick={() => setFilterType("rejected")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center space-x-1 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1 ${
                 filterType === "rejected"
-                  ? "bg-rose-600 text-white shadow-xs"
-                  : "bg-slate-800/80 text-rose-300 hover:bg-slate-700"
+                  ? "bg-rose-600 text-white shadow-xs glow-rose-crit"
+                  : "bg-slate-900 text-rose-300 hover:bg-slate-800 border border-slate-800"
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
@@ -328,10 +328,10 @@ export default function SwarmTraceViewer({
             </button>
             <button
               onClick={() => setFilterType("verified")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center space-x-1 ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center space-x-1 ${
                 filterType === "verified"
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "bg-slate-800/80 text-emerald-300 hover:bg-slate-700"
+                  ? "bg-emerald-600 text-white shadow-xs glow-emerald-repro"
+                  : "bg-slate-900 text-emerald-300 hover:bg-slate-800 border border-slate-800"
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -341,7 +341,7 @@ export default function SwarmTraceViewer({
 
           {/* Phase Filter Tag */}
           {selectedPhase !== "all" && (
-            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-purple-900/40 border border-purple-700/50 text-purple-200 text-xs font-mono">
+            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-amber-950/40 border border-amber-500/50 text-amber-200 text-xs font-mono">
               <span>Phase: {selectedPhase.toUpperCase()}</span>
               <button
                 onClick={() => {
@@ -366,14 +366,14 @@ export default function SwarmTraceViewer({
           }`}
         >
           {loading ? (
-            <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl">
-              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-purple-600" />
+            <div className="p-12 text-center text-slate-400 glass-card border border-slate-800 rounded-2xl">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-amber-400" />
               <p className="text-xs">Loading forensic inference traces...</p>
             </div>
           ) : displayedTraces.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 bg-white border border-slate-200 rounded-2xl">
-              <Brain className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-              <p className="text-sm font-semibold text-slate-700">No traces matching your filter.</p>
+            <div className="p-12 text-center text-slate-400 glass-card border border-slate-800 rounded-2xl">
+              <Brain className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+              <p className="text-sm font-semibold text-white">No traces matching your filter.</p>
               <p className="text-xs mt-1 text-slate-400">
                 {searchQuery
                   ? `No events touched '${searchQuery}'. Clear the search bar to see all steps.`
@@ -401,32 +401,32 @@ export default function SwarmTraceViewer({
                   }}
                   className={`group relative p-3.5 rounded-xl border transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-purple-50/90 border-purple-500 ring-2 ring-purple-200 shadow-md -translate-y-0.5"
+                      ? "bg-slate-900 border-amber-500 ring-2 ring-amber-500/40 shadow-lg -translate-y-0.5 text-white"
                       : isVerified
-                      ? "bg-emerald-50/40 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50/80"
+                      ? "bg-emerald-950/20 border-emerald-800/60 hover:border-emerald-500/80 hover:bg-emerald-950/40"
                       : isRejected
-                      ? "bg-rose-50/40 border-rose-200 hover:border-rose-400 hover:bg-rose-50/80"
+                      ? "bg-rose-950/20 border-rose-800/60 hover:border-rose-500/80 hover:bg-rose-950/40"
                       : isTool
-                      ? "bg-blue-50/30 border-blue-200 hover:border-blue-400 hover:bg-blue-50/70"
-                      : "bg-white border-slate-200 hover:border-purple-300 hover:shadow-xs"
+                      ? "bg-sky-950/20 border-sky-800/60 hover:border-sky-500/80 hover:bg-sky-950/40"
+                      : "glass-card border-slate-800 hover:border-amber-500/40 hover:shadow-xs"
                   }`}
                 >
                   {/* Step Header */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center space-x-2">
-                      <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                      <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-700">
                         #{trace.step_number}
                       </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md uppercase font-semibold bg-slate-800 text-purple-200">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md uppercase font-semibold bg-slate-950 text-amber-300 border border-amber-500/30">
                         {trace.phase}
                       </span>
-                      <span className="text-xs font-semibold text-slate-800">{trace.agent_name}</span>
+                      <span className="text-xs font-semibold text-slate-200">{trace.agent_name}</span>
                     </div>
 
-                    <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-500">
+                    <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-400">
                       {trace.latency_ms > 0 && <span>{trace.latency_ms}ms</span>}
                       {trace.total_tokens > 0 && <span>{formatTokens(trace.total_tokens)} tok</span>}
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
                     </div>
                   </div>
 
@@ -434,10 +434,10 @@ export default function SwarmTraceViewer({
                   <div className="mt-2 text-xs">
                     {/* Tool Call Card */}
                     {isTool && (
-                      <div className="flex items-center space-x-2 p-2 rounded-lg bg-blue-100/60 border border-blue-200 text-blue-900 font-mono text-[11px]">
-                        <Wrench className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span className="font-bold">{trace.tool_name}</span>
-                        <span className="truncate text-blue-700">
+                      <div className="flex items-center space-x-2 p-2 rounded-lg bg-sky-950/50 border border-sky-800/70 text-sky-200 font-mono text-[11px]">
+                        <Wrench className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                        <span className="font-bold text-white">{trace.tool_name}</span>
+                        <span className="truncate text-sky-300">
                           {trace.tool_input
                             ? JSON.stringify(trace.tool_input).slice(0, 80)
                             : "(arguments)"}
@@ -447,13 +447,13 @@ export default function SwarmTraceViewer({
 
                     {/* Thinking Preview */}
                     {isThinking && (
-                      <div className="mt-1 flex items-start space-x-2 p-2 rounded-lg bg-purple-50/80 border border-purple-100 text-purple-950 font-sans">
-                        <Brain className="w-3.5 h-3.5 text-purple-600 shrink-0 mt-0.5" />
+                      <div className="mt-1 flex items-start space-x-2 p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-300 font-sans">
+                        <Brain className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <span className="font-bold text-[11px] text-purple-900 block font-mono">
+                          <span className="font-bold text-[11px] text-amber-300 block font-mono">
                             Model Chain-of-Thought
                           </span>
-                          <p className="text-[11px] text-purple-800 line-clamp-2 leading-relaxed">
+                          <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
                             {trace.thinking_preview || trace.thinking_content}
                           </p>
                         </div>
@@ -465,17 +465,17 @@ export default function SwarmTraceViewer({
                       <div
                         className={`mt-1.5 p-2 rounded-lg border text-[11px] flex items-start space-x-2 ${
                           isVerified
-                            ? "bg-emerald-100/80 border-emerald-300 text-emerald-950"
-                            : "bg-rose-100/80 border-rose-300 text-rose-950"
+                            ? "bg-emerald-950/60 border-emerald-700/80 text-emerald-200 font-mono"
+                            : "bg-rose-950/60 border-rose-700/80 text-rose-200 font-mono"
                         }`}
                       >
                         {isVerified ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                          <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1">
-                          <span className="font-bold block truncate">{trace.candidate_vuln_title}</span>
+                          <span className="font-bold block truncate text-white">{trace.candidate_vuln_title}</span>
                           <span className="text-[10px] opacity-80 block">{trace.decision_reason}</span>
                         </div>
                       </div>
@@ -490,11 +490,11 @@ export default function SwarmTraceViewer({
 
         {/* Slide-Over Forensic Inspector (Right Column) */}
         {selectedTrace && (
-          <div className="w-1/2 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-slate-100 shadow-xl flex flex-col h-[700px] sticky top-4">
+          <div className="w-1/2 glass-card border border-slate-800 rounded-2xl p-4 text-slate-100 shadow-2xl flex flex-col h-[700px] sticky top-4">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center space-x-2.5">
-                <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-purple-600 text-white">
+                <span className="font-mono text-xs font-black px-2.5 py-1 rounded-md bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 glow-amber-btn">
                   Step #{selectedTrace.step_number}
                 </span>
                 <div>
@@ -520,7 +520,7 @@ export default function SwarmTraceViewer({
                   onClick={() => setActiveTab("thinking")}
                   className={`px-3 py-1 rounded-lg transition-all flex items-center space-x-1.5 ${
                     activeTab === "thinking"
-                      ? "bg-purple-600 text-white font-bold"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black glow-amber-btn"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -533,7 +533,7 @@ export default function SwarmTraceViewer({
                   onClick={() => setActiveTab("tool")}
                   className={`px-3 py-1 rounded-lg transition-all flex items-center space-x-1.5 ${
                     activeTab === "tool"
-                      ? "bg-blue-600 text-white font-bold"
+                      ? "bg-sky-600 text-white font-bold"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -546,7 +546,7 @@ export default function SwarmTraceViewer({
                   onClick={() => setActiveTab("decision")}
                   className={`px-3 py-1 rounded-lg transition-all flex items-center space-x-1.5 ${
                     activeTab === "decision"
-                      ? "bg-emerald-600 text-white font-bold"
+                      ? "bg-emerald-600 text-white font-bold glow-emerald-repro"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -573,8 +573,8 @@ export default function SwarmTraceViewer({
               {activeTab === "thinking" && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="flex items-center space-x-1 text-purple-300 font-bold">
-                      <Brain className="w-3.5 h-3.5" />
+                    <span className="flex items-center space-x-1 text-amber-300 font-bold">
+                      <Brain className="w-3.5 h-3.5 text-amber-400" />
                       <span>Model Chain-of-Thought (&lt;think&gt;)</span>
                     </span>
                     <button
@@ -589,7 +589,7 @@ export default function SwarmTraceViewer({
                       <span>{copiedField === "thinking" ? "Copied" : "Copy Thinking"}</span>
                     </button>
                   </div>
-                  <div className="p-3 bg-slate-900 border border-purple-900/40 rounded-xl text-purple-200 text-xs font-sans leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto">
+                  <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 text-xs font-sans leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto">
                     {selectedTrace.thinking_content || "No reasoning tokens captured for this step."}
                   </div>
                 </div>

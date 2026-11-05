@@ -452,49 +452,49 @@ export default function NewScanPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="border-b border-purple-100/90 pb-3">
+      <div className="border-b border-slate-800 pb-3">
         <div className="flex items-center space-x-2">
-          <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-          <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-            Pipeline Configuration
+            Pipeline Configuration &bull; Obsidian Amber Aurora
           </span>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 mt-1 flex items-center space-x-2">
+        <h1 className="text-2xl font-extrabold tracking-tight text-white mt-1 flex items-center space-x-2">
           <span>Launch Security Audit</span>
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-slate-400 mt-1 font-mono">
           Configure repository source ingestion, Google Mantis ADK flags, and hard financial guardrails.
         </p>
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start space-x-2.5 text-xs text-rose-800 shadow-xs">
-          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+        <div className="p-4 bg-rose-950/60 border border-rose-800/80 rounded-xl flex items-start space-x-2.5 text-xs text-rose-200 shadow-xl">
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {whitelistSuccessMsg && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center space-x-2 text-xs text-emerald-800 shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-3.5 bg-emerald-950/60 border border-emerald-800/80 rounded-xl flex items-center space-x-2 text-xs text-emerald-200 shadow-xl">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{whitelistSuccessMsg}</span>
         </div>
       )}
 
       <form onSubmit={handleLaunch} className="space-y-6" autoComplete="off">
         {/* Section 0: Audit Identification */}
-        <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 space-y-4 shadow-xs backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <Shield className="w-4 h-4 text-purple-700" />
+        <div className="glass-card rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 className="text-sm font-bold text-white flex items-center space-x-2">
+              <Shield className="w-4 h-4 text-amber-400" />
               <span>Audit Identification</span>
             </h2>
-            <span className="text-[11px] text-slate-400">Custom label for tracking &amp; model benchmark comparison</span>
+            <span className="text-[11px] text-slate-400 font-mono">Custom label for tracking &amp; model benchmark comparison</span>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
               <span>Scan Name</span>
               <span className="text-[11px] text-slate-400 font-normal">Optional (defaults to repository name)</span>
             </label>
@@ -503,24 +503,24 @@ export default function NewScanPage() {
               value={scanName}
               onChange={(e) => setScanName(e.target.value)}
               placeholder="e.g. JuiceShop DeepSeek-V4 Audit, sBank-v2.1-Security-Review"
-              className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 transition-all font-mono"
+              className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono"
             />
           </div>
         </div>
 
         {/* Section 1: Ingestion Target */}
-        <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 space-y-5 shadow-xs backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <GitBranch className="w-4 h-4 text-purple-700" />
+        <div className="glass-card rounded-2xl p-6 space-y-5 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 className="text-sm font-bold text-white flex items-center space-x-2">
+              <GitBranch className="w-4 h-4 text-amber-400" />
               <span>Target Source Code</span>
             </h2>
-            <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+            <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs">
               <button
                 type="button"
                 onClick={() => setSourceType("git")}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg font-bold transition-all ${
-                  sourceType === "git" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                  sourceType === "git" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold shadow-xs" : "text-slate-400 hover:text-slate-200"
                 }`}
               >
                 <GitBranch className="w-3.5 h-3.5" />
@@ -530,7 +530,7 @@ export default function NewScanPage() {
                 type="button"
                 onClick={() => setSourceType("local")}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg font-bold transition-all ${
-                  sourceType === "local" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                  sourceType === "local" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold shadow-xs" : "text-slate-400 hover:text-slate-200"
                 }`}
               >
                 <Folder className="w-3.5 h-3.5" />
@@ -541,7 +541,7 @@ export default function NewScanPage() {
 
           {/* Quick Target Presets */}
           <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
-            <span className="text-[11px] font-semibold text-slate-400">Quick Test Targets:</span>
+            <span className="text-[11px] font-semibold text-slate-400 font-mono">Quick Test Targets:</span>
             
             {/* test_targets preset */}
             <div className="relative group">
@@ -552,19 +552,19 @@ export default function NewScanPage() {
                   setSourceTarget("/app/mantis_engine/test_targets");
                   setScanName("Built-in Test Suite (Flask & Vault)");
                 }}
-                className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900/70 border border-amber-800/80 text-amber-300 text-xs font-mono font-bold transition-all shadow-xs cursor-pointer"
               >
                 🧪 test_targets
               </button>
               <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none transition-all">
                 <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                  <span className="font-bold text-xs text-purple-300">🧪 Built-in Test Targets</span>
-                  <span className="text-[10px] font-mono bg-purple-900/80 text-purple-200 px-1.5 py-0.5 rounded border border-purple-700/50">Micro Suite</span>
+                  <span className="font-bold text-xs text-amber-300 font-mono">🧪 Built-in Test Targets</span>
+                  <span className="text-[10px] font-mono bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/60">Micro Suite</span>
                 </div>
                 <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
                   Local test harness containing micro Flask APIs, synthetic credentials, and vault routines for rapid smoke testing of Mantis engine primitives.
                 </p>
-                <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-purple-300 font-mono">
+                <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-amber-400 font-mono">
                   Path: /app/mantis_engine/test_targets
                 </div>
               </div>
@@ -579,15 +579,15 @@ export default function NewScanPage() {
                   setSourceTarget("/app/mantis_engine/evals/research_target");
                   setScanName("Mantis 26-File Seeded Corpus");
                 }}
-                className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 text-indigo-700 text-xs font-mono font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer ring-1 ring-indigo-200"
+                className="px-2.5 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-700/80 text-indigo-300 text-xs font-mono font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer ring-1 ring-indigo-500/30"
               >
                 <span>🎯 research_target</span>
-                <HelpCircle className="w-3 h-3 text-indigo-400 group-hover:text-indigo-600 transition-colors" />
+                <HelpCircle className="w-3 h-3 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
               </button>
               <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-80 p-3.5 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-indigo-500/40 z-50 pointer-events-none transition-all">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <div className="flex items-center space-x-1.5">
-                    <span className="font-bold text-xs text-indigo-300">🎯 Mantis Seeded Benchmark</span>
+                    <span className="font-bold text-xs text-indigo-300 font-mono">🎯 Mantis Seeded Benchmark</span>
                   </div>
                   <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">
                     16 Ground-Truth Flaws
@@ -617,14 +617,14 @@ export default function NewScanPage() {
                   setSourceTarget("https://github.com/juice-shop/juice-shop.git");
                   setScanName("OWASP Juice Shop Audit");
                 }}
-                className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-mono font-medium transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-800/80 text-emerald-300 text-xs font-mono font-bold transition-all shadow-xs cursor-pointer"
               >
                 🧃 Juice Shop
               </button>
               <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none transition-all">
                 <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                  <span className="font-bold text-xs text-emerald-300">🧃 OWASP Juice Shop</span>
-                  <span className="text-[10px] font-mono bg-emerald-900/80 text-emerald-200 px-1.5 py-0.5 rounded border border-emerald-700/50">Full Web App</span>
+                  <span className="font-bold text-xs text-emerald-300 font-mono">🧃 OWASP Juice Shop</span>
+                  <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-700/50">Full Web App</span>
                 </div>
                 <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
                   The official OWASP vulnerable JavaScript / TypeScript web application. Cloned from GitHub for complete multi-agent repository exploration and threat modeling.
@@ -634,9 +634,9 @@ export default function NewScanPage() {
 
             <Link
               href="/benchmarks"
-              className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-mono font-medium transition-colors flex items-center space-x-1"
+              className="px-2.5 py-1 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 border border-amber-800/60 text-amber-300 text-xs font-mono font-medium transition-colors flex items-center space-x-1"
             >
-              <Sparkles className="w-3 h-3 text-amber-600" />
+              <Sparkles className="w-3 h-3 text-amber-400" />
               <span>Target Studio &amp; Benchmarks →</span>
             </Link>
           </div>
@@ -648,7 +648,7 @@ export default function NewScanPage() {
               <input type="password" name="fake_password_remember" style={{ display: "none" }} tabIndex={-1} aria-hidden="true" autoComplete="new-password" />
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Git Repository URL
                 </label>
                 <input
@@ -662,13 +662,13 @@ export default function NewScanPage() {
                   value={sourceTarget}
                   onChange={(e) => setSourceTarget(e.target.value)}
                   placeholder="https://github.com/juice-shop/juice-shop.git"
-                  className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                  className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                     Branch / Tag / Commit
                   </label>
                   <input
@@ -685,17 +685,17 @@ export default function NewScanPage() {
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
                     placeholder="e.g. main, master (optional)"
-                    className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
                     <span>Personal Access Token</span>
-                    <span className="text-[11px] text-slate-400 font-normal">Optional</span>
+                    <span className="text-[11px] text-slate-500 font-normal">Optional</span>
                   </label>
                   <div className="relative">
-                    <Key className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Key className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                     <input
                       type="password"
                       id="git_personal_access_token"
@@ -710,7 +710,7 @@ export default function NewScanPage() {
                       value={gitToken}
                       onChange={(e) => setGitToken(e.target.value)}
                       placeholder="ghp_••••••••••••••••••••"
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
                     />
                   </div>
                 </div>
@@ -718,7 +718,7 @@ export default function NewScanPage() {
             </div>
           ) : (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Mounted Server Directory Path
               </label>
               <input
@@ -727,20 +727,20 @@ export default function NewScanPage() {
                 value={sourceTarget}
                 onChange={(e) => setSourceTarget(e.target.value)}
                 placeholder="/Users/username/project or /data/repos/my-repo"
-                className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
               />
             </div>
           )}
         </div>
 
         {/* Section 2: Mantis ADK Engine Flags */}
-        <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 space-y-5 shadow-xs backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <Cpu className="w-4 h-4 text-purple-700" />
+        <div className="glass-card rounded-2xl p-6 space-y-5 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 className="text-sm font-bold text-white flex items-center space-x-2">
+              <Cpu className="w-4 h-4 text-amber-400" />
               <span>Google Mantis ADK Engine Flags</span>
             </h2>
-            <span className="text-[11px] text-purple-700 font-mono bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md">
+            <span className="text-[11px] text-amber-300 font-mono bg-amber-950/80 border border-amber-800/80 px-2 py-0.5 rounded-md">
               Mantis Native
             </span>
           </div>
@@ -748,12 +748,12 @@ export default function NewScanPage() {
           {/* Model Selection */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-slate-300">
                 Model Architecture
               </label>
               {providers.find((p) => p.provider === "ollama")?.is_active && (
-                <span className="flex items-center space-x-1.5 text-[11px] font-mono text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="flex items-center space-x-1.5 text-[11px] font-mono text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-800/60">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Ollama Cloud Connected (https://ollama.com)</span>
                 </span>
               )}
@@ -762,7 +762,7 @@ export default function NewScanPage() {
             {/* Whitelisted Models from Settings (Ollama Cloud & Google) */}
             {availableModels.length > 0 && (
               <div className="space-y-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono block">
                   Your Configured &amp; Whitelisted Models ({availableModels.length})
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -771,14 +771,14 @@ export default function NewScanPage() {
                       key={m.id}
                       type="button"
                       onClick={() => setModelPreset(m.id)}
-                      className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all ${
+                      className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all cursor-pointer ${
                         modelPreset === m.id
-                          ? "bg-purple-700 border-purple-700 text-white shadow-xs ring-2 ring-purple-300"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-purple-50/50"
+                          ? "bg-amber-950/80 border-amber-500 text-amber-300 shadow-md ring-2 ring-amber-500/30 font-bold glow-amber-btn"
+                          : "bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80"
                       }`}
                     >
                       <div className="font-bold truncate">{m.display_name || m.id}</div>
-                      <div className={`text-[10px] font-mono truncate mt-0.5 ${modelPreset === m.id ? "text-purple-200" : "text-slate-400"}`}>
+                      <div className={`text-[10px] font-mono truncate mt-0.5 ${modelPreset === m.id ? "text-amber-400" : "text-slate-500"}`}>
                         {m.provider} &bull; {m.id}
                       </div>
                     </button>
@@ -789,7 +789,7 @@ export default function NewScanPage() {
 
             {/* Standard Cloud Presets */}
             <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono block">
                 Standard Cloud Presets
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -798,10 +798,10 @@ export default function NewScanPage() {
                     key={m.id}
                     type="button"
                     onClick={() => setModelPreset(m.id)}
-                    className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all ${
+                    className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all cursor-pointer ${
                       modelPreset === m.id
-                        ? "bg-purple-700 border-purple-700 text-white shadow-xs ring-2 ring-purple-300"
-                        : "bg-slate-50 border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-white"
+                        ? "bg-amber-950/80 border-amber-500 text-amber-300 shadow-md ring-2 ring-amber-500/30 font-bold glow-amber-btn"
+                        : "bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80"
                     }`}
                   >
                     {m.label}
@@ -816,33 +816,33 @@ export default function NewScanPage() {
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
                 placeholder="e.g. ollama/deepseek-v4.1-flash, openai/gpt-4o-mini"
-                className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all mt-1"
+                className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all mt-1"
               />
             )}
           </div>
 
           {/* Reasoning Effort */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-slate-300">
               Reasoning Effort
             </label>
-            <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs gap-1">
+            <div className="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs gap-1">
               {(["low", "medium", "high"] as const).map((eff) => (
                 <button
                   key={eff}
                   type="button"
                   onClick={() => setReasoningEffort(eff)}
-                  className={`px-4 py-1.5 rounded-lg capitalize font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer ${
                     reasoningEffort === eff
-                      ? "bg-purple-700 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   {eff}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-400">
               Controls thinking budget per LLM call. <strong>High</strong> = deeper reasoning but more tokens.
             </p>
           </div>
@@ -850,28 +850,28 @@ export default function NewScanPage() {
           {/* Focus */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                <Search className="w-3.5 h-3.5 text-purple-600" />
+              <label className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                <Search className="w-3.5 h-3.5 text-amber-400" />
                 <span>Focus Directive (--focus)</span>
-                <span className="text-[10px] font-mono font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200">
+                <span className="text-[10px] font-mono font-semibold bg-amber-950/80 text-amber-300 px-2 py-0.5 rounded-full border border-amber-800/80">
                   Tactical CWE Filter
                 </span>
               </label>
-              <span className="text-[11px] text-slate-400 font-normal">Optional</span>
+              <span className="text-[11px] text-slate-500 font-normal">Optional</span>
             </div>
             <input
               type="text"
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
               placeholder="e.g. SQL injection, SSRF, IDOR, deserialization, command injection"
-              className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
             />
-            <div className="text-[11px] text-slate-500 leading-relaxed space-y-1">
+            <div className="text-[11px] text-slate-400 leading-relaxed space-y-1">
               <p>
                 <strong>Tactical CWE Filter:</strong> Directs Mantis's hypothesis generator and critic swarms to isolate specific vulnerability classes or attack vectors.
               </p>
-              <div className="text-[11px] text-purple-800 bg-purple-50/80 rounded-xl p-2.5 border border-purple-100 flex items-start space-x-2">
-                <Info className="w-3.5 h-3.5 text-purple-600 shrink-0 mt-0.5" />
+              <div className="text-[11px] text-amber-200 bg-amber-950/40 rounded-xl p-2.5 border border-amber-800/60 flex items-start space-x-2">
+                <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                 <span>
                   <strong>Focus vs Objective:</strong> <em>Focus</em> restricts <strong>what defect classes</strong> are hunted (e.g., SQLi, SSRF, IDOR). <em>Objective</em> (under Advanced Flags below) guides <strong>what attacker goal</strong> to achieve (e.g., unauthenticated privilege escalation to tenant admin).
                 </span>
@@ -881,24 +881,24 @@ export default function NewScanPage() {
 
           {/* Exclude Patterns */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700 flex items-center space-x-1">
-              <Filter className="w-3.5 h-3.5 text-slate-500" />
+            <label className="block text-xs font-semibold text-slate-300 flex items-center space-x-1">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
               <span>Exclude Patterns</span>
-              <span className="text-[11px] text-slate-400 font-normal ml-1">Comma-separated, optional</span>
+              <span className="text-[11px] text-slate-500 font-normal ml-1">Comma-separated, optional</span>
             </label>
             <input
               type="text"
               value={excludePatterns}
               onChange={(e) => setExcludePatterns(e.target.value)}
               placeholder="e.g. vendor, testdata, *.min.js, node_modules"
-              className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
             />
           </div>
 
           {/* Sandbox Mode */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700 flex items-center space-x-1">
-              <Box className="w-3.5 h-3.5 text-slate-600" />
+            <label className="block text-xs font-semibold text-slate-300 flex items-center space-x-1">
+              <Box className="w-3.5 h-3.5 text-slate-400" />
               <span>Sandbox Mode</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -907,16 +907,16 @@ export default function NewScanPage() {
                   key={opt.id}
                   type="button"
                   onClick={() => setSandbox(opt.id)}
-                  className={`p-3 rounded-xl border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     sandbox === opt.id
-                      ? "bg-purple-700 border-purple-700 text-white"
-                      : "bg-slate-50 border-slate-200 text-slate-700 hover:border-purple-300"
+                      ? "bg-amber-950/80 border-amber-500 text-amber-300 ring-2 ring-amber-500/30 glow-amber-btn"
+                      : "bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40"
                   }`}
                 >
-                  <div className={`font-bold text-xs ${sandbox === opt.id ? "text-white" : "text-slate-800"}`}>
+                  <div className={`font-bold text-xs ${sandbox === opt.id ? "text-amber-300" : "text-white"}`}>
                     {opt.label}
                   </div>
-                  <div className={`text-[10px] mt-0.5 ${sandbox === opt.id ? "text-purple-200" : "text-slate-400"}`}>
+                  <div className={`text-[10px] mt-0.5 ${sandbox === opt.id ? "text-amber-400" : "text-slate-400"}`}>
                     {opt.desc}
                   </div>
                 </button>
@@ -926,9 +926,9 @@ export default function NewScanPage() {
 
           {/* Token Budget */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-300 flex items-center justify-between">
               <span>Token Budget Ceiling</span>
-              <span className="text-[11px] text-slate-400 font-normal">Optional</span>
+              <span className="text-[11px] text-slate-500 font-normal">Optional</span>
             </label>
             <input
               type="number"
@@ -937,52 +937,52 @@ export default function NewScanPage() {
               placeholder="e.g. 500000 (leave blank for no limit)"
               min={10000}
               step={10000}
-              className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+              className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
             />
           </div>
 
           {/* Resume */}
-          <label className="flex items-start space-x-3 cursor-pointer group pt-1 border-t border-slate-100">
+          <label className="flex items-start space-x-3 cursor-pointer group pt-1 border-t border-slate-800">
             <input
               type="checkbox"
               checked={resumeScan}
               onChange={(e) => setResumeScan(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-purple-700 focus:ring-purple-500 cursor-pointer"
+              className="mt-0.5 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 accent-amber-500 cursor-pointer"
             />
             <div className="space-y-0.5">
               <div className="flex items-center space-x-1.5">
-                <RefreshCw className="w-3.5 h-3.5 text-purple-600" />
-                <span className="text-xs font-bold text-slate-800 group-hover:text-purple-900 transition-colors">
+                <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
                   Resume from Last Checkpoint
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
                 If a previous scan workspace exists for this target, resume from where it left off rather than starting fresh.
               </p>
             </div>
           </label>
 
           {/* Advanced Mantis ADK Controls Toggle */}
-          <div className="pt-3 border-t border-slate-100">
+          <div className="pt-3 border-t border-slate-800">
             <button
               type="button"
               onClick={() => setShowAdvancedMantis(!showAdvancedMantis)}
-              className="flex items-center justify-between w-full py-1 text-xs font-bold text-purple-700 hover:text-purple-900"
+              className="flex items-center justify-between w-full py-1 text-xs font-bold text-amber-400 hover:text-amber-300 font-mono cursor-pointer"
             >
               <div className="flex items-center space-x-2">
                 <Sliders className="w-3.5 h-3.5" />
                 <span>Advanced Mantis ADK Engine Flags ({showAdvancedMantis ? "Hide" : "Show"})</span>
               </div>
-              <span className="text-[10px] font-mono bg-purple-50 px-2 py-0.5 rounded text-purple-600">
+              <span className="text-[10px] font-mono bg-amber-950/60 px-2 py-0.5 rounded text-amber-300 border border-amber-800/60">
                 mode: {scanMode} | {parallel} worker(s)
               </span>
             </button>
 
             {showAdvancedMantis && (
-              <div className="mt-4 space-y-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="mt-4 space-y-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
                 {/* Scan Mode */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-slate-300">
                     Scan Mode (--scan-mode)
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -996,14 +996,14 @@ export default function NewScanPage() {
                         key={m.id}
                         type="button"
                         onClick={() => setScanMode(m.id as any)}
-                        className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                        className={`p-2.5 rounded-lg border text-left text-xs transition-all cursor-pointer ${
                           scanMode === m.id
-                            ? "bg-purple-700 border-purple-700 text-white"
-                            : "bg-white border-slate-200 text-slate-700 hover:border-purple-300"
+                            ? "bg-amber-950/80 border-amber-500 text-amber-300 font-bold"
+                            : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
                         }`}
                       >
                         <div className="font-bold">{m.label}</div>
-                        <div className={`text-[10px] mt-0.5 ${scanMode === m.id ? "text-purple-200" : "text-slate-400"}`}>
+                        <div className={`text-[10px] mt-0.5 ${scanMode === m.id ? "text-amber-400" : "text-slate-500"}`}>
                           {m.desc}
                         </div>
                       </button>
@@ -1014,28 +1014,28 @@ export default function NewScanPage() {
                 {/* Campaign Objective */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
-                      <Crosshair className="w-3.5 h-3.5 text-indigo-600" />
+                    <label className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                      <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
                       <span>Natural Language Objective (--objective)</span>
-                      <span className="text-[10px] font-mono font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200">
+                      <span className="text-[10px] font-mono font-semibold bg-cyan-950/80 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-800/80">
                         Strategic Scenario Goal
                       </span>
                     </label>
-                    <span className="text-[10px] text-slate-400">Optional</span>
+                    <span className="text-[10px] text-slate-500">Optional</span>
                   </div>
                   <input
                     type="text"
                     value={objective}
                     onChange={(e) => setObjective(e.target.value)}
                     placeholder="e.g. Find privilege escalation from unauthenticated visitor to tenant admin"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:border-purple-600"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-100 focus:outline-none focus:border-amber-500"
                   />
-                  <div className="text-[10px] text-slate-500 space-y-1 leading-relaxed">
+                  <div className="text-[10px] text-slate-400 space-y-1 leading-relaxed">
                     <p>
                       <strong>Strategic Campaign Goal:</strong> Steers multi-agent research graph synthesis toward an attacker mission outcome.
                     </p>
-                    <div className="text-indigo-800 bg-indigo-50/80 rounded-lg p-2 border border-indigo-100 flex items-start space-x-1.5">
-                      <Info className="w-3 h-3 text-indigo-600 shrink-0 mt-0.5" />
+                    <div className="text-indigo-200 bg-indigo-950/40 rounded-lg p-2 border border-indigo-800/60 flex items-start space-x-1.5">
+                      <Info className="w-3 h-3 text-indigo-400 shrink-0 mt-0.5" />
                       <span>
                         <strong>Objective vs Focus:</strong> <em>Objective</em> steers <strong>attacker business logic milestones</strong> (e.g., reaching admin panel without MFA). <em>Focus</em> (above) specifies <strong>detector bug classes</strong> (e.g., SQLi, SSRF).
                       </span>
@@ -1045,7 +1045,7 @@ export default function NewScanPage() {
 
                 {/* Seed Report */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-slate-300">
                     Variant Bug Hunting Report (--seed-report)
                   </label>
                   <input
@@ -1053,9 +1053,9 @@ export default function NewScanPage() {
                     value={seedReport}
                     onChange={(e) => setSeedReport(e.target.value)}
                     placeholder="e.g. /app/reports/cve-2024-1234.md"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:border-purple-600"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-100 focus:outline-none focus:border-amber-500"
                   />
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-400 font-mono">
                     Path to a prior bug report; Mantis will search for structural variants of the reported bug.
                   </p>
                 </div>
@@ -1063,7 +1063,7 @@ export default function NewScanPage() {
                 {/* Grid for Parallel & Limits */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700">
+                    <label className="block text-xs font-semibold text-slate-300">
                       Parallel Campaigns Concurrency (--parallel)
                     </label>
                     <input
@@ -1072,12 +1072,12 @@ export default function NewScanPage() {
                       max={10}
                       value={parallel}
                       onChange={(e) => setParallel(parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-100 focus:border-amber-500"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700">
+                    <label className="block text-xs font-semibold text-slate-300">
                       Max LLM Calls Ceiling (--max-llm-calls)
                     </label>
                     <input
@@ -1086,29 +1086,29 @@ export default function NewScanPage() {
                       value={maxLlmCalls}
                       onChange={(e) => setMaxLlmCalls(e.target.value ? parseInt(e.target.value) : "")}
                       placeholder="e.g. 100 (leave blank for workflow default)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-100 focus:border-amber-500"
                     />
                   </div>
                 </div>
 
                 {/* Toggles */}
-                <div className="pt-2 border-t border-slate-200 space-y-2">
-                  <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                <div className="pt-2 border-t border-slate-800 space-y-2">
+                  <label className="flex items-center space-x-2 text-xs font-medium text-slate-300 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={deterministicOnly}
                       onChange={(e) => setDeterministicOnly(e.target.checked)}
-                      className="rounded border-slate-300 text-purple-700 focus:ring-purple-500"
+                      className="rounded border-slate-700 text-amber-500 focus:ring-amber-500 accent-amber-500"
                     />
                     <span>Force Deterministic Archetype Synthesis (--deterministic-only)</span>
                   </label>
 
-                  <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                  <label className="flex items-center space-x-2 text-xs font-medium text-slate-300 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={noReplan}
                       onChange={(e) => setNoReplan(e.target.checked)}
-                      className="rounded border-slate-300 text-purple-700 focus:ring-purple-500"
+                      className="rounded border-slate-700 text-amber-500 focus:ring-amber-500 accent-amber-500"
                     />
                     <span>Freeze Campaign Plan at Start (--no-replan) for exact reproducibility</span>
                   </label>
@@ -1119,13 +1119,13 @@ export default function NewScanPage() {
         </div>
 
         {/* Section 3: Hard Cost Ceiling */}
-        <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 space-y-5 shadow-xs backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <DollarSign className="w-4 h-4 text-amber-600" />
+        <div className="glass-card rounded-2xl p-6 space-y-5 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 className="text-sm font-bold text-white flex items-center space-x-2">
+              <DollarSign className="w-4 h-4 text-amber-400" />
               <span>Hard Cost Ceiling</span>
             </h2>
-            <span className="px-3 py-1 rounded-full text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 font-mono">
+            <span className="px-3 py-1 rounded-full text-xs font-bold text-amber-300 bg-amber-950/80 border border-amber-800/80 font-mono glow-amber-btn">
               ${budgetLimit.toFixed(2)} USD
             </span>
           </div>
@@ -1138,26 +1138,26 @@ export default function NewScanPage() {
               step="0.50"
               value={budgetLimit}
               onChange={(e) => setBudgetLimit(parseFloat(e.target.value))}
-              className="w-full accent-amber-600 cursor-pointer"
+              className="w-full accent-amber-500 cursor-pointer"
             />
-            <div className="flex justify-between text-[11px] text-slate-400 mt-1.5 font-medium">
+            <div className="flex justify-between text-[11px] text-slate-400 mt-1.5 font-medium font-mono">
               <span>$0.50 (Frugal)</span>
               <span>$5.00 (Standard)</span>
               <span>$10.00 (Deep Multi-Pass)</span>
               <span>$20.00 (Max)</span>
             </div>
           </div>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-slate-400">
             If this audit exceeds the specified cost ceiling, the execution pipeline immediately halts with a{" "}
-            <code className="text-amber-800 font-bold bg-amber-50 px-1 py-0.5 rounded border border-amber-200">budget_exceeded</code> safety state.
+            <code className="text-amber-300 font-bold bg-amber-950/80 px-1 py-0.5 rounded border border-amber-800/60 font-mono">budget_exceeded</code> safety state.
           </p>
         </div>
 
         {/* Section 4: Audit Mode & Knowledge Base Reset */}
-        <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 space-y-4 shadow-xs backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-purple-700" />
+        <div className="glass-card rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 className="text-sm font-bold text-white flex items-center space-x-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Audit Mode &amp; Knowledge Base Reset</span>
             </h2>
           </div>
@@ -1166,13 +1166,13 @@ export default function NewScanPage() {
               type="checkbox"
               checked={freshScan}
               onChange={(e) => setFreshScan(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-purple-700 focus:ring-purple-500 cursor-pointer"
+              className="mt-0.5 h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-500 accent-amber-500 cursor-pointer"
             />
             <div className="space-y-0.5">
-              <span className="text-xs font-bold text-slate-800 group-hover:text-purple-900 transition-colors">
+              <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
                 Fresh Baseline Scan (Clean Slate)
               </span>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
                 Purge and ignore any historical learnings, past reflections, or archived findings for this repository. Mantis will treat this as a brand-new first-time scan rather than a continuation pass.
               </p>
             </div>
@@ -1183,9 +1183,9 @@ export default function NewScanPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 px-4 bg-purple-700 hover:bg-purple-800 disabled:opacity-50 text-white font-bold text-sm rounded-xl flex items-center justify-center space-x-2 transition-all shadow-xs hover:-translate-y-0.5 cursor-pointer"
+          className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-extrabold text-sm rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg shadow-amber-500/25 hover:-translate-y-0.5 cursor-pointer glow-amber-btn"
         >
-          <Play className="w-4 h-4 fill-white" />
+          <Play className="w-4 h-4 fill-current" />
           <span>{loading ? "Initializing Scan Pipeline..." : "Start Autonomous Audit"}</span>
         </button>
       </form>

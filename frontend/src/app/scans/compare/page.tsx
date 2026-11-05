@@ -128,7 +128,7 @@ export default function ScanComparisonPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
       </div>
     );
   }
@@ -136,65 +136,65 @@ export default function ScanComparisonPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-purple-100/90">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-slate-800">
         <div>
           <div className="flex items-center space-x-2">
             <Link
               href="/dashboard"
-              className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-purple-700 transition-colors mr-2"
+              className="inline-flex items-center text-xs font-semibold text-slate-400 hover:text-amber-400 transition-colors mr-2"
             >
               <ArrowLeft className="w-3.5 h-3.5 mr-1" />
               <span>Dashboard</span>
             </Link>
-            <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
               Comparative Benchmark Matrix
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 mt-1 flex items-center space-x-2">
-            <GitCompare className="w-6 h-6 text-purple-700" />
+          <h1 className="text-2xl font-extrabold tracking-tight text-white mt-1 flex items-center space-x-2">
+            <GitCompare className="w-6 h-6 text-amber-400" />
             <span>Multi-Model Scan Comparison</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5">
             Evaluate agentic reasoning efficacy, exploit reproduction rates, false positive pruning, and cost efficiency across different LLM backends.
           </p>
         </div>
 
         {comparisonData?.same_repository && (
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 rounded-xl text-xs font-bold shadow-xs font-mono glow-emerald-repro">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Controlled Benchmark: Same Repository</span>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center space-x-2 text-xs text-rose-800">
-          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+        <div className="p-4 bg-rose-950/60 border border-rose-800/80 rounded-xl flex items-center space-x-2 text-xs text-rose-300">
+          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Interactive Scan Selection Shelf */}
-      <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs backdrop-blur-md space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+      <div className="glass-card border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
           <div className="flex items-center space-x-2">
-            <Layers className="w-4 h-4 text-purple-700" />
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+            <Layers className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
               Select Scans to Compare ({selectedScanIds.length} active)
             </span>
           </div>
 
           {/* Quick Repo Filter Dropdown */}
           {distinctRepos.length > 1 && (
-            <div className="flex items-center space-x-1.5 text-xs">
-              <Filter className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-500 font-medium">Filter repo:</span>
+            <div className="flex items-center space-x-1.5 text-xs font-mono">
+              <Filter className="w-3.5 h-3.5 text-slate-500" />
+              <span className="text-slate-400 font-medium">Filter repo:</span>
               <select
                 value={repoFilter}
                 onChange={(e) => setRepoFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-purple-600"
+                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs font-semibold text-white outline-none focus:border-amber-500"
               >
                 <option value="all">All Repositories ({distinctRepos.length})</option>
                 {distinctRepos.map((r) => (
@@ -218,20 +218,20 @@ export default function ScanComparisonPage() {
                 onClick={() => toggleScanSelection(s.id)}
                 className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border shadow-xs ${
                   isSelected
-                    ? "bg-purple-700 text-white border-purple-800 ring-2 ring-purple-200"
-                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-purple-50 hover:border-purple-200"
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black border-amber-500 ring-2 ring-amber-500/40 glow-amber-btn"
+                    : "bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700"
                 }`}
               >
                 <div
                   className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
-                    isSelected ? "bg-white text-purple-700 font-bold" : "border border-slate-300"
+                    isSelected ? "bg-slate-950 text-amber-400 font-bold" : "border border-slate-600"
                   }`}
                 >
                   {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                 </div>
                 <div className="text-left">
                   <div className="truncate max-w-[200px] font-bold">{title}</div>
-                  <div className={`text-[10px] font-mono ${isSelected ? "text-purple-200" : "text-slate-400"}`}>
+                  <div className={`text-[10px] font-mono ${isSelected ? "text-slate-900 font-extrabold" : "text-slate-400"}`}>
                     ${(s.cost_spent_usd || 0).toFixed(4)} &bull; {s.findings_count || 0} bugs
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function ScanComparisonPage() {
 
       {comparing ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
         </div>
       ) : comparisonData ? (
         <div className="space-y-6">
@@ -254,18 +254,18 @@ export default function ScanComparisonPage() {
               return (
                 <div
                   key={s.id}
-                  className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4 flex flex-col justify-between hover:border-purple-300 transition-all"
+                  className="glass-card border border-slate-800 hover:border-amber-500/40 rounded-2xl p-5 shadow-xl space-y-4 flex flex-col justify-between transition-all"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-mono text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200/80">
+                      <span className="text-[11px] font-mono text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/40">
                         {s.id.slice(0, 8)}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[11px] font-bold capitalize ${
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-bold capitalize font-mono ${
                           s.status === "completed"
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                            : "bg-amber-50 text-amber-800 border border-amber-200"
+                            ? "bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 glow-emerald-repro"
+                            : "bg-amber-950/80 text-amber-300 border border-amber-500/60"
                         }`}
                       >
                         {s.status}
@@ -273,7 +273,7 @@ export default function ScanComparisonPage() {
                     </div>
 
                     <div>
-                      <h3 className="font-extrabold text-base text-slate-900 truncate" title={s.name}>
+                      <h3 className="font-extrabold text-base text-white truncate" title={s.name}>
                         {s.name}
                       </h3>
                       <p className="text-xs font-mono text-slate-400 truncate mt-0.5" title={s.source_target}>
@@ -282,65 +282,65 @@ export default function ScanComparisonPage() {
                     </div>
 
                     {/* Metric Cards Grid */}
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                      <div className="p-2.5 bg-slate-50/80 rounded-xl border border-slate-100">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                      <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
                           Verified Bugs
                         </span>
-                        <span className="text-lg font-black text-slate-900 mt-0.5 block">
+                        <span className="text-lg font-black text-white mt-0.5 block">
                           {s.findings_count}
                         </span>
-                        <span className="text-[10px] font-semibold text-rose-600">
+                        <span className="text-[10px] font-semibold text-rose-400 font-mono">
                           {s.critical_count} Critical, {s.high_count} High
                         </span>
                       </div>
 
-                      <div className="p-2.5 bg-slate-50/80 rounded-xl border border-slate-100">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
                           Exploits Proven
                         </span>
-                        <span className="text-lg font-black text-emerald-700 mt-0.5 block">
+                        <span className="text-lg font-black text-emerald-400 mt-0.5 block font-mono">
                           {s.reproduced_count}
                         </span>
-                        <span className="text-[10px] font-semibold text-emerald-600">
+                        <span className="text-[10px] font-semibold text-emerald-400 font-mono">
                           {reproRate}% reproduction
                         </span>
                       </div>
 
-                      <div className="p-2.5 bg-slate-50/80 rounded-xl border border-slate-100">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
                           LLM Cost
                         </span>
-                        <span className="text-lg font-black text-amber-900 mt-0.5 block font-mono">
+                        <span className="text-lg font-black text-amber-400 mt-0.5 block font-mono">
                           ${s.cost_spent_usd.toFixed(4)}
                         </span>
-                        <span className="text-[10px] text-slate-400">Total API Spend</span>
+                        <span className="text-[10px] text-slate-500 font-mono">Total API Spend</span>
                       </div>
 
-                      <div className="p-2.5 bg-slate-50/80 rounded-xl border border-slate-100">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
                           Runtime
                         </span>
-                        <span className="text-lg font-black text-slate-900 mt-0.5 block font-mono">
+                        <span className="text-lg font-black text-white mt-0.5 block font-mono">
                           {formatDuration(s.duration_seconds)}
                         </span>
-                        <span className="text-[10px] text-slate-400">Pipeline Latency</span>
+                        <span className="text-[10px] text-slate-500 font-mono">Pipeline Latency</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center space-x-2 pt-3 border-t border-slate-100">
+                  <div className="flex items-center space-x-2 pt-3 border-t border-slate-800">
                     <Link
                       href={`/scans/${s.id}`}
-                      className="flex-1 flex items-center justify-center space-x-1 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold transition-all border border-purple-200"
+                      className="flex-1 flex items-center justify-center space-x-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black transition-all glow-amber-btn"
                     >
                       <span>Audit View</span>
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-3 h-3 text-slate-950" />
                     </Link>
                     <Link
                       href={`/scans/${s.id}`}
-                      className="flex items-center justify-center p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 transition-all border border-purple-200"
+                      className="flex items-center justify-center p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 transition-all border border-slate-800"
                       title="Inspect full trace in Swarm Trace Inspector"
                     >
                       <Terminal className="w-3.5 h-3.5" />
@@ -352,33 +352,33 @@ export default function ScanComparisonPage() {
           </div>
 
           {/* Section 2: Model Configuration Matrix per Phase */}
-          <div className="bg-white/95 border border-purple-100/90 rounded-2xl overflow-hidden shadow-xs">
-            <div className="px-6 py-4 border-b border-purple-100/90 flex items-center justify-between bg-purple-50/20">
+          <div className="glass-card border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
               <div className="flex items-center space-x-2">
-                <Cpu className="w-4 h-4 text-purple-700" />
-                <h2 className="text-sm font-bold text-slate-900">Per-Stage Model Routing Matrix</h2>
+                <Cpu className="w-4 h-4 text-amber-400" />
+                <h2 className="text-sm font-bold text-white">Per-Stage Model Routing Matrix</h2>
               </div>
-              <span className="text-xs text-slate-500 font-mono">Autonomous Phase Assignments</span>
+              <span className="text-xs text-slate-400 font-mono">Autonomous Phase Assignments</span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-mono border-b border-slate-800">
                   <tr>
                     <th className="px-6 py-3">Verification Phase</th>
                     {comparisonData.scans.map((s: any) => (
                       <th key={s.id} className="px-6 py-3">
-                        <span className="font-bold text-slate-900 block truncate max-w-[180px]">
+                        <span className="font-bold text-white block truncate max-w-[180px]">
                           {s.name}
                         </span>
-                        <span className="text-[10px] font-mono text-purple-700 font-semibold">
+                        <span className="text-[10px] font-mono text-amber-400 font-semibold">
                           {s.id.slice(0, 8)}
                         </span>
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-mono text-xs">
+                <tbody className="divide-y divide-slate-800/60 font-mono text-xs">
                   {[
                     { key: "recon", label: "02 Recon (Taint Flow & Sinks)" },
                     { key: "threat_model", label: "03 Threat (Callgraph Reachability)" },
@@ -394,13 +394,13 @@ export default function ScanComparisonPage() {
                     return (
                       <tr
                         key={phase.key}
-                        className={`transition-colors ${isDivergent ? "bg-amber-50/30" : "hover:bg-slate-50/50"}`}
+                        className={`transition-colors ${isDivergent ? "bg-amber-950/20" : "hover:bg-slate-800/30"}`}
                       >
-                        <td className="px-6 py-3.5 font-sans font-semibold text-slate-900">
+                        <td className="px-6 py-3.5 font-sans font-semibold text-white">
                           <div className="flex items-center space-x-2">
                             <span>{phase.label}</span>
                             {isDivergent && (
-                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-950/80 text-amber-300 border border-amber-500/50">
                                 Variant Model
                               </span>
                             )}
@@ -413,12 +413,12 @@ export default function ScanComparisonPage() {
                               <span
                                 className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
                                   assignedModel.includes("claude")
-                                    ? "bg-purple-50 text-purple-900 border-purple-200"
+                                    ? "bg-amber-950/80 text-amber-300 border-amber-500/60"
                                     : assignedModel.includes("gpt")
-                                    ? "bg-emerald-50 text-emerald-900 border-emerald-200"
+                                    ? "bg-emerald-950/80 text-emerald-300 border-emerald-700/60"
                                     : assignedModel.includes("gemini")
-                                    ? "bg-sky-50 text-sky-900 border-sky-200"
-                                    : "bg-slate-100 text-slate-800 border-slate-200"
+                                    ? "bg-sky-950/80 text-sky-300 border-sky-700/60"
+                                    : "bg-slate-900 text-slate-300 border-slate-800"
                                 }`}
                               >
                                 {assignedModel}
@@ -435,28 +435,28 @@ export default function ScanComparisonPage() {
           </div>
 
           {/* Section 3: Vulnerability Findings Differential Matrix */}
-          <div className="bg-white/95 border border-purple-100/90 rounded-2xl overflow-hidden shadow-xs space-y-4">
-            <div className="px-6 py-4 border-b border-purple-100/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-purple-50/20">
+          <div className="glass-card border border-slate-800 rounded-2xl overflow-hidden shadow-xl space-y-4">
+            <div className="px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/60">
               <div className="flex items-center space-x-2">
-                <ShieldAlert className="w-5 h-5 text-rose-600" />
+                <ShieldAlert className="w-5 h-5 text-rose-400" />
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900">
+                  <h2 className="text-sm font-bold text-white">
                     Cross-Model Vulnerability Matrix &amp; Proof Concordance
                   </h2>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-slate-400">
                     Compare which vulnerabilities were identified by each model and whether their exploits were verified.
                   </p>
                 </div>
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200 overflow-x-auto">
+              <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl text-xs font-bold border border-slate-800 overflow-x-auto font-mono">
                 <button
                   onClick={() => setActiveFilterTab("all")}
                   className={`px-3 py-1 rounded-lg transition-all ${
                     activeFilterTab === "all"
-                      ? "bg-purple-700 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs glow-amber-btn"
+                      : "text-slate-400 hover:text-white"
                   }`}
                 >
                   All Unique ({comparisonData.all_findings.length})
@@ -465,8 +465,8 @@ export default function ScanComparisonPage() {
                   onClick={() => setActiveFilterTab("common")}
                   className={`px-3 py-1 rounded-lg transition-all ${
                     activeFilterTab === "common"
-                      ? "bg-purple-700 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs glow-amber-btn"
+                      : "text-slate-400 hover:text-white"
                   }`}
                 >
                   Common to All ({comparisonData.common_findings.length})
@@ -479,8 +479,8 @@ export default function ScanComparisonPage() {
                       onClick={() => setActiveFilterTab(s.id)}
                       className={`px-3 py-1 rounded-lg transition-all ${
                         activeFilterTab === s.id
-                          ? "bg-purple-700 text-white shadow-xs"
-                          : "text-slate-600 hover:text-slate-900"
+                          ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs glow-amber-btn"
+                          : "text-slate-400 hover:text-white"
                       }`}
                     >
                       Only in {s.name.slice(0, 10)} ({exclusiveCount})
@@ -491,13 +491,13 @@ export default function ScanComparisonPage() {
             </div>
 
             {displayedFindings.length === 0 ? (
-              <div className="p-10 text-center text-xs text-slate-400 italic">
+              <div className="p-10 text-center text-xs text-slate-500 italic">
                 No vulnerabilities in this filter category.
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-700">
-                  <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-mono border-b border-slate-800">
                     <tr>
                       <th className="px-6 py-3">Vulnerability Finding</th>
                       <th className="px-6 py-3">Location</th>
@@ -506,45 +506,45 @@ export default function ScanComparisonPage() {
                       <th className="px-6 py-3">Dynamic Exploit PoC</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-800/60">
                     {displayedFindings.map((f: any) => (
-                      <tr key={f.id} className="hover:bg-purple-50/30 transition-colors">
+                      <tr key={f.id} className="hover:bg-slate-800/30 transition-colors">
                         <td className="px-6 py-4">
                           <div className="space-y-1">
                             <div className="flex items-center space-x-2">
                               {f.cwe && (
-                                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-purple-50 text-purple-800 border border-purple-200/80">
+                                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40">
                                   {f.cwe}
                                 </span>
                               )}
-                              <span className="font-bold text-slate-900 text-xs">{f.title}</span>
+                              <span className="font-bold text-white text-xs">{f.title}</span>
                             </div>
                             {f.description && (
-                              <p className="text-[11px] text-slate-500 line-clamp-2 max-w-lg leading-relaxed">
+                              <p className="text-[11px] text-slate-400 line-clamp-2 max-w-lg leading-relaxed">
                                 {f.description}
                               </p>
                             )}
                           </div>
                         </td>
 
-                        <td className="px-6 py-4 font-mono text-slate-600">
+                        <td className="px-6 py-4 font-mono text-slate-400">
                           {f.file_path ? (
                             <span>
                               {f.file_path} {f.line_number && `:${f.line_number}`}
                             </span>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-500">—</span>
                           )}
                         </td>
 
                         <td className="px-6 py-4">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide font-mono ${
                               f.severity === "critical"
-                                ? "bg-rose-50 text-rose-800 border border-rose-200"
+                                ? "bg-rose-950/90 text-rose-300 border border-rose-600/80 glow-rose-crit"
                                 : f.severity === "high"
-                                ? "bg-amber-50 text-amber-800 border border-amber-200"
-                                : "bg-purple-50 text-purple-800 border border-purple-200"
+                                ? "bg-amber-950/90 text-amber-300 border border-amber-500/80 glow-amber-btn"
+                                : "bg-slate-900 text-slate-300 border border-slate-700"
                             }`}
                           >
                             {f.severity}
@@ -552,7 +552,7 @@ export default function ScanComparisonPage() {
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-wrap gap-1.5 font-mono">
                             {comparisonData.scans.map((s: any) => {
                               const wasDetected = f.detected_in_scan_ids.includes(s.id);
                               return (
@@ -560,16 +560,16 @@ export default function ScanComparisonPage() {
                                   key={s.id}
                                   className={`px-2 py-0.5 rounded text-[10px] font-semibold flex items-center space-x-1 ${
                                     wasDetected
-                                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold"
-                                      : "bg-slate-100 text-slate-400 border border-slate-200 line-through opacity-60"
+                                      ? "bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 font-bold glow-emerald-repro"
+                                      : "bg-slate-900 text-slate-500 border border-slate-800 line-through opacity-50"
                                   }`}
                                   title={wasDetected ? `Detected by ${s.name}` : `Not detected by ${s.name}`}
                                 >
                                   <span>{s.name.slice(0, 12)}</span>
                                   {wasDetected ? (
-                                    <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                    <Check className="w-2.5 h-2.5 text-emerald-400" />
                                   ) : (
-                                    <XCircle className="w-2.5 h-2.5 text-slate-400" />
+                                    <XCircle className="w-2.5 h-2.5 text-slate-500" />
                                   )}
                                 </span>
                               );
@@ -578,7 +578,7 @@ export default function ScanComparisonPage() {
                         </td>
 
                         <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-wrap gap-1.5 font-mono">
                             {comparisonData.scans.map((s: any) => {
                               const hasPoC = Boolean(f.has_poc?.[s.id]);
                               const isRepro = f.scan_statuses?.[s.id] === "reproduced";
@@ -590,10 +590,10 @@ export default function ScanComparisonPage() {
                                   key={s.id}
                                   className={`px-2 py-0.5 rounded text-[10px] font-semibold flex items-center space-x-1 ${
                                     isRepro
-                                      ? "bg-purple-100 text-purple-900 border border-purple-300 font-bold"
+                                      ? "bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 font-bold glow-emerald-repro"
                                       : hasPoC
-                                      ? "bg-amber-50 text-amber-800 border border-amber-200"
-                                      : "bg-slate-50 text-slate-500 border border-slate-200"
+                                      ? "bg-amber-950/80 text-amber-300 border border-amber-500/60"
+                                      : "bg-slate-900 text-slate-500 border border-slate-800"
                                   }`}
                                   title={`${s.name}: ${isRepro ? "Exploit Proven" : hasPoC ? "PoC Generated" : "Static Only"}`}
                                 >
@@ -613,10 +613,10 @@ export default function ScanComparisonPage() {
           </div>
         </div>
       ) : (
-        <div className="p-12 text-center bg-white rounded-2xl border border-purple-100/90 space-y-3">
-          <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
-          <h3 className="text-sm font-bold text-slate-900">Select at least 2 scans to compare</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+        <div className="p-12 text-center glass-card rounded-2xl border border-slate-800 space-y-3">
+          <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto" />
+          <h3 className="text-sm font-bold text-white">Select at least 2 scans to compare</h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
             Choose multiple audit runs above to evaluate model performance, cost, and finding overlap side-by-side.
           </p>
         </div>

@@ -325,7 +325,7 @@ export default function ScanDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
       </div>
     );
   }
@@ -343,58 +343,58 @@ export default function ScanDetailPage() {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="glass-card rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center space-x-2.5">
-            <h1 className="text-xl font-extrabold text-slate-900 max-w-xl truncate">
+            <h1 className="text-xl font-extrabold text-white max-w-xl truncate">
               {scan.name || scan.source_target}
             </h1>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${
+              className={`px-2.5 py-0.5 rounded-full text-xs font-bold font-mono capitalize ${
                 scan.status === "completed"
-                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  ? "bg-emerald-950/80 text-emerald-300 border border-emerald-600/70 shadow-xs"
                   : scan.status === "running"
-                  ? "bg-purple-50 text-purple-800 border border-purple-200 animate-pulse"
+                  ? "bg-amber-950/80 text-amber-300 border border-amber-500/80 animate-pulse glow-amber-btn"
                   : scan.status === "failed" || scan.status === "budget_exceeded"
-                  ? "bg-rose-50 text-rose-800 border border-rose-200"
-                  : "bg-amber-50 text-amber-800 border border-amber-200"
+                  ? "bg-rose-950/80 text-rose-300 border border-rose-600/70 glow-rose-crit"
+                  : "bg-slate-900 text-slate-300 border border-slate-700"
               }`}
             >
               {scan.status.replace("_", " ")}
             </span>
           </div>
           {scan.name && scan.name !== scan.source_target && (
-            <p className="text-xs font-mono text-slate-500 truncate max-w-xl">
+            <p className="text-xs font-mono text-slate-400 truncate max-w-xl">
               {scan.source_target}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
             {scan.branch && (
-              <span className="flex items-center space-x-1 font-mono text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/80">
-                <GitBranch className="w-3.5 h-3.5 text-purple-600" />
+              <span className="flex items-center space-x-1 font-mono text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800/60">
+                <GitBranch className="w-3.5 h-3.5 text-amber-400" />
                 <span>{scan.branch}</span>
               </span>
             )}
             <span className="flex items-center space-x-1">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <Clock className="w-3.5 h-3.5 text-slate-500" />
               <span>{new Date(scan.created_at).toLocaleString()}</span>
             </span>
-            <span className="flex items-center space-x-1 text-amber-800 font-mono font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-              <DollarSign className="w-3.5 h-3.5 text-amber-600" />
+            <span className="flex items-center space-x-1 text-amber-300 font-mono font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/80">
+              <DollarSign className="w-3.5 h-3.5 text-amber-400" />
               <span>
                 ${(scan.cost_spent_usd || 0).toFixed(4)}
                 {scan.budget_limit_usd && ` / $${scan.budget_limit_usd.toFixed(2)}`}
               </span>
             </span>
             <span
-              className="flex items-center space-x-1.5 text-indigo-800 font-mono font-bold bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200"
+              className="flex items-center space-x-1.5 text-cyan-300 font-mono font-bold bg-cyan-950/60 px-2.5 py-0.5 rounded border border-cyan-800/80"
               title={`Prompt Tokens: ${(scan.prompt_tokens || 0).toLocaleString()} | Completion Tokens: ${(scan.completion_tokens || 0).toLocaleString()}`}
             >
-              <Cpu className="w-3.5 h-3.5 text-indigo-600" />
+              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
               <span>
                 {formatTokens(scan.total_tokens || 0)} Tokens
-                <span className="text-[10px] text-indigo-600 font-normal ml-1">
+                <span className="text-[10px] text-cyan-400 font-normal ml-1">
                   ({formatTokens(scan.prompt_tokens || 0)} in / {formatTokens(scan.completion_tokens || 0)} out)
                 </span>
               </span>
@@ -403,34 +403,34 @@ export default function ScanDetailPage() {
 
           {/* Quick Config Badges */}
           <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Model">
-              <Cpu className="w-3 h-3 text-purple-600" />
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Model">
+              <Cpu className="w-3 h-3 text-amber-400" />
               <span>{scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}</span>
             </span>
-            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Reasoning Effort">
-              <Sliders className="w-3 h-3 text-indigo-600" />
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Reasoning Effort">
+              <Sliders className="w-3 h-3 text-cyan-400" />
               <span>effort: {scan.scan_config?.reasoning_effort || scan.reasoning_effort || "medium"}</span>
             </span>
-            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Scan Mode">
-              <Layers className="w-3 h-3 text-cyan-600" />
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Scan Mode">
+              <Layers className="w-3 h-3 text-indigo-400" />
               <span>mode: {scan.scan_config?.scan_mode || "file-by-file"}</span>
             </span>
-            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded border border-slate-200" title="Sandbox">
-              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+            <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Sandbox">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
               <span>sandbox: {scan.scan_config?.sandbox || scan.sandbox || "static-only"}</span>
             </span>
             {(scan.scan_config?.focus || scan.focus) && (
-              <span className="flex items-center space-x-1 font-mono text-[11px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200" title="Focus">
-                <Target className="w-3 h-3 text-amber-600" />
+              <span className="flex items-center space-x-1 font-mono text-[11px] bg-amber-950/60 text-amber-300 px-2 py-0.5 rounded border border-amber-800/80" title="Focus">
+                <Target className="w-3 h-3 text-amber-400" />
                 <span>focus: {scan.scan_config?.focus || scan.focus}</span>
               </span>
             )}
             <button
               onClick={() => setActiveTab("config")}
-              className="flex items-center space-x-1 font-mono text-[11px] font-medium text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded border border-purple-200 transition-colors cursor-pointer"
+              className="flex items-center space-x-1 font-mono text-[11px] font-medium text-amber-400 hover:text-amber-300 bg-amber-950/40 hover:bg-amber-900/50 px-2 py-0.5 rounded border border-amber-800/60 transition-colors cursor-pointer"
               title="Inspect full scan parameters and execution strategy"
             >
-              <Settings className="w-3 h-3 text-purple-600" />
+              <Settings className="w-3 h-3 text-amber-400" />
               <span>View Full Config &rarr;</span>
             </button>
           </div>
@@ -442,17 +442,17 @@ export default function ScanDetailPage() {
             <button
               type="button"
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-800 border border-slate-300 hover:border-purple-300 hover:bg-purple-50/50 transition-all shadow-xs cursor-pointer"
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900/90 text-slate-200 border border-slate-700 hover:border-amber-500/50 hover:text-white transition-all shadow-xs cursor-pointer"
               title="Export pentest reports in PDF, CSV, JSON, and SARIF formats"
             >
-              <Download className="w-3.5 h-3.5 text-purple-600" />
+              <Download className="w-3.5 h-3.5 text-amber-400" />
               <span>Export Deliverables</span>
               <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showExportMenu ? "rotate-180" : ""}`} />
             </button>
 
             {showExportMenu && (
-              <div className="absolute right-0 top-full mt-1.5 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="absolute right-0 top-full mt-1.5 w-72 bg-[#0f1422] border border-slate-800 rounded-xl shadow-2xl z-50 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                   Audit &amp; Pentest Reports
                 </div>
 
@@ -462,13 +462,13 @@ export default function ScanDetailPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setShowExportMenu(false)}
-                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 >
-                  <Printer className="w-4 h-4 text-purple-600 shrink-0" />
+                  <Printer className="w-4 h-4 text-amber-400 shrink-0" />
                   <div className="flex-1">
                     <div className="font-bold flex items-center justify-between">
                       <span>Pentest PDF Report</span>
-                      <span className="text-[10px] font-mono text-purple-700 bg-purple-100 px-1 rounded font-bold">PDF / Print</span>
+                      <span className="text-[10px] font-mono text-amber-300 bg-amber-950/80 px-1 rounded font-bold border border-amber-800/80">PDF / Print</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-normal">Executive &amp; Technical Disclosures</div>
                   </div>
@@ -479,13 +479,13 @@ export default function ScanDetailPage() {
                   href={`/api/scans/${id}/export/csv?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
                   download
                   onClick={() => setShowExportMenu(false)}
-                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
                   <div className="flex-1">
                     <div className="font-bold flex items-center justify-between">
                       <span>CSV Spreadsheet</span>
-                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded font-bold">.csv</span>
+                      <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/80 px-1 rounded font-bold border border-emerald-800/60">.csv</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-normal">Spreadsheet finding matrix</div>
                   </div>
@@ -496,13 +496,13 @@ export default function ScanDetailPage() {
                   href={`/api/scans/${id}/export/json?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
                   download
                   onClick={() => setShowExportMenu(false)}
-                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 >
-                  <FileJson className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <FileJson className="w-4 h-4 text-cyan-400 shrink-0" />
                   <div className="flex-1">
                     <div className="font-bold flex items-center justify-between">
                       <span>JSON Audit Report</span>
-                      <span className="text-[10px] font-mono text-indigo-700 bg-indigo-50 px-1 rounded font-bold">.json</span>
+                      <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-1 rounded font-bold border border-cyan-800/60">.json</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-normal">Full machine-readable metadata</div>
                   </div>
@@ -513,32 +513,32 @@ export default function ScanDetailPage() {
                   href={`/api/scans/${id}/export/sarif?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
                   download
                   onClick={() => setShowExportMenu(false)}
-                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 >
-                  <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
                   <div className="flex-1">
                     <div className="font-bold flex items-center justify-between">
                       <span>SARIF v2.1.0</span>
-                      <span className="text-[10px] font-mono text-sky-700 bg-sky-50 px-1 rounded font-bold">.sarif</span>
+                      <span className="text-[10px] font-mono text-sky-300 bg-sky-950/80 px-1 rounded font-bold border border-sky-800/60">.sarif</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-normal">OASIS standard (sansarif) for CI/CD</div>
                   </div>
                 </a>
 
-                <div className="border-t border-slate-100 pt-1 my-1"></div>
+                <div className="border-t border-slate-800 pt-1 my-1"></div>
 
                 {/* Patch Diff */}
                 <a
                   href={`/api/scans/${id}/export/patch?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
                   download
                   onClick={() => setShowExportMenu(false)}
-                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 >
-                  <FileCode className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <FileCode className="w-4 h-4 text-emerald-400 shrink-0" />
                   <div className="flex-1">
                     <div className="font-bold flex items-center justify-between">
                       <span>Unified Patch</span>
-                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded">.diff</span>
+                      <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/80 px-1 rounded border border-emerald-800/60">.diff</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-normal">Verified Git patches for all findings</div>
                   </div>
@@ -549,13 +549,13 @@ export default function ScanDetailPage() {
                   href={`/api/scans/${id}/export/bundle?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
                   download
                   onClick={() => setShowExportMenu(false)}
-                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-purple-900 hover:bg-purple-50 transition-colors"
+                  className="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
                 >
-                  <Download className="w-4 h-4 text-purple-600 shrink-0" />
+                  <Download className="w-4 h-4 text-amber-400 shrink-0" />
                   <div className="flex-1">
                     <div className="font-bold flex items-center justify-between">
                       <span>Complete ZIP Bundle</span>
-                      <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-1 rounded">.zip</span>
+                      <span className="text-[10px] font-mono text-amber-300 bg-amber-950/80 px-1 rounded border border-amber-800/80">.zip</span>
                     </div>
                     <div className="text-[10px] text-slate-400 font-normal">Findings, patches, logs, reproducers</div>
                   </div>
@@ -568,19 +568,19 @@ export default function ScanDetailPage() {
           <a
             href={`/api/scans/${id}/export/patch?token=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("sast_auth_token") || "" : "")}`}
             download
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-xs"
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900/60 transition-all shadow-xs"
             title="Download unified git patch (.diff)"
           >
-            <FileCode className="w-3.5 h-3.5 text-emerald-700" />
+            <FileCode className="w-3.5 h-3.5 text-emerald-400" />
             <span>.patch</span>
           </a>
 
           {/* Deep link into Swarm Trace Inspector */}
           <button
             onClick={() => setActiveTab("trace")}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100 transition-all shadow-xs cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-500/20 glow-amber-btn transition-all cursor-pointer"
           >
-            <Brain className="w-3.5 h-3.5 text-purple-700" />
+            <Brain className="w-3.5 h-3.5 text-slate-950 fill-current" />
             <span>Inspect Swarm Traces</span>
           </button>
 
@@ -590,7 +590,7 @@ export default function ScanDetailPage() {
               <button
                 onClick={handleResume}
                 disabled={actionLoading}
-                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 transition-all shadow-md shadow-amber-500/20 glow-amber-btn disabled:opacity-50 cursor-pointer"
                 title="Resume scan from last completed checkpoint without re-cloning or re-auditing finished modules"
               >
                 <Play className={`w-3.5 h-3.5 fill-current ${actionLoading ? "animate-spin" : ""}`} />
@@ -599,7 +599,7 @@ export default function ScanDetailPage() {
               <button
                 onClick={handleRetry}
                 disabled={actionLoading}
-                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 hover:text-white transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                 title="Wipe previous checkpoints and restart this scan from scratch"
               >
                 <RotateCcw className={`w-3.5 h-3.5 ${actionLoading ? "animate-spin" : ""}`} />
@@ -611,9 +611,9 @@ export default function ScanDetailPage() {
           {scan.status === "running" && (
             <button
               onClick={handleCancel}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 transition-all shadow-xs"
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-950/80 text-rose-300 border border-rose-700/60 hover:bg-rose-900/80 transition-all shadow-xs"
             >
-              <StopCircle className="w-3.5 h-3.5 text-rose-600" />
+              <StopCircle className="w-3.5 h-3.5 text-rose-400" />
               <span>Abort Scan</span>
             </button>
           )}
@@ -622,14 +622,14 @@ export default function ScanDetailPage() {
 
       {/* Scan Error Banner */}
       {(scan.status === "failed" || scan.status === "budget_exceeded" || scan.status === "error") && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-900 shadow-xs">
+        <div className="p-4 bg-rose-950/60 border border-rose-800/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-200 shadow-xl">
           <div className="flex items-start space-x-3 overflow-hidden">
-            <AlertTriangle className="w-5 h-5 text-rose-600 mt-0.5 shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-rose-400 mt-0.5 shrink-0" />
             <div className="space-y-1 overflow-hidden">
-              <h4 className="text-xs font-bold uppercase tracking-wide text-rose-800">
+              <h4 className="text-xs font-bold uppercase tracking-wide text-rose-300 font-mono">
                 Scan Execution Paused or Failed
               </h4>
-              <p className="text-xs font-mono text-rose-700 whitespace-pre-wrap break-all">
+              <p className="text-xs font-mono text-rose-300 whitespace-pre-wrap break-all">
                 {scan.error_message || "The autonomous analysis pipeline encountered an interruption. You can resume from the last completed stage or restart from scratch."}
               </p>
             </div>
@@ -638,7 +638,7 @@ export default function ScanDetailPage() {
             <button
               onClick={handleResume}
               disabled={actionLoading}
-              className="px-3.5 py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-xl flex items-center space-x-1.5 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center space-x-1.5 transition-all shadow-md shadow-amber-500/20 glow-amber-btn disabled:opacity-50 cursor-pointer"
               title="Resume from last completed checkpoint"
             >
               <Play className={`w-3.5 h-3.5 fill-current ${actionLoading ? "animate-spin" : ""}`} />
@@ -647,7 +647,7 @@ export default function ScanDetailPage() {
             <button
               onClick={handleRetry}
               disabled={actionLoading}
-              className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl flex items-center space-x-1.5 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl flex items-center space-x-1.5 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
               title="Restart from scratch"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${actionLoading ? "animate-spin" : ""}`} />
@@ -658,17 +658,17 @@ export default function ScanDetailPage() {
       )}
 
       {/* Visual Funnel Stepper */}
-      <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs">
+      <div className="glass-card rounded-2xl p-5 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
           <div className="flex items-center space-x-2">
-            <Cpu className="w-4 h-4 text-purple-700" />
-            <span className="text-xs font-bold uppercase text-purple-900 tracking-wider">
+            <Cpu className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-bold uppercase text-amber-300 tracking-wider font-mono">
               Autonomous Verification Funnel
             </span>
           </div>
-          <span className="text-xs font-mono text-slate-500 flex items-center space-x-1.5">
+          <span className="text-xs font-mono text-slate-400 flex items-center space-x-1.5">
             <span>Click any stage box to filter Swarm Traces, reasoning &amp; tool calls</span>
-            <Brain className="w-3 h-3 text-purple-600" />
+            <Brain className="w-3 h-3 text-amber-400" />
           </span>
         </div>
 
@@ -692,38 +692,38 @@ export default function ScanDetailPage() {
                 }
                 className={`group relative p-3 rounded-xl border text-center transition-all duration-150 cursor-pointer hover:shadow-md hover:-translate-y-0.5 block w-full ${
                   isCurrent
-                    ? "bg-purple-50 border-purple-600 text-purple-900 ring-2 ring-purple-200 shadow-xs font-bold hover:bg-purple-100/80"
+                    ? "bg-amber-950/80 border-amber-500 text-amber-300 ring-2 ring-amber-500/30 shadow-md font-bold glow-amber-btn"
                     : isDone
-                    ? "bg-emerald-50/80 border-emerald-200 text-emerald-800 font-semibold hover:border-purple-400 hover:bg-purple-50/60"
-                    : "bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300 hover:bg-slate-100"
+                    ? "bg-emerald-950/40 border-emerald-800/80 text-emerald-300 font-semibold hover:border-amber-400/70 hover:bg-emerald-950/60"
+                    : "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/40"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1 px-0.5">
                   <div className="flex items-center space-x-1">
                     {isDone ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     ) : isCurrent ? (
-                      <div className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-ping" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
                     ) : (
-                      <span className="w-3 h-3 text-[10px] text-slate-400 font-mono">{idx + 1}</span>
+                      <span className="w-3 h-3 text-[10px] text-slate-500 font-mono">{idx + 1}</span>
                     )}
                   </div>
-                  <Brain className="w-3 h-3 text-slate-400 group-hover:text-purple-700 opacity-60 group-hover:opacity-100 transition-all" />
+                  <Brain className="w-3 h-3 text-slate-500 group-hover:text-amber-400 opacity-60 group-hover:opacity-100 transition-all" />
                 </div>
-                <span className="text-xs font-semibold block truncate group-hover:text-purple-900 transition-colors">
+                <span className="text-xs font-semibold block truncate group-hover:text-amber-300 transition-colors">
                   {p.label}
                 </span>
                 <div className="mt-1 flex items-center justify-center">
                   {obsCount ? (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-purple-100/90 text-purple-800 font-medium group-hover:bg-purple-200 transition-colors">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800/60 font-medium group-hover:bg-amber-900/80 transition-colors">
                       {obsCount} step{obsCount > 1 ? "s" : ""}
                     </span>
                   ) : p.id === "ingest" ? (
-                    <span className="text-[10px] font-mono text-slate-400 group-hover:text-slate-600">
+                    <span className="text-[10px] font-mono text-slate-500 group-hover:text-slate-400">
                       git clone
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono text-slate-400 group-hover:text-purple-600">
+                    <span className="text-[10px] font-mono text-slate-500 group-hover:text-amber-400">
                       view trace
                     </span>
                   )}
@@ -739,9 +739,9 @@ export default function ScanDetailPage() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
           <div className="px-4 py-2.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center space-x-2 font-mono">
-              <Terminal className="w-3.5 h-3.5 text-purple-400" />
+              <Terminal className="w-3.5 h-3.5 text-amber-400" />
               <span className="text-slate-200 font-bold">Live Execution Stream</span>
-              <span className="text-[10px] text-purple-300 font-mono">({streamLogs.length} events)</span>
+              <span className="text-[10px] text-amber-300 font-mono">({streamLogs.length} events)</span>
             </span>
             <div className="flex items-center space-x-3">
               <button
@@ -749,7 +749,7 @@ export default function ScanDetailPage() {
                 onClick={() => setAutoScrollLogs(!autoScrollLogs)}
                 className={`text-[10px] px-2 py-0.5 rounded font-mono border transition-colors cursor-pointer ${
                   autoScrollLogs
-                    ? "bg-purple-900/60 border-purple-500 text-purple-200 font-bold"
+                    ? "bg-amber-950/80 border-amber-500 text-amber-300 font-bold"
                     : "bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200"
                 }`}
                 title="Toggle internal auto-scroll to latest log event"
@@ -766,7 +766,7 @@ export default function ScanDetailPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("logs")}
-                className="text-[11px] text-purple-300 font-mono hover:underline"
+                className="text-[11px] text-amber-300 font-mono hover:underline"
               >
                 Full Console &rarr;
               </button>
@@ -775,7 +775,7 @@ export default function ScanDetailPage() {
           {showConsolePreview && (
             <div
               ref={previewScrollContainerRef}
-              className="p-3 max-h-36 overflow-y-auto font-mono text-xs text-slate-300 space-y-1 bg-[#0b0f17]"
+              className="p-3 max-h-36 overflow-y-auto font-mono text-xs text-slate-300 space-y-1 bg-[#070a12]"
             >
               {streamLogs.length === 0 ? (
                 <div className="text-slate-500 italic py-1">Waiting for pipeline events...</div>
@@ -792,13 +792,13 @@ export default function ScanDetailPage() {
       )}
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-purple-100/90 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-2">
         <button
           onClick={() => { setActiveTab("findings"); fetchScan(); }}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "findings"
-              ? "bg-purple-700 text-white shadow-xs"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-900"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20"
+              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200 font-semibold"
           }`}
         >
           <ShieldAlert className="w-4 h-4" />
@@ -807,10 +807,10 @@ export default function ScanDetailPage() {
 
         <button
           onClick={() => { setActiveTab("trace"); }}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "trace"
-              ? "bg-purple-700 text-white shadow-xs"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-900"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20"
+              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200 font-semibold"
           }`}
         >
           <Brain className="w-4 h-4" />
@@ -819,10 +819,10 @@ export default function ScanDetailPage() {
 
         <button
           onClick={() => { setActiveTab("threat_model"); fetchScan(); }}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "threat_model"
-              ? "bg-purple-700 text-white shadow-xs"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-900"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20"
+              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200 font-semibold"
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -831,10 +831,10 @@ export default function ScanDetailPage() {
 
         <button
           onClick={() => { setActiveTab("review_packet"); fetchScan(); }}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "review_packet"
-              ? "bg-purple-700 text-white shadow-xs"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-900"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20"
+              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200 font-semibold"
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -843,10 +843,10 @@ export default function ScanDetailPage() {
 
         <button
           onClick={() => { setActiveTab("config"); }}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "config"
-              ? "bg-purple-700 text-white shadow-xs"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-900"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20"
+              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200 font-semibold"
           }`}
         >
           <Sliders className="w-4 h-4" />
@@ -855,10 +855,10 @@ export default function ScanDetailPage() {
 
         <button
           onClick={() => { setActiveTab("logs"); }}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === "logs"
-              ? "bg-purple-700 text-white shadow-xs"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-purple-50 hover:text-purple-900"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-md shadow-amber-500/20"
+              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-slate-200 font-semibold"
           }`}
         >
           <Terminal className="w-4 h-4" />
@@ -888,22 +888,22 @@ export default function ScanDetailPage() {
 
           {/* Full Architecture Review Specification Report */}
           {scan.architecture_summary ? (
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="glass-card rounded-2xl p-6 shadow-xl space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center space-x-2">
-                  <Layers className="w-5 h-5 text-purple-700" />
-                  <h3 className="text-base font-bold text-slate-900">
+                  <Layers className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-base font-bold text-white">
                     System Architecture Review &amp; Trust Boundaries Report (mantis-architecture)
                   </h3>
                 </div>
-                <span className="text-xs font-mono text-slate-500">architecture.md</span>
+                <span className="text-xs font-mono text-slate-400">architecture.md</span>
               </div>
-              <div className="font-mono text-xs text-slate-700 bg-slate-50/70 p-5 rounded-xl border border-slate-200/80 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
+              <div className="font-mono text-xs text-slate-200 bg-slate-950 p-5 rounded-xl border border-slate-800 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
                 {scan.architecture_summary}
               </div>
             </div>
           ) : (
-            <div className="bg-purple-50/60 border border-purple-200/70 rounded-2xl p-6 text-center text-xs text-purple-900">
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center text-xs text-slate-400 font-mono">
               Architecture review document is generating during the Recon phase. It will appear automatically once Recon completes.
             </div>
           )}
@@ -916,17 +916,17 @@ export default function ScanDetailPage() {
 
           {/* Full Threat Model Specification Report */}
           {scan.threat_model && (
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="glass-card rounded-2xl p-6 shadow-xl space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center space-x-2">
-                  <ShieldAlert className="w-5 h-5 text-rose-600" />
-                  <h3 className="text-base font-bold text-slate-900">
+                  <ShieldAlert className="w-5 h-5 text-rose-500" />
+                  <h3 className="text-base font-bold text-white">
                     STRIDE Threat Model &amp; Attack Surface Matrix (mantis-threat-model)
                   </h3>
                 </div>
-                <span className="text-xs font-mono text-slate-500">threat_model.md</span>
+                <span className="text-xs font-mono text-slate-400">threat_model.md</span>
               </div>
-              <div className="font-mono text-xs text-slate-700 bg-slate-50/70 p-5 rounded-xl border border-slate-200/80 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
+              <div className="font-mono text-xs text-slate-200 bg-slate-950 p-5 rounded-xl border border-slate-800 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
                 {scan.threat_model}
               </div>
             </div>
@@ -934,12 +934,12 @@ export default function ScanDetailPage() {
 
           {/* Actionable Hunting Plan */}
           {scan.hunting_plan && (
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs space-y-3">
-              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-base font-bold text-slate-900">Actionable Hunting Plan (mantis-plan)</h3>
+            <div className="glass-card rounded-2xl p-6 shadow-xl space-y-3">
+              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-base font-bold text-white">Actionable Hunting Plan (mantis-plan)</h3>
               </div>
-              <div className="font-mono text-xs text-slate-700 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
+              <div className="font-mono text-xs text-slate-200 bg-slate-950 p-4 rounded-xl border border-slate-800 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
                 {scan.hunting_plan}
               </div>
             </div>
@@ -950,32 +950,32 @@ export default function ScanDetailPage() {
       {/* Tab Panel: Executive Review Packet */}
       {activeTab === "review_packet" && (
         <div className="space-y-6">
-          <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="glass-card rounded-2xl p-6 shadow-xl space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
-                <FileText className="w-5 h-5 text-purple-700" />
-                <h3 className="text-base font-bold text-slate-900">Executive Security Review Packet (mantis-report)</h3>
+                <FileText className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-bold text-white">Executive Security Review Packet (mantis-report)</h3>
               </div>
-              <span className="text-xs font-mono text-slate-500">review_packet.md</span>
+              <span className="text-xs font-mono text-slate-400">review_packet.md</span>
             </div>
             {scan.review_packet ? (
-              <div className="font-mono text-xs text-slate-700 bg-slate-50/70 p-5 rounded-xl border border-slate-200/80 whitespace-pre-wrap leading-relaxed max-h-[600px] overflow-y-auto">
+              <div className="font-mono text-xs text-slate-200 bg-slate-950 p-5 rounded-xl border border-slate-800 whitespace-pre-wrap leading-relaxed max-h-[600px] overflow-y-auto">
                 {scan.review_packet}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 italic py-6 text-center">
+              <p className="text-xs text-slate-400 italic py-6 text-center font-mono">
                 Executive report generation is finalized upon completion of the audit pipeline.
               </p>
             )}
           </div>
 
           {scan.exploit_chains && (
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs space-y-3">
-              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                <ShieldCheck className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-base font-bold text-slate-900">Multi-Step Exploit Chains (mantis-chain)</h3>
+            <div className="glass-card rounded-2xl p-6 shadow-xl space-y-3">
+              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <ShieldCheck className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-base font-bold text-white">Multi-Step Exploit Chains (mantis-chain)</h3>
               </div>
-              <div className="font-mono text-xs text-slate-700 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80 whitespace-pre-wrap leading-relaxed">
+              <div className="font-mono text-xs text-slate-200 bg-slate-950 p-4 rounded-xl border border-slate-800 whitespace-pre-wrap leading-relaxed">
                 {typeof scan.exploit_chains === "string" ? scan.exploit_chains : scan.exploit_chains.raw || JSON.stringify(scan.exploit_chains, null, 2)}
               </div>
             </div>
@@ -985,20 +985,20 @@ export default function ScanDetailPage() {
 
       {/* Tab Panel: Execution Console */}
       {activeTab === "logs" && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm space-y-0">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl space-y-0">
           <div className="px-5 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center space-x-2 font-mono">
-              <Terminal className="w-4 h-4 text-purple-400" />
-              <span className="text-slate-200 font-bold">Comprehensive Pipeline Execution Stream</span>
+              <Terminal className="w-4 h-4 text-amber-400" />
+              <span className="text-white font-bold">Comprehensive Pipeline Execution Stream</span>
             </span>
             <div className="flex items-center space-x-3">
-              <span className="text-[11px] text-purple-300 font-mono">{streamLogs.length} events recorded</span>
+              <span className="text-[11px] text-amber-300 font-mono">{streamLogs.length} events recorded</span>
               <button
                 type="button"
                 onClick={() => setAutoScrollLogs(!autoScrollLogs)}
                 className={`text-[10px] px-2.5 py-1 rounded font-mono border transition-colors cursor-pointer ${
                   autoScrollLogs
-                    ? "bg-purple-900/60 border-purple-500 text-purple-200 font-bold"
+                    ? "bg-amber-950/80 border-amber-500 text-amber-300 font-bold"
                     : "bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200"
                 }`}
                 title="Toggle internal auto-scroll to latest log event"
@@ -1011,14 +1011,14 @@ export default function ScanDetailPage() {
                 className="flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] border border-slate-700 transition-colors"
                 title="Download full pipeline.log"
               >
-                <Download className="w-3 h-3 text-purple-400" />
+                <Download className="w-3 h-3 text-amber-400" />
                 <span>Download pipeline.log</span>
               </a>
             </div>
           </div>
           <div
             ref={fullConsoleScrollContainerRef}
-            className="p-4 max-h-[600px] overflow-y-auto font-mono text-xs text-slate-300 space-y-1.5 bg-[#0b0f17]"
+            className="p-4 max-h-[600px] overflow-y-auto font-mono text-xs text-slate-300 space-y-1.5 bg-[#070a12]"
           >
             {streamLogs.length === 0 ? (
               <div className="text-slate-500 italic py-6 text-center">
@@ -1039,24 +1039,24 @@ export default function ScanDetailPage() {
       {activeTab === "config" && (
         <div className="space-y-6">
           {/* Header Card */}
-          <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="glass-card rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <Sliders className="w-5 h-5 text-purple-700" />
-                <h3 className="text-base font-bold text-slate-900">
+                <Sliders className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-bold text-white">
                   Autonomous Scan Configuration &amp; Orchestration Parameters
                 </h3>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 Detailed runtime parameters, AI reasoning engine specs, sandboxing constraints, and equivalent Google Mantis ADK CLI command.
               </p>
             </div>
             <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={() => handleCopyCli(generateCliCommand())}
-                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition-all cursor-pointer shadow-xs"
+                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-950/60 text-amber-300 border border-amber-800/80 hover:bg-amber-900/80 transition-all cursor-pointer shadow-xs"
               >
-                {copiedCli ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-purple-600" />}
+                {copiedCli ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
                 <span>{copiedCli ? "CLI Copied!" : "Copy CLI Command"}</span>
               </button>
             </div>
@@ -1065,35 +1065,35 @@ export default function ScanDetailPage() {
           {/* 4 Core Parameter Cards in Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Card 1: AI Model & Reasoning Engine */}
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                <Cpu className="w-4 h-4 text-purple-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-900">
+            <div className="glass-card rounded-2xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <Cpu className="w-4 h-4 text-amber-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono">
                   AI Model &amp; Reasoning Engine
                 </h4>
               </div>
               <dl className="grid grid-cols-1 gap-3 text-xs">
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Model Architecture</dt>
-                  <dd className="font-mono font-bold text-purple-900 bg-purple-50 px-2.5 py-0.5 rounded border border-purple-200/80">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Model Architecture</dt>
+                  <dd className="font-mono font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-800/60">
                     {scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Reasoning Effort Tier</dt>
-                  <dd className="font-mono font-bold text-slate-800 capitalize bg-slate-100 px-2 py-0.5 rounded">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Reasoning Effort Tier</dt>
+                  <dd className="font-mono font-bold text-slate-200 capitalize bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
                     {scan.scan_config?.reasoning_effort || scan.reasoning_effort || "medium"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Max LLM Calls / Turns</dt>
-                  <dd className="font-mono text-slate-700">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Max LLM Calls / Turns</dt>
+                  <dd className="font-mono text-slate-300">
                     {scan.scan_config?.max_llm_calls ? `${scan.scan_config.max_llm_calls} turns` : "Self-calibrated (unlimited)"}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between py-1">
-                  <dt className="text-slate-500 font-medium">API Base Gateway</dt>
-                  <dd className="font-mono text-[11px] text-slate-600 truncate max-w-[240px]" title={scan.scan_config?.api_base || "Default Google AI Studio Gateway"}>
+                  <dt className="text-slate-400 font-medium">API Base Gateway</dt>
+                  <dd className="font-mono text-[11px] text-slate-300 truncate max-w-[240px]" title={scan.scan_config?.api_base || "Default Google AI Studio Gateway"}>
                     {scan.scan_config?.api_base || "Google AI Studio (Default)"}
                   </dd>
                 </div>
@@ -1101,39 +1101,39 @@ export default function ScanDetailPage() {
             </div>
 
             {/* Card 2: Execution & Sandboxing Strategy */}
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
+            <div className="glass-card rounded-2xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300 font-mono">
                   Execution &amp; Sandboxing Strategy
                 </h4>
               </div>
               <dl className="grid grid-cols-1 gap-3 text-xs">
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Mantis Scan Mode</dt>
-                  <dd className="font-mono font-bold text-cyan-900 bg-cyan-50 px-2.5 py-0.5 rounded border border-cyan-200/80">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Mantis Scan Mode</dt>
+                  <dd className="font-mono font-bold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded border border-cyan-800/60">
                     {scan.scan_config?.scan_mode || "file-by-file"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Sandbox Environment</dt>
-                  <dd className="font-mono font-bold text-emerald-900 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200/80">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Sandbox Environment</dt>
+                  <dd className="font-mono font-bold text-emerald-300 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-800/60">
                     {scan.scan_config?.sandbox || scan.sandbox || "static-only"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Parallel Campaigns</dt>
-                  <dd className="font-mono text-slate-800">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Parallel Campaigns</dt>
+                  <dd className="font-mono text-slate-300">
                     {scan.scan_config?.parallel || 1} worker{Number(scan.scan_config?.parallel || 1) > 1 ? "s" : ""}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between py-1">
-                  <dt className="text-slate-500 font-medium">Dynamic Replanning</dt>
-                  <dd className="font-mono text-slate-800">
+                  <dt className="text-slate-400 font-medium">Dynamic Replanning</dt>
+                  <dd className="font-mono text-slate-300">
                     {scan.scan_config?.no_replan ? (
-                      <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Disabled (Static)</span>
+                      <span className="text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">Disabled (Static)</span>
                     ) : (
-                      <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Enabled (Adaptive)</span>
+                      <span className="text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">Enabled (Adaptive)</span>
                     )}
                   </dd>
                 </div>
@@ -1141,51 +1141,51 @@ export default function ScanDetailPage() {
             </div>
 
             {/* Card 3: Scope & Steering */}
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                <Target className="w-4 h-4 text-indigo-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900">
+            <div className="glass-card rounded-2xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <Target className="w-4 h-4 text-cyan-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300 font-mono">
                   Audit Scope &amp; Steering Focus
                 </h4>
               </div>
               <dl className="grid grid-cols-1 gap-3 text-xs">
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Target Repository</dt>
-                  <dd className="font-mono text-slate-900 truncate max-w-[240px]" title={scan.scan_config?.source_target || scan.source_target}>
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Target Repository</dt>
+                  <dd className="font-mono text-slate-200 truncate max-w-[240px]" title={scan.scan_config?.source_target || scan.source_target}>
                     {scan.scan_config?.source_target || scan.source_target}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Branch / Revision</dt>
-                  <dd className="font-mono text-slate-700">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Branch / Revision</dt>
+                  <dd className="font-mono text-slate-300">
                     {scan.scan_config?.branch || scan.branch || "HEAD / Default"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Vulnerability Focus</dt>
-                  <dd className="font-mono text-slate-800">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Vulnerability Focus</dt>
+                  <dd className="font-mono text-slate-200">
                     {scan.scan_config?.focus || scan.focus || "Broad spectrum (All CWE categories)"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Seed Report / Lead</dt>
-                  <dd className="font-mono text-slate-600">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Seed Report / Lead</dt>
+                  <dd className="font-mono text-slate-400">
                     {scan.scan_config?.seed_report || "None (Cold-start audit)"}
                   </dd>
                 </div>
                 <div className="flex flex-col space-y-1 py-1">
-                  <dt className="text-slate-500 font-medium">Excluded Patterns</dt>
-                  <dd className="font-mono text-[11px] text-slate-600">
+                  <dt className="text-slate-400 font-medium">Excluded Patterns</dt>
+                  <dd className="font-mono text-[11px] text-slate-300">
                     {Array.isArray(scan.scan_config?.exclude) && scan.scan_config.exclude.length > 0 ? (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {scan.scan_config.exclude.map((pat: string, idx: number) => (
-                          <span key={idx} className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                          <span key={idx} className="bg-slate-900 text-slate-300 px-1.5 py-0.5 rounded border border-slate-800">
                             {pat}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-slate-400 italic">None (Full workspace scope)</span>
+                      <span className="text-slate-500 italic">None (Full workspace scope)</span>
                     )}
                   </dd>
                 </div>
@@ -1193,43 +1193,43 @@ export default function ScanDetailPage() {
             </div>
 
             {/* Card 4: Token Budget & Guardrails */}
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                <DollarSign className="w-4 h-4 text-amber-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+            <div className="glass-card rounded-2xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <DollarSign className="w-4 h-4 text-amber-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono">
                   Token Budget &amp; Metered Guardrails
                 </h4>
               </div>
               <dl className="grid grid-cols-1 gap-3 text-xs">
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">USD Spend Limit</dt>
-                  <dd className="font-mono font-bold text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">USD Spend Limit</dt>
+                  <dd className="font-mono font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-800/60">
                     {scan.scan_config?.budget_limit_usd || scan.budget_limit_usd
                       ? `$${Number(scan.scan_config?.budget_limit_usd || scan.budget_limit_usd).toFixed(2)}`
                       : "Uncapped"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Max Token Ceiling</dt>
-                  <dd className="font-mono text-slate-800">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Max Token Ceiling</dt>
+                  <dd className="font-mono text-slate-300">
                     {scan.scan_config?.max_tokens ? formatTokens(scan.scan_config.max_tokens) : "Uncapped"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Actual Consumption</dt>
-                  <dd className="font-mono font-bold text-indigo-900 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Actual Consumption</dt>
+                  <dd className="font-mono font-bold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded border border-cyan-800/60">
                     {formatTokens(scan.total_tokens || 0)} Tokens
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-slate-50">
-                  <dt className="text-slate-500 font-medium">Token Breakdown</dt>
-                  <dd className="font-mono text-[11px] text-slate-600">
+                <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
+                  <dt className="text-slate-400 font-medium">Token Breakdown</dt>
+                  <dd className="font-mono text-[11px] text-slate-400">
                     {formatTokens(scan.prompt_tokens || 0)} prompt / {formatTokens(scan.completion_tokens || 0)} completion
                   </dd>
                 </div>
                 <div className="flex items-center justify-between py-1">
-                  <dt className="text-slate-500 font-medium">Incurred Model Spend</dt>
-                  <dd className="font-mono font-bold text-emerald-800">
+                  <dt className="text-slate-400 font-medium">Incurred Model Spend</dt>
+                  <dd className="font-mono font-bold text-emerald-400">
                     ${(scan.cost_spent_usd || 0).toFixed(4)} USD
                   </dd>
                 </div>
@@ -1238,11 +1238,11 @@ export default function ScanDetailPage() {
           </div>
 
           {/* Equivalent Google Mantis CLI Invocation */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="px-5 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center space-x-2 font-mono">
                 <Terminal className="w-4 h-4 text-emerald-400" />
-                <span className="text-slate-200 font-bold">Equivalent Google Mantis ADK CLI Command</span>
+                <span className="text-white font-bold">Equivalent Google Mantis ADK CLI Command</span>
               </span>
               <button
                 onClick={() => handleCopyCli(generateCliCommand())}
@@ -1252,7 +1252,7 @@ export default function ScanDetailPage() {
                 <span>{copiedCli ? "Copied to Clipboard!" : "Copy Command"}</span>
               </button>
             </div>
-            <div className="p-4 bg-[#0b0f17] overflow-x-auto">
+            <div className="p-4 bg-[#070a12] overflow-x-auto">
               <pre className="font-mono text-xs text-emerald-400 whitespace-pre">
                 {generateCliCommand()}
               </pre>
@@ -1260,23 +1260,23 @@ export default function ScanDetailPage() {
           </div>
 
           {/* Full Raw JSON Scan Config Viewer */}
-          <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="glass-card rounded-2xl p-5 shadow-xl space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
-                <Code className="w-4 h-4 text-purple-700" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-900">
+                <Code className="w-4 h-4 text-amber-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-white font-mono">
                   Raw Scan Configuration Payload (JSON)
                 </h4>
               </div>
               <button
                 onClick={() => handleCopyJson(JSON.stringify(scan.scan_config || {}, null, 2))}
-                className="flex items-center space-x-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition-all cursor-pointer"
+                className="flex items-center space-x-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-amber-950/60 text-amber-300 border border-amber-800/80 hover:bg-amber-900/80 transition-all cursor-pointer"
               >
-                {copiedJson ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-purple-600" />}
+                {copiedJson ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
                 <span>{copiedJson ? "JSON Copied!" : "Copy JSON"}</span>
               </button>
             </div>
-            <pre className="p-4 bg-slate-900 rounded-xl font-mono text-xs text-slate-300 border border-slate-800 overflow-x-auto max-h-80 leading-relaxed">
+            <pre className="p-4 bg-slate-950 rounded-xl font-mono text-xs text-slate-300 border border-slate-800 overflow-x-auto max-h-80 leading-relaxed">
               {JSON.stringify(scan.scan_config || {}, null, 2)}
             </pre>
           </div>
@@ -1287,8 +1287,8 @@ export default function ScanDetailPage() {
       {activeTab === "findings" && (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-            <ShieldAlert className="w-5 h-5 text-rose-600" />
+          <h2 className="text-base font-bold text-white flex items-center space-x-2">
+            <ShieldAlert className="w-5 h-5 text-rose-500" />
             <span>Verified Vulnerabilities ({scan.findings?.length || 0})</span>
           </h2>
         </div>
@@ -1302,31 +1302,31 @@ export default function ScanDetailPage() {
               return (
                 <div
                   key={f.id}
-                  className="bg-white/95 border border-purple-100/90 rounded-2xl p-6 space-y-4 shadow-xs hover:border-purple-200 transition-all"
+                  className="glass-card rounded-2xl p-6 space-y-4 shadow-xl hover:border-amber-500/50 transition-all"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide ${
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase font-mono tracking-wide ${
                             f.severity === "critical"
-                              ? "bg-rose-50 text-rose-800 border border-rose-200"
+                              ? "bg-rose-950/80 text-rose-300 border border-rose-700/80 glow-rose-crit"
                               : f.severity === "high"
-                              ? "bg-amber-50 text-amber-800 border border-amber-200"
-                              : "bg-purple-50 text-purple-800 border border-purple-200"
+                              ? "bg-amber-950/80 text-amber-300 border border-amber-700/80 glow-amber-btn"
+                              : "bg-slate-800 text-slate-300 border border-slate-700"
                           }`}
                         >
                           {f.severity}
                         </span>
                         {f.cwe && (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-purple-50 text-purple-800 border border-purple-200/60 font-semibold">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-900 text-cyan-300 border border-cyan-800/60 font-semibold">
                             {f.cwe}
                           </span>
                         )}
-                        <h3 className="text-sm font-bold text-slate-900">{f.title}</h3>
+                        <h3 className="text-sm font-bold text-white">{f.title}</h3>
                       </div>
                       {f.file_path && (
-                        <p className="text-xs font-mono text-slate-500">
+                        <p className="text-xs font-mono text-slate-400">
                           {f.file_path} {f.line_number && `(line ${f.line_number})`}
                         </p>
                       )}
@@ -1335,10 +1335,10 @@ export default function ScanDetailPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => setSelectedPentestFinding(f)}
-                        className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-[11px] font-bold text-white bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 transition-all shadow-xs cursor-pointer"
+                        className="flex items-center space-x-1.5 px-3 py-1 rounded-md text-[11px] font-bold text-slate-950 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 transition-all shadow-sm shadow-amber-500/20 cursor-pointer"
                         title="Open official Pentest Report & Advisory disclosure view for this finding"
                       >
-                        <ShieldAlert className="w-3.5 h-3.5 text-purple-200" />
+                        <ShieldAlert className="w-3.5 h-3.5 text-slate-950" />
                         <span>Pentest Report View</span>
                       </button>
 
@@ -1348,18 +1348,18 @@ export default function ScanDetailPage() {
                           setTracePhaseFilter("all");
                           setActiveTab("trace");
                         }}
-                        className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors shadow-2xs"
+                        className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-300 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors shadow-2xs cursor-pointer"
                         title="Jump to Forensic Trace, Thinking & Tool Calls for this finding"
                       >
-                        <Brain className="w-3 h-3 text-purple-600" />
+                        <Brain className="w-3 h-3 text-amber-400" />
                         <span>Trace &amp; Reasoning</span>
                       </button>
 
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold font-mono capitalize ${
                           f.status === "reproduced"
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                            : "bg-slate-100 text-slate-600"
+                            ? "bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 glow-emerald-repro"
+                            : "bg-slate-900 text-slate-400 border border-slate-800"
                         }`}
                       >
                         {f.status === "reproduced" ? "Exploit Proven" : f.status}
@@ -1367,56 +1367,56 @@ export default function ScanDetailPage() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                     {f.description}
                   </p>
 
                   {/* Enterprise Source-to-Sink Data Flow Trace */}
                   {f.source_sink_trace && (
-                    <div className="bg-slate-50/90 rounded-xl p-3.5 border border-slate-200/90 space-y-2">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 flex items-center space-x-1.5">
-                        <ArrowRight className="w-3 h-3 text-purple-600" />
+                    <div className="bg-slate-900/90 rounded-xl p-3.5 border border-slate-800 space-y-2">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono flex items-center space-x-1.5">
+                        <ArrowRight className="w-3 h-3 text-amber-400" />
                         <span>Source-to-Sink Data Flow Trace</span>
                       </span>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                         {/* Source */}
-                        <div className="bg-blue-50/80 border border-blue-200/80 rounded-lg p-2.5 space-y-1">
-                          <span className="text-[10px] font-bold text-blue-800 uppercase flex items-center space-x-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                        <div className="bg-cyan-950/40 border border-cyan-800/60 rounded-lg p-2.5 space-y-1">
+                          <span className="text-[10px] font-bold text-cyan-300 uppercase flex items-center space-x-1 font-mono">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
                             <span>Source ({f.source_sink_trace.source?.type || "External Input"})</span>
                           </span>
-                          <p className="font-mono text-[11px] text-blue-950 font-semibold break-all">
+                          <p className="font-mono text-[11px] text-cyan-100 font-semibold break-all">
                             {f.source_sink_trace.source?.parameter || "Input parameter"}
                           </p>
-                          <p className="text-[10px] text-blue-700 font-mono">
+                          <p className="text-[10px] text-cyan-400 font-mono">
                             {f.source_sink_trace.source?.file}:{f.source_sink_trace.source?.line}
                           </p>
                         </div>
 
                         {/* Propagation */}
-                        <div className="bg-amber-50/80 border border-amber-200/80 rounded-lg p-2.5 space-y-1">
-                          <span className="text-[10px] font-bold text-amber-800 uppercase flex items-center space-x-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                        <div className="bg-amber-950/40 border border-amber-800/60 rounded-lg p-2.5 space-y-1">
+                          <span className="text-[10px] font-bold text-amber-300 uppercase flex items-center space-x-1 font-mono">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                             <span>Taint Propagation</span>
                           </span>
-                          <p className="text-[11px] text-amber-950 leading-tight">
+                          <p className="text-[11px] text-amber-100 leading-tight">
                             {f.source_sink_trace.taint_path?.[0]?.statement || "Unvalidated flow into dangerous execution context"}
                           </p>
-                          <p className="text-[10px] text-amber-700 font-mono">
+                          <p className="text-[10px] text-amber-400 font-mono">
                             No sanitization or validation barrier
                           </p>
                         </div>
 
                         {/* Dangerous Sink */}
-                        <div className="bg-rose-50/80 border border-rose-200/80 rounded-lg p-2.5 space-y-1">
-                          <span className="text-[10px] font-bold text-rose-800 uppercase flex items-center space-x-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                        <div className="bg-rose-950/40 border border-rose-800/60 rounded-lg p-2.5 space-y-1">
+                          <span className="text-[10px] font-bold text-rose-300 uppercase flex items-center space-x-1 font-mono">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
                             <span>Dangerous Sink ({f.source_sink_trace.sink?.sink_type || "Sink"})</span>
                           </span>
-                          <p className="font-mono text-[11px] text-rose-950 font-semibold break-all">
+                          <p className="font-mono text-[11px] text-rose-100 font-semibold break-all">
                             {f.source_sink_trace.sink?.expression || f.file_path}
                           </p>
-                          <p className="text-[10px] text-rose-700 font-mono">
+                          <p className="text-[10px] text-rose-400 font-mono">
                             {f.source_sink_trace.sink?.file}:{f.source_sink_trace.sink?.line}
                           </p>
                         </div>
@@ -1426,12 +1426,12 @@ export default function ScanDetailPage() {
 
                   {/* Step-by-Step Reproduction Instructions */}
                   {f.exploit_steps && (
-                    <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-3.5 space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
-                        <Bug className="w-3.5 h-3.5 text-rose-500" />
+                    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center space-x-1.5">
+                        <Bug className="w-3.5 h-3.5 text-rose-400" />
                         <span>Step-by-Step Exploitation &amp; Reproduction</span>
                       </span>
-                      <div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed font-mono text-[11px] bg-white p-2.5 rounded-lg border border-slate-200/60">
+                      <div className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-mono text-[11px] bg-slate-950 p-3 rounded-lg border border-slate-800">
                         {f.exploit_steps}
                       </div>
                     </div>
@@ -1439,12 +1439,12 @@ export default function ScanDetailPage() {
 
                   {/* Remediation & Mitigation Guidance */}
                   {f.mitigation && (
-                    <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3.5 space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 flex items-center space-x-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-3.5 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 font-mono flex items-center space-x-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Remediation Guidance</span>
                       </span>
-                      <p className="text-xs text-emerald-950 whitespace-pre-wrap leading-relaxed">
+                      <p className="text-xs text-emerald-200 whitespace-pre-wrap leading-relaxed">
                         {f.mitigation}
                       </p>
                     </div>
@@ -1452,20 +1452,20 @@ export default function ScanDetailPage() {
 
                   {/* Evidence & Dynamic/Static Reproducer Accordion */}
                   {(f.poc_script || f.poc_output) && (
-                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/60">
+                    <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/60">
                       <button
                         onClick={() => setExpandedPoc({ ...expandedPoc, [f.id]: !isPocOpen })}
-                        className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200/70 flex items-center justify-between text-xs text-slate-700 transition-colors"
+                        className="w-full px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 flex items-center justify-between text-xs text-slate-300 transition-colors cursor-pointer"
                       >
-                        <span className="font-bold text-purple-900 flex items-center space-x-1.5">
-                          <Terminal className="w-3.5 h-3.5 text-purple-700" />
+                        <span className="font-bold text-amber-300 font-mono flex items-center space-x-1.5">
+                          <Terminal className="w-3.5 h-3.5 text-amber-400" />
                           <span>Verification Evidence &amp; Execution Output</span>
                         </span>
-                        {isPocOpen ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
+                        {isPocOpen ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                       </button>
 
                       {isPocOpen && (
-                        <div className="p-4 bg-slate-900 space-y-3 font-mono text-xs border-t border-slate-800 text-slate-200">
+                        <div className="p-4 bg-[#070a12] space-y-3 font-mono text-xs border-t border-slate-800 text-slate-200">
                           {f.poc_script && (
                             <div>
                               <span className="text-[10px] text-slate-400 uppercase font-semibold">reproducer.py</span>
@@ -1489,20 +1489,20 @@ export default function ScanDetailPage() {
 
                   {/* Patch Diff Accordion */}
                   {f.patch_diff && (
-                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/60">
+                    <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/60">
                       <button
                         onClick={() => setExpandedPatch({ ...expandedPatch, [f.id]: !isPatchOpen })}
-                        className="w-full px-4 py-2.5 bg-slate-100 hover:bg-slate-200/70 flex items-center justify-between text-xs text-slate-700 transition-colors"
+                        className="w-full px-4 py-2.5 bg-slate-800/60 hover:bg-slate-800 flex items-center justify-between text-xs text-slate-300 transition-colors cursor-pointer"
                       >
-                        <span className="font-bold text-emerald-800 flex items-center space-x-1.5">
-                          <FileCode className="w-3.5 h-3.5 text-emerald-700" />
+                        <span className="font-bold text-emerald-300 font-mono flex items-center space-x-1.5">
+                          <FileCode className="w-3.5 h-3.5 text-emerald-400" />
                           <span>Remediation Patch (Unified Git Diff)</span>
                         </span>
-                        {isPatchOpen ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
+                        {isPatchOpen ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
                       </button>
 
                       {isPatchOpen && (
-                        <div className="p-4 bg-slate-900 font-mono text-xs border-t border-slate-800 overflow-x-auto">
+                        <div className="p-4 bg-[#070a12] font-mono text-xs border-t border-slate-800 overflow-x-auto">
                           <pre className="text-slate-300 whitespace-pre">
                             {f.patch_diff.split("\n").map((line: string, i: number) => {
                               if (line.startsWith("+") && !line.startsWith("+++")) {
@@ -1531,10 +1531,10 @@ export default function ScanDetailPage() {
             })}
           </div>
         ) : (
-          <div className="p-8 text-center bg-white/95 border border-purple-100/90 rounded-2xl space-y-2 shadow-xs">
-            <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-            <h3 className="text-sm font-bold text-slate-900">No Vulnerabilities Confirmed</h3>
-            <p className="text-xs text-slate-500">
+          <div className="p-8 text-center glass-card rounded-2xl space-y-2 shadow-xl">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+            <h3 className="text-sm font-bold text-white">No Vulnerabilities Confirmed</h3>
+            <p className="text-xs text-slate-400">
               {scan.status === "completed"
                 ? "The codebase successfully cleared threat modeling, researcher sweeps, and adversarial critic filters."
                 : "Auditing in progress..."}

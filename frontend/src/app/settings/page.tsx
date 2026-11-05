@@ -437,24 +437,24 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Page Header */}
-      <div className="border-b border-purple-100/90 pb-3 flex items-center justify-between">
+      <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
               Platform Configuration
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 mt-1">System Settings</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-extrabold tracking-tight text-white mt-1">System Settings</h1>
+          <p className="text-xs text-slate-400 mt-0.5">
             Configure dynamic LLM provider discovery, test live model access, and inspect platform telemetry.
           </p>
         </div>
 
         <button
           onClick={loadData}
-          className="p-2 text-slate-500 hover:text-purple-900 bg-white hover:bg-purple-50 rounded-xl border border-slate-200 shadow-xs transition-all flex items-center space-x-1.5 text-xs font-semibold"
+          className="p-2 text-slate-400 hover:text-white glass-card rounded-xl border border-slate-700/80 hover:border-amber-500/50 shadow-xs transition-all flex items-center space-x-1.5 text-xs font-semibold"
           title="Refresh Settings"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -467,29 +467,29 @@ export default function SettingsPage() {
         <div
           className={`p-3.5 rounded-xl flex items-start space-x-2.5 text-xs border shadow-xs transition-all ${
             banner.type === "success"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+              ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-200"
               : banner.type === "info"
-              ? "bg-purple-50 border-purple-200 text-purple-900"
-              : "bg-rose-50 border-rose-200 text-rose-900"
+              ? "bg-amber-950/40 border-amber-500/40 text-amber-200"
+              : "bg-rose-950/40 border-rose-500/40 text-rose-200"
           }`}
         >
           {banner.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
           ) : banner.type === "info" ? (
-            <Sparkles className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
           )}
           <span className="font-medium leading-relaxed">{banner.text}</span>
         </div>
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200 w-fit space-x-1 text-xs font-bold">
+      <div className="flex rounded-xl bg-slate-900/90 p-1 border border-slate-800 w-fit space-x-1 text-xs font-bold">
         <button
           onClick={() => setActiveTab("keys")}
           className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
-            activeTab === "keys" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "keys" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
           }`}
         >
           <Key className="w-3.5 h-3.5" />
@@ -498,7 +498,7 @@ export default function SettingsPage() {
         <button
           onClick={() => setActiveTab("models")}
           className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
-            activeTab === "models" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "models" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
           }`}
         >
           <Cpu className="w-3.5 h-3.5" />
@@ -510,7 +510,7 @@ export default function SettingsPage() {
             if (!mantisStatus) loadMantisStatus();
           }}
           className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
-            activeTab === "mantis" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "mantis" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
           }`}
         >
           <GitBranch className="w-3.5 h-3.5" />
@@ -522,7 +522,7 @@ export default function SettingsPage() {
         <button
           onClick={() => setActiveTab("health")}
           className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
-            activeTab === "health" ? "bg-purple-700 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+            activeTab === "health" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-xs" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
           }`}
         >
           <Activity className="w-3.5 h-3.5" />
@@ -533,11 +533,11 @@ export default function SettingsPage() {
       {/* ── Tab 1: Provider Credentials & Dynamic Discovery ─────────────────────── */}
       {activeTab === "keys" && (
         <div className="space-y-6">
-          <div className="bg-purple-50/60 border border-purple-200/80 rounded-2xl p-4 text-xs text-purple-950 flex items-start space-x-3">
-            <Sparkles className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
+          <div className="glass-card border border-amber-500/30 rounded-2xl p-4 text-xs text-slate-300 flex items-start space-x-3">
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-purple-900">Dynamic Model Discovery &amp; Live Key Verification</p>
-              <p className="text-purple-800/90 mt-0.5">
+              <p className="font-bold text-amber-300">Dynamic Model Discovery &amp; Live Key Verification</p>
+              <p className="text-slate-400 mt-0.5">
                 Enter your provider credentials below and click <strong>&quot;Discover Models&quot;</strong>.
                 NewGenSAST queries the official provider API live, fetches all available models,
                 resolves dynamic token pricing, and runs a live 1-token test ping before whitelisting.
@@ -597,46 +597,46 @@ export default function SettingsPage() {
               return (
                 <div
                   key={provKey}
-                  className={`bg-white/95 border rounded-2xl p-5 space-y-4 shadow-xs backdrop-blur-md flex flex-col justify-between transition-all ${
+                  className={`glass-card rounded-2xl p-5 space-y-4 shadow-xl flex flex-col justify-between transition-all border ${
                     cardError
-                      ? "border-rose-300 ring-2 ring-rose-200/50 bg-rose-50/15"
+                      ? "border-rose-500/80 ring-1 ring-rose-500/40 bg-rose-950/25"
                       : st === "verified"
-                      ? "border-emerald-300 ring-1 ring-emerald-200/50"
-                      : "border-purple-100/90"
+                      ? "border-emerald-500/80 ring-1 ring-emerald-500/40 bg-emerald-950/20"
+                      : "border-slate-800 hover:border-slate-700"
                   }`}
                 >
                   <div className="space-y-4">
                     {/* Provider Card Header */}
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-slate-900 font-mono">
+                        <span className="text-sm font-bold text-white font-mono">
                           {provDisplayName}
                         </span>
                       </div>
 
                       {/* Dynamic Contextual Status Badge */}
                       {cardError || st === "error" ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-rose-50 text-rose-800 border border-rose-200 flex items-center space-x-1.5 shadow-2xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-rose-950/80 text-rose-300 border border-rose-700/60 flex items-center space-x-1.5 glow-rose-crit font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
                           <span>Connection Error</span>
                         </span>
                       ) : st === "verified" ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center space-x-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 flex items-center space-x-1.5 glow-emerald-repro font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                           <span>Verified &amp; Active</span>
                         </span>
                       ) : st === "connected" ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-purple-50 text-purple-900 border border-purple-200 flex items-center space-x-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-amber-950/80 text-amber-300 border border-amber-500/60 flex items-center space-x-1.5 font-mono">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                           <span>Connected ({discovered.length} Models)</span>
                         </span>
                       ) : hasConfig ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200 flex items-center space-x-1.5">
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-slate-800/80 text-slate-300 border border-slate-700 flex items-center space-x-1.5 font-mono">
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                           <span>Saved (Click Discover)</span>
                         </span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-slate-100 text-slate-400 border border-slate-200">
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-slate-900 text-slate-500 border border-slate-800 font-mono">
                           Not Configured
                         </span>
                       )}
@@ -645,10 +645,10 @@ export default function SettingsPage() {
                     {/* Inputs */}
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">
                           API Key / Auth Token {provConfig?.api_key_masked && `(${provConfig.api_key_masked})`}
                           {provKey === "ollama" && (
-                            <span className="text-slate-400 text-[10px] ml-1 font-normal">
+                            <span className="text-slate-500 text-[10px] ml-1 font-normal">
                               (Required for Ollama Cloud, optional for local)
                             </span>
                           )}
@@ -667,16 +667,16 @@ export default function SettingsPage() {
                               ? "•••••••••••••••• (Leave blank to keep saved key)"
                               : "Paste API key or Bearer token..."
                           }
-                          className="w-full px-3 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                          className="w-full px-3 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 font-mono transition-all"
                         />
                       </div>
 
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <label className="text-xs font-semibold text-slate-700">
+                          <label className="text-xs font-semibold text-slate-300">
                             API Base Endpoint URL
                           </label>
-                          <span className="text-[10px] text-slate-400 font-mono">
+                          <span className="text-[10px] text-slate-500 font-mono">
                             Auto-normalized
                           </span>
                         </div>
@@ -690,9 +690,9 @@ export default function SettingsPage() {
                             })
                           }
                           placeholder={placeholderUrl}
-                          className="w-full px-3 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-2 focus:ring-purple-200/50 font-mono transition-all"
+                          className="w-full px-3 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 font-mono transition-all"
                         />
-                        <p className="text-[10px] text-slate-400 mt-1">{helpText}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">{helpText}</p>
                       </div>
                     </div>
 
@@ -701,7 +701,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handleDiscoverModels(provKey)}
                         disabled={isDiscovering || isTesting}
-                        className="py-2 px-3 bg-purple-700 hover:bg-purple-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all shadow-xs"
+                        className="py-2 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all shadow-xs glow-amber-btn"
                       >
                         {isDiscovering ? (
                           <>
@@ -710,7 +710,7 @@ export default function SettingsPage() {
                           </>
                         ) : (
                           <>
-                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            <Sparkles className="w-3.5 h-3.5 text-slate-950" />
                             <span>Discover Models</span>
                           </>
                         )}
@@ -719,7 +719,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handleSaveKey(provKey)}
                         disabled={isSaving || isDiscovering}
-                        className="py-2 px-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all"
+                        className="py-2 px-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all border border-slate-700"
                       >
                         <Save className="w-3.5 h-3.5" />
                         <span>{isSaving ? "Saving..." : "Save Only"}</span>
@@ -728,15 +728,15 @@ export default function SettingsPage() {
 
                     {/* Localized Error Box - Rendered directly inside this provider card */}
                     {cardError && (
-                      <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start space-x-2.5 text-xs text-rose-900 shadow-2xs">
-                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div className="p-3 bg-rose-950/60 border border-rose-800/70 rounded-xl flex items-start space-x-2.5 text-xs text-rose-200 shadow-2xs">
+                        <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-rose-950">Connection Error</p>
-                          <p className="text-rose-800 mt-0.5 text-[11px] leading-relaxed break-words font-mono">
+                          <p className="font-bold text-rose-300">Connection Error</p>
+                          <p className="text-rose-200 mt-0.5 text-[11px] leading-relaxed break-words font-mono">
                             {cardError}
                           </p>
                           {provKey === "ollama" && (
-                            <p className="text-[10px] text-rose-700 mt-1.5">
+                            <p className="text-[10px] text-rose-300/80 mt-1.5">
                               Tip: For Ollama Cloud, use <code>https://ollama.com</code> with your Bearer API token. For local Ollama, ensure Ollama is running and accessible.
                             </p>
                           )}
@@ -746,7 +746,7 @@ export default function SettingsPage() {
                             setProviderErrors((prev) => ({ ...prev, [provKey]: null }));
                             setProviderStatus((prev) => ({ ...prev, [provKey]: "idle" }));
                           }}
-                          className="text-rose-400 hover:text-rose-700 text-xs font-bold shrink-0 ml-1"
+                          className="text-rose-400 hover:text-rose-200 text-xs font-bold shrink-0 ml-1"
                           title="Dismiss Error"
                         >
                           ✕
@@ -756,33 +756,33 @@ export default function SettingsPage() {
 
                     {/* Localized Success Box - Rendered directly inside this provider card */}
                     {cardSuccess && !cardError && (
-                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center space-x-2 text-xs text-emerald-900 shadow-2xs">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="p-2.5 bg-emerald-950/60 border border-emerald-800/70 rounded-xl flex items-center space-x-2 text-xs text-emerald-200 shadow-2xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span className="flex-1 text-[11px] font-semibold">{cardSuccess}</span>
                       </div>
                     )}
 
                     {/* Dynamic Discovery Drawer */}
                     {discovered.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-3 bg-purple-50/20 -mx-5 -mb-5 p-5 rounded-b-2xl">
+                      <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 bg-slate-950/60 -mx-5 -mb-5 p-5 rounded-b-2xl">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-1.5">
-                            <Cpu className="w-3.5 h-3.5 text-purple-700" />
-                            <span className="text-xs font-bold text-slate-900">
+                            <Cpu className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="text-xs font-bold text-white">
                               Discovered Models ({discovered.length})
                             </span>
                           </div>
                           <div className="flex items-center space-x-2 text-[11px]">
                             <button
                               onClick={() => handleToggleSelectAll(provKey, true)}
-                              className="text-purple-700 hover:underline font-semibold"
+                              className="text-amber-400 hover:text-amber-300 hover:underline font-semibold"
                             >
                               Select All
                             </button>
-                            <span className="text-slate-300">|</span>
+                            <span className="text-slate-600">|</span>
                             <button
                               onClick={() => handleToggleSelectAll(provKey, false)}
-                              className="text-slate-500 hover:underline"
+                              className="text-slate-400 hover:text-slate-200 hover:underline"
                             >
                               Deselect All
                             </button>
@@ -791,7 +791,7 @@ export default function SettingsPage() {
 
                         {/* Search Filter */}
                         <div className="relative">
-                          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
                           <input
                             type="text"
                             value={modelFilter[provKey] || ""}
@@ -799,7 +799,7 @@ export default function SettingsPage() {
                               setModelFilter({ ...modelFilter, [provKey]: e.target.value })
                             }
                             placeholder="Filter discovered models..."
-                            className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-600"
+                            className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500"
                           />
                         </div>
 
@@ -815,30 +815,30 @@ export default function SettingsPage() {
                                 onClick={() => handleToggleModelSelection(provKey, m.id)}
                                 className={`p-2 rounded-xl border transition-all cursor-pointer flex items-start space-x-2.5 ${
                                   isChecked
-                                    ? "bg-white border-purple-300 shadow-2xs"
-                                    : "bg-slate-50/60 border-slate-200 opacity-60 hover:opacity-100"
+                                    ? "bg-slate-900/90 border-amber-500/60 text-slate-100 shadow-xs ring-1 ring-amber-500/30"
+                                    : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                                 }`}
                               >
                                 <input
                                   type="checkbox"
                                   checked={isChecked}
                                   onChange={() => {}} // handled by parent onClick
-                                  className="mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                  className="mt-0.5 rounded accent-amber-500 cursor-pointer"
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between">
-                                    <span className="font-mono text-[11px] font-bold text-slate-900 truncate">
+                                    <span className="font-mono text-[11px] font-bold text-white truncate">
                                       {m.id}
                                     </span>
-                                    <span className="text-[10px] font-mono text-slate-400 shrink-0 ml-1">
+                                    <span className="text-[10px] font-mono text-slate-500 shrink-0 ml-1">
                                       {m.context_window ? `${Math.round(m.context_window / 1000)}k ctx` : "128k"}
                                     </span>
                                   </div>
                                   <div className="flex items-center justify-between mt-0.5">
-                                    <span className="text-[11px] text-slate-500 truncate">
+                                    <span className="text-[11px] text-slate-400 truncate">
                                       {m.display_name}
                                     </span>
-                                    <span className="text-[10px] font-mono font-semibold text-amber-700 shrink-0 ml-1">
+                                    <span className="text-[10px] font-mono font-semibold text-amber-400 shrink-0 ml-1">
                                       {m.cost_per_m_in || m.cost_per_m_out
                                         ? `$${m.cost_per_m_in} / $${m.cost_per_m_out}`
                                         : "Self-Hosted / $0"}
@@ -850,14 +850,14 @@ export default function SettingsPage() {
                                     <div
                                       className={`mt-1.5 px-2 py-0.5 rounded text-[10px] font-medium flex items-center space-x-1 ${
                                         tRes.status === "verified"
-                                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                          : "bg-rose-50 text-rose-800 border border-rose-200"
+                                          ? "bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 font-mono"
+                                          : "bg-rose-950/80 text-rose-300 border border-rose-700/60 font-mono"
                                       }`}
                                     >
                                       {tRes.status === "verified" ? (
-                                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                        <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
                                       ) : (
-                                        <XCircle className="w-3 h-3 text-rose-600 shrink-0" />
+                                        <XCircle className="w-3 h-3 text-rose-400 shrink-0" />
                                       )}
                                       <span className="truncate">{tRes.message}</span>
                                     </div>
@@ -872,7 +872,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => handleTestAndWhitelist(provKey)}
                           disabled={isTesting || selectedCount === 0}
-                          className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all shadow-xs"
+                          className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition-all shadow-xs glow-amber-btn"
                         >
                           {isTesting ? (
                             <>
@@ -905,48 +905,48 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 These models have been verified and whitelisted for multi-agent SAST scans.
               </p>
             </div>
 
             <div className="flex items-center space-x-2 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
                 <input
                   type="text"
                   value={whitelistFilter}
                   onChange={(e) => setWhitelistFilter(e.target.value)}
                   placeholder="Filter whitelisted models..."
-                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-600 shadow-2xs"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 shadow-2xs font-mono"
                 />
               </div>
 
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl text-xs font-black transition-all shadow-xs shrink-0 glow-amber-btn"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 text-slate-950" />
                 <span>Custom Model</span>
               </button>
 
               {models.length > 0 && (
                 <button
                   onClick={handleClearAllModels}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 border border-rose-800/80 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0"
                   title="Remove all whitelisted models"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                   <span>Clear All</span>
                 </button>
               )}
             </div>
           </div>
 
-          <div className="bg-white/95 border border-purple-100/90 rounded-2xl overflow-hidden shadow-xs">
+          <div className="glass-card border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-700">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-950/90 text-slate-400 text-xs uppercase tracking-wider font-mono border-b border-slate-800">
                   <tr>
                     <th className="px-5 py-3.5 font-bold">Model ID</th>
                     <th className="px-5 py-3.5 font-bold">Display Name</th>
@@ -957,11 +957,11 @@ export default function SettingsPage() {
                     <th className="px-5 py-3.5 font-bold text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
+                <tbody className="divide-y divide-slate-800/60 text-xs">
                   {filteredWhitelistedModels.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
-                        No models found. Switch to the <strong>&quot;Providers &amp; Dynamic Discovery&quot;</strong> tab to discover and whitelist models.
+                      <td colSpan={7} className="px-5 py-8 text-center text-slate-500">
+                        No models found. Switch to the <strong className="text-amber-400">&quot;Providers &amp; Dynamic Discovery&quot;</strong> tab to discover and whitelist models.
                       </td>
                     </tr>
                   ) : (
@@ -970,20 +970,20 @@ export default function SettingsPage() {
                       const testRes = singleTestResult[m.id];
 
                       return (
-                        <tr key={m.id} className="hover:bg-purple-50/30 transition-colors">
-                          <td className="px-5 py-3.5 font-mono font-semibold text-slate-900">
+                        <tr key={m.id} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="px-5 py-3.5 font-mono font-semibold text-white">
                             {m.id}
                           </td>
-                          <td className="px-5 py-3.5 text-slate-700">{m.display_name}</td>
-                          <td className="px-5 py-3.5 font-mono uppercase text-[11px] text-slate-500">
-                            <span className="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200 font-bold">
+                          <td className="px-5 py-3.5 text-slate-300">{m.display_name}</td>
+                          <td className="px-5 py-3.5 font-mono uppercase text-[11px] text-slate-400">
+                            <span className="px-2 py-0.5 bg-slate-900 rounded-md border border-slate-700 font-bold">
                               {m.provider}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5 font-mono text-slate-500">
+                          <td className="px-5 py-3.5 font-mono text-slate-400">
                             {m.context_window ? `${Math.round(m.context_window / 1000)}k` : "128k"}
                           </td>
-                          <td className="px-5 py-3.5 font-mono font-semibold text-amber-800">
+                          <td className="px-5 py-3.5 font-mono font-semibold text-amber-400">
                             {m.cost_per_m_in || m.cost_per_m_out
                               ? `$${m.cost_per_m_in} / $${m.cost_per_m_out}`
                               : "Self-Hosted / $0"}
@@ -991,10 +991,10 @@ export default function SettingsPage() {
                           <td className="px-5 py-3.5 text-center">
                             <button
                               onClick={() => handleToggleModel(m.id, m.is_enabled)}
-                              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${
+                              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold font-mono transition-colors ${
                                 m.is_enabled
-                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                  : "bg-slate-100 text-slate-500 border border-slate-200"
+                                  ? "bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 glow-emerald-repro"
+                                  : "bg-slate-900 text-slate-500 border border-slate-800"
                               }`}
                             >
                               {m.is_enabled ? "Enabled" : "Disabled"}
@@ -1007,17 +1007,17 @@ export default function SettingsPage() {
                               disabled={isTesting}
                               className={`p-1.5 rounded-lg border text-xs font-semibold inline-flex items-center space-x-1 transition-all ${
                                 testRes?.status === "verified"
-                                  ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                                  ? "bg-emerald-950/80 border-emerald-700/80 text-emerald-300"
                                   : testRes?.status === "failed"
-                                  ? "bg-rose-50 border-rose-200 text-rose-800"
-                                  : "bg-white border-slate-200 text-slate-600 hover:text-purple-700 hover:border-purple-300"
+                                  ? "bg-rose-950/80 border-rose-700/80 text-rose-300"
+                                  : "bg-slate-900 border-slate-700 text-slate-300 hover:text-amber-400 hover:border-amber-500/50"
                               }`}
                               title={testRes ? testRes.message : "Run live ping test"}
                             >
                               {isTesting ? (
-                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-purple-700" />
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
                               ) : (
-                                <Zap className="w-3.5 h-3.5 text-amber-600" />
+                                <Zap className="w-3.5 h-3.5 text-amber-400" />
                               )}
                               <span>
                                 {isTesting
@@ -1033,7 +1033,7 @@ export default function SettingsPage() {
                             {/* Remove Button */}
                             <button
                               onClick={() => handleDeleteModel(m.id)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-rose-950/50 transition-colors"
                               title="Remove from Whitelist"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1054,72 +1054,72 @@ export default function SettingsPage() {
       {activeTab === "health" && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 space-y-2 shadow-xs">
+            <div className="glass-card border border-slate-800 rounded-2xl p-5 space-y-2 shadow-xl">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
                 <span>PostgreSQL 16 Database</span>
-                <Server className="w-4 h-4 text-purple-700" />
+                <Server className="w-4 h-4 text-amber-400" />
               </div>
               <div className="flex items-center space-x-2">
                 <span
                   className={`w-2.5 h-2.5 rounded-full ${
-                    health?.database === "connected" ? "bg-emerald-500" : "bg-rose-500"
+                    health?.database === "connected" ? "bg-emerald-400 shadow-xs shadow-emerald-500/50" : "bg-rose-500 shadow-xs shadow-rose-500/50"
                   }`}
                 />
-                <span className="text-base font-extrabold text-slate-900 capitalize">
+                <span className="text-base font-extrabold text-white capitalize">
                   {health?.database || "Disconnected"}
                 </span>
               </div>
             </div>
 
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 space-y-2 shadow-xs">
+            <div className="glass-card border border-slate-800 rounded-2xl p-5 space-y-2 shadow-xl">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
                 <span>Redis Broker &amp; Celery Queue</span>
-                <Activity className="w-4 h-4 text-purple-700" />
+                <Activity className="w-4 h-4 text-amber-400" />
               </div>
               <div className="flex items-center space-x-2">
                 <span
                   className={`w-2.5 h-2.5 rounded-full ${
-                    health?.redis === "connected" ? "bg-emerald-500" : "bg-rose-500"
+                    health?.redis === "connected" ? "bg-emerald-400 shadow-xs shadow-emerald-500/50" : "bg-rose-500 shadow-xs shadow-rose-500/50"
                   }`}
                 />
-                <span className="text-base font-extrabold text-slate-900 capitalize">
+                <span className="text-base font-extrabold text-white capitalize">
                   {health?.redis || "Disconnected"}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono">
+              <p className="text-[11px] text-slate-500 font-mono">
                 {health?.active_scans || 0} Active / {health?.queued_scans || 0} Queued
               </p>
             </div>
 
-            <div className="bg-white/95 border border-purple-100/90 rounded-2xl p-5 space-y-2 shadow-xs">
+            <div className="glass-card border border-slate-800 rounded-2xl p-5 space-y-2 shadow-xl">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
                 <span>Docker Sandbox Daemon</span>
-                <Server className="w-4 h-4 text-emerald-600" />
+                <Server className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="flex items-center space-x-2">
                 <span
                   className={`w-2.5 h-2.5 rounded-full ${
-                    health?.docker === "connected" ? "bg-emerald-500" : "bg-amber-500"
+                    health?.docker === "connected" ? "bg-emerald-400 shadow-xs shadow-emerald-500/50" : "bg-amber-400 shadow-xs shadow-amber-500/50"
                   }`}
                 />
-                <span className="text-base font-extrabold text-slate-900 capitalize">
+                <span className="text-base font-extrabold text-white capitalize">
                   {health?.docker || "Unavailable"}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono">Isolated (network=none)</p>
+              <p className="text-[11px] text-slate-500 font-mono">Isolated (network=none)</p>
             </div>
           </div>
 
-          <div className="p-5 bg-white/95 border border-purple-100/90 rounded-2xl flex items-center justify-between shadow-xs">
+          <div className="p-5 glass-card border border-slate-800 rounded-2xl flex items-center justify-between shadow-xl">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Native Swarm Tracing &amp; Forensics</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-sm font-bold text-white">Native Swarm Tracing &amp; Forensics</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
                 Integrated real-time trace inspector, chain-of-thought visualization, tool call auditing, and critic verdicts right inside NewGenSAST.
               </p>
             </div>
             <Link
               href="/dashboard"
-              className="px-3.5 py-2 bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs"
+              className="px-3.5 py-2 bg-slate-900 text-slate-200 border border-slate-700 hover:border-amber-500/60 hover:text-amber-300 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs"
             >
               <span>View Active Scans</span>
             </Link>
@@ -1131,22 +1131,22 @@ export default function SettingsPage() {
       {activeTab === "mantis" && (
         <div className="space-y-6">
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-purple-900/10 via-indigo-900/10 to-slate-900/10 border border-purple-200/80 rounded-2xl p-5 text-xs text-slate-800 flex flex-col md:flex-row md:items-start md:justify-between gap-4 shadow-xs">
+          <div className="glass-card border border-slate-800 rounded-2xl p-5 text-xs text-slate-300 flex flex-col md:flex-row md:items-start md:justify-between gap-4 shadow-xl">
             <div className="flex items-start space-x-3.5">
-              <div className="w-10 h-10 rounded-xl bg-purple-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-black flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
                 <GitBranch className="w-5 h-5" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-bold text-white">
                     Google Mantis Upstream Engine &amp; Skills Synchronizer
                   </h3>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-500/50 font-mono">
                     Upstream: google/mantis
                   </span>
                 </div>
-                <p className="text-slate-600 leading-relaxed max-w-3xl">
-                  NewGenSAST directly vendors Google Mantis’s 19 official modular skills and deterministic Tree-Sitter AST structural index engine (<code className="bg-slate-200/70 px-1 py-0.5 rounded text-[11px] font-mono">catalog.sqlite</code>). Before updating, NewGenSAST fetches upstream, calculates git diffs, and runs automated static AST analysis to verify that all cognitive interfaces and symbol traversal methods remain 100% backward-compatible.
+                <p className="text-slate-400 leading-relaxed max-w-3xl">
+                  NewGenSAST directly vendors Google Mantis’s 19 official modular skills and deterministic Tree-Sitter AST structural index engine (<code className="bg-slate-900 border border-slate-800 px-1 py-0.5 rounded text-[11px] font-mono text-amber-300">catalog.sqlite</code>). Before updating, NewGenSAST fetches upstream, calculates git diffs, and runs automated static AST analysis to verify that all cognitive interfaces and symbol traversal methods remain 100% backward-compatible.
                 </p>
               </div>
             </div>
@@ -1154,7 +1154,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => handleCheckMantisUpdates(false)}
                 disabled={checkingMantis || applyingMantisUpdate}
-                className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 active:scale-98 text-white font-semibold text-xs shadow-xs transition-all disabled:opacity-50"
+                className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-98 text-slate-950 font-black text-xs shadow-xs transition-all disabled:opacity-50 glow-amber-btn"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${checkingMantis ? "animate-spin" : ""}`} />
                 <span>{checkingMantis ? "Checking Upstream..." : "Check for Updates"}</span>
@@ -1163,9 +1163,9 @@ export default function SettingsPage() {
                 onClick={() => handleCheckMantisUpdates(true)}
                 disabled={checkingMantis || applyingMantisUpdate}
                 title="Force git fetch and inspect AST compatibility against upstream HEAD"
-                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 active:scale-98 text-slate-700 font-semibold text-xs border border-slate-300 transition-all shadow-xs disabled:opacity-50"
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-slate-300 font-semibold text-xs border border-slate-700 transition-all shadow-xs disabled:opacity-50"
               >
-                <Search className="w-3.5 h-3.5 text-slate-500" />
+                <Search className="w-3.5 h-3.5 text-slate-400" />
                 <span>Inspect AST Diff</span>
               </button>
             </div>
@@ -1173,61 +1173,61 @@ export default function SettingsPage() {
 
           {/* Quick Metrics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Vendored Commit</span>
+            <div className="glass-card p-4 rounded-xl border border-slate-800 shadow-md">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Vendored Commit</span>
               <div className="flex items-center space-x-2 mt-1">
-                <GitCommit className="w-4 h-4 text-purple-600" />
+                <GitCommit className="w-4 h-4 text-amber-400" />
                 <a
                   href={`https://github.com/google/mantis/commit/${mantisStatus?.commit_hash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs font-bold text-purple-700 hover:underline flex items-center space-x-1"
+                  className="font-mono text-xs font-bold text-amber-400 hover:underline flex items-center space-x-1"
                 >
                   <span>{mantisStatus?.short_hash || "f3162c0"}</span>
-                  <ExternalLink className="w-3 h-3 text-slate-400" />
+                  <ExternalLink className="w-3 h-3 text-slate-500" />
                 </a>
               </div>
-              <span className="text-[10px] text-slate-500 mt-1 block truncate" title={mantisStatus?.commit_message}>
+              <span className="text-[10px] text-slate-400 mt-1 block truncate" title={mantisStatus?.commit_message}>
                 {mantisStatus?.commit_message || "feat(llm): continue thinking turn"}
               </span>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Official Skills</span>
+            <div className="glass-card p-4 rounded-xl border border-slate-800 shadow-md">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Official Skills</span>
               <div className="flex items-center space-x-2 mt-1">
-                <FileCode className="w-4 h-4 text-emerald-600" />
-                <span className="text-base font-bold text-slate-900">{mantisStatus?.skills_count || 19} Skills Loaded</span>
+                <FileCode className="w-4 h-4 text-emerald-400" />
+                <span className="text-base font-bold text-white">{mantisStatus?.skills_count || 19} Skills Loaded</span>
               </div>
-              <span className="text-[10px] text-emerald-600 font-medium mt-1 block">
+              <span className="text-[10px] text-emerald-400 font-medium mt-1 block font-mono">
                 100% Upstream Fidelity
               </span>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Structural AST Engine</span>
+            <div className="glass-card p-4 rounded-xl border border-slate-800 shadow-md">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Structural AST Engine</span>
               <div className="flex items-center space-x-2 mt-1">
-                <ShieldCheck className="w-4 h-4 text-blue-600" />
-                <span className="text-xs font-bold text-slate-900">Tree-Sitter v0.26 (AST)</span>
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-bold text-white">Tree-Sitter v0.26 (AST)</span>
               </div>
-              <span className="text-[10px] text-slate-500 mt-1 block">
+              <span className="text-[10px] text-slate-400 mt-1 block font-mono">
                 Pass Lifecycle Contract v5
               </span>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Upstream Sync Status</span>
+            <div className="glass-card p-4 rounded-xl border border-slate-800 shadow-md">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Upstream Sync Status</span>
               <div className="flex items-center space-x-2 mt-1">
                 {mantisCheckResult?.has_updates ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                    <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" /> Update Ready
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-500/60 font-mono">
+                    <AlertTriangle className="w-3 h-3 mr-1 text-amber-400" /> Update Ready
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" /> Fully Aligned
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 font-mono">
+                    <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-400" /> Fully Aligned
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-slate-400 mt-1 block">
+              <span className="text-[10px] text-slate-500 mt-1 block font-mono">
                 Last checked: {mantisStatus?.synced_at ? new Date(mantisStatus.synced_at).toLocaleTimeString() : "Just now"}
               </span>
             </div>
@@ -1235,28 +1235,28 @@ export default function SettingsPage() {
 
           {/* Verification & Diff Panel (visible after check) */}
           {mantisCheckResult && (
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="glass-card border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center space-x-2">
-                  <GitPullRequest className="w-4 h-4 text-purple-700" />
-                  <h3 className="text-sm font-bold text-slate-900">Upstream Verification &amp; Compatibility Assessment</h3>
+                  <GitPullRequest className="w-4 h-4 text-amber-400" />
+                  <h3 className="text-sm font-bold text-white">Upstream Verification &amp; Compatibility Assessment</h3>
                 </div>
                 <div className="flex items-center space-x-2">
                   {mantisCheckResult.safety_verdict === "SAFE" && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      <ShieldCheck className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 font-mono glow-emerald-repro">
+                      <ShieldCheck className="w-3.5 h-3.5 mr-1 text-emerald-400" />
                       AST Verified Safe
                     </span>
                   )}
                   {mantisCheckResult.safety_verdict === "BREAKING_CHANGE" && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                      <ShieldAlert className="w-3.5 h-3.5 mr-1 text-rose-600" />
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-950/80 text-rose-300 border border-rose-700/60 font-mono glow-rose-crit">
+                      <ShieldAlert className="w-3.5 h-3.5 mr-1 text-rose-400" />
                       Breaking Changes Flagged
                     </span>
                   )}
                   {mantisCheckResult.safety_verdict === "ADVISORY_WARNING" && (
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                      <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-500/60 font-mono">
+                      <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-400" />
                       Advisory Warning
                     </span>
                   )}
@@ -1267,21 +1267,21 @@ export default function SettingsPage() {
               <div
                 className={`p-4 rounded-xl border text-xs leading-relaxed flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 ${
                   mantisCheckResult.safety_verdict === "SAFE"
-                    ? "bg-emerald-50/80 border-emerald-200 text-emerald-950"
+                    ? "bg-emerald-950/40 border-emerald-800/80 text-emerald-200"
                     : mantisCheckResult.safety_verdict === "BREAKING_CHANGE"
-                    ? "bg-rose-50/80 border-rose-200 text-rose-950"
-                    : "bg-amber-50/80 border-amber-200 text-amber-950"
+                    ? "bg-rose-950/40 border-rose-800/80 text-rose-200"
+                    : "bg-amber-950/40 border-amber-800/80 text-amber-200"
                 }`}
               >
                 <div className="space-y-1">
                   <p className="font-bold flex items-center space-x-1.5">
-                    {mantisCheckResult.safety_verdict === "SAFE" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                    {mantisCheckResult.safety_verdict === "BREAKING_CHANGE" && <ShieldAlert className="w-4 h-4 text-rose-600" />}
-                    {mantisCheckResult.safety_verdict === "ADVISORY_WARNING" && <AlertTriangle className="w-4 h-4 text-amber-600" />}
+                    {mantisCheckResult.safety_verdict === "SAFE" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                    {mantisCheckResult.safety_verdict === "BREAKING_CHANGE" && <ShieldAlert className="w-4 h-4 text-rose-400" />}
+                    {mantisCheckResult.safety_verdict === "ADVISORY_WARNING" && <AlertTriangle className="w-4 h-4 text-amber-400" />}
                     <span>{mantisCheckResult.assessment}</span>
                   </p>
                   {mantisCheckResult.breaking_issues && mantisCheckResult.breaking_issues.length > 0 && (
-                    <ul className="list-disc pl-5 pt-1 space-y-0.5 text-rose-800 font-mono text-[11px]">
+                    <ul className="list-disc pl-5 pt-1 space-y-0.5 text-rose-300 font-mono text-[11px]">
                       {mantisCheckResult.breaking_issues.map((iss: string, idx: number) => (
                         <li key={idx}>{iss}</li>
                       ))}
@@ -1292,7 +1292,7 @@ export default function SettingsPage() {
                 {mantisCheckResult.has_updates && mantisCheckResult.safety_verdict !== "BREAKING_CHANGE" && (
                   <button
                     onClick={() => setShowConfirmModal(true)}
-                    className="shrink-0 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white rounded-xl font-bold text-xs shadow-xs transition-all flex items-center space-x-1.5"
+                    className="shrink-0 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 active:scale-98 text-slate-950 rounded-xl font-black text-xs shadow-xs transition-all flex items-center space-x-1.5 glow-emerald-repro"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Apply Upstream Update</span>
@@ -1303,48 +1303,48 @@ export default function SettingsPage() {
               {/* Skills Delta Badges */}
               {mantisCheckResult.skills_delta && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-1">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Added Skills</span>
+                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Added Skills</span>
                     {mantisCheckResult.skills_delta.added.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {mantisCheckResult.skills_delta.added.map((s: string) => (
-                          <span key={s} className="px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span key={s} className="px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-700/60">
                             +{s}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-slate-400 text-[11px]">No new skills</span>
+                      <span className="text-slate-500 text-[11px]">No new skills</span>
                     )}
                   </div>
 
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Modified Skills</span>
+                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Modified Skills</span>
                     {mantisCheckResult.skills_delta.modified.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {mantisCheckResult.skills_delta.modified.map((s: string) => (
-                          <span key={s} className="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-100 text-amber-800 border border-amber-200">
+                          <span key={s} className="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-950/80 text-amber-300 border border-amber-500/60">
                             ~{s}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-slate-400 text-[11px]">No skill modifications</span>
+                      <span className="text-slate-500 text-[11px]">No skill modifications</span>
                     )}
                   </div>
 
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Removed Skills</span>
+                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block font-mono">Removed Skills</span>
                     {mantisCheckResult.skills_delta.removed.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {mantisCheckResult.skills_delta.removed.map((s: string) => (
-                          <span key={s} className="px-2 py-0.5 rounded text-[11px] font-mono bg-rose-100 text-rose-800 border border-rose-200">
+                          <span key={s} className="px-2 py-0.5 rounded text-[11px] font-mono bg-rose-950/80 text-rose-300 border border-rose-700/60">
                             -{s}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-slate-400 text-[11px]">None removed</span>
+                      <span className="text-slate-500 text-[11px]">None removed</span>
                     )}
                   </div>
                 </div>
@@ -1354,33 +1354,33 @@ export default function SettingsPage() {
               {mantisCheckResult.files_changed && mantisCheckResult.files_changed.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800">
+                    <span className="text-xs font-bold text-white">
                       Modified Files ({mantisCheckResult.files_changed.length})
                     </span>
                     <button
                       onClick={() => setShowRawDiff(!showRawDiff)}
-                      className="text-xs text-purple-700 hover:text-purple-800 font-semibold flex items-center space-x-1"
+                      className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center space-x-1"
                     >
                       <span>{showRawDiff ? "Hide Git Diff" : "View Raw Git Diff"}</span>
                       {showRawDiff ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
                   </div>
 
-                  <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                  <div className="border border-slate-800 rounded-xl overflow-hidden text-xs">
                     <table className="w-full text-left">
-                      <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-[11px]">
+                      <thead className="bg-slate-950 text-slate-400 font-mono font-semibold border-b border-slate-800 text-[11px]">
                         <tr>
                           <th className="py-2 px-3">File Path</th>
                           <th className="py-2 px-3 text-right">Additions</th>
                           <th className="py-2 px-3 text-right">Deletions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-800/60 bg-slate-900/60">
                         {mantisCheckResult.files_changed.map((f: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-slate-50/50">
-                            <td className="py-2 px-3 font-mono text-slate-800 text-[11px]">{f.path}</td>
-                            <td className="py-2 px-3 text-right font-mono text-emerald-600 font-bold">+{f.additions}</td>
-                            <td className="py-2 px-3 text-right font-mono text-rose-600 font-bold">-{f.deletions}</td>
+                          <tr key={idx} className="hover:bg-slate-800/40">
+                            <td className="py-2 px-3 font-mono text-slate-300 text-[11px]">{f.path}</td>
+                            <td className="py-2 px-3 text-right font-mono text-emerald-400 font-bold">+{f.additions}</td>
+                            <td className="py-2 px-3 text-right font-mono text-rose-400 font-bold">-{f.deletions}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1394,7 +1394,7 @@ export default function SettingsPage() {
                         let colorClass = "text-slate-300";
                         if (line.startsWith("+") && !line.startsWith("+++")) colorClass = "text-emerald-400 bg-emerald-950/40";
                         else if (line.startsWith("-") && !line.startsWith("---")) colorClass = "text-rose-400 bg-rose-950/40";
-                        else if (line.startsWith("@@")) colorClass = "text-purple-400 font-bold";
+                        else if (line.startsWith("@@")) colorClass = "text-amber-400 font-bold";
                         else if (line.startsWith("diff ") || line.startsWith("index ")) colorClass = "text-slate-500 font-bold";
                         return (
                           <div key={lIdx} className={`${colorClass} px-1 whitespace-pre`}>
@@ -1411,27 +1411,27 @@ export default function SettingsPage() {
 
           {/* Post-Update Automated Verification Report */}
           {verificationReport && (
-            <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-5 space-y-3 shadow-xs animate-in fade-in duration-200">
-              <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2.5">
+            <div className="bg-emerald-950/40 border border-emerald-800/80 rounded-2xl p-5 space-y-3 shadow-xl animate-in fade-in duration-200">
+              <div className="flex items-center justify-between border-b border-emerald-800/60 pb-2.5">
                 <div className="flex items-center space-x-2">
-                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                  <h3 className="text-sm font-bold text-emerald-950">Automated Engine Verification Suite Passed</h3>
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-emerald-200">Automated Engine Verification Suite Passed</h3>
                 </div>
-                <span className="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-900/60 border border-emerald-700/60 px-2 py-0.5 rounded-full">
                   {verificationReport.filter((c: any) => c.passed).length} / {verificationReport.length} Checks OK
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                 {verificationReport.map((c: any, idx: number) => (
-                  <div key={idx} className="bg-white p-3 rounded-xl border border-emerald-200/80 space-y-1">
+                  <div key={idx} className="glass-card p-3 rounded-xl border border-emerald-800/60 space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-800 flex items-center space-x-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="font-bold text-white flex items-center space-x-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                         <span>{c.name}</span>
                       </span>
                       <span className="text-[10px] font-mono text-slate-400">{c.duration_ms}ms</span>
                     </div>
-                    <p className="text-[11px] text-slate-600 leading-relaxed">{c.details}</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">{c.details}</p>
                   </div>
                 ))}
               </div>
@@ -1439,24 +1439,24 @@ export default function SettingsPage() {
           )}
 
           {/* Installed Official Skills Catalog */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
+          <div className="glass-card border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-white">
                   Vendored Google Mantis Skills Directory ({mantisStatus?.skills?.length || 19})
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-400 mt-0.5">
                   Official production prompts and decision matrices loaded into NewGenSAST from upstream.
                 </p>
               </div>
               <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   placeholder="Filter skills..."
                   value={skillSearch}
                   onChange={(e) => setSkillSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white transition-all"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-all font-mono"
                 />
               </div>
             </div>
@@ -1491,22 +1491,22 @@ export default function SettingsPage() {
                   return (
                     <div
                       key={s.name}
-                      className="p-3.5 bg-slate-50/70 hover:bg-white border border-slate-200/80 rounded-xl space-y-1.5 transition-all shadow-2xs hover:shadow-xs hover:border-purple-200"
+                      className="p-3.5 glass-card border border-slate-800 hover:border-amber-500/50 rounded-xl space-y-1.5 transition-all shadow-md group"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold text-purple-900 truncate">
+                        <span className="font-mono text-xs font-bold text-amber-400 truncate group-hover:text-amber-300">
                           {s.name}
                         </span>
-                        <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <span className="px-1.5 py-0.5 text-[9px] font-bold font-mono rounded bg-emerald-950/80 text-emerald-300 border border-emerald-700/60">
                           {s.size_bytes ? `${Math.round(s.size_bytes / 1024)} KB` : "SKILL.md"}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
                         {desc}
                       </p>
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-200/50">
-                        <span className="flex items-center space-x-1 text-emerald-700 font-medium">
-                          <Check className="w-3 h-3 text-emerald-600" />
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800 font-mono">
+                        <span className="flex items-center space-x-1 text-emerald-400 font-medium">
+                          <Check className="w-3 h-3 text-emerald-400" />
                           <span>Verified Upstream</span>
                         </span>
                         <span>Pass Lifecycle Contract</span>
@@ -1519,59 +1519,59 @@ export default function SettingsPage() {
 
           {/* Confirmation Modal */}
           {showConfirmModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-lg space-y-4 shadow-2xl animate-in fade-in duration-150">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+              <div className="glass-card border border-slate-700 rounded-2xl p-6 w-full max-w-lg space-y-4 shadow-2xl animate-in fade-in duration-150 text-slate-100">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-amber-950/80 text-amber-300 border border-amber-500/60 flex items-center justify-center font-bold">
                       <GitPullRequest className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">
+                      <h3 className="text-sm font-bold text-white">
                         Confirm Google Mantis Upstream Update
                       </h3>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-slate-400 font-mono">
                         Target: {mantisCheckResult?.upstream_version?.short_hash || "latest"} ({mantisCheckResult?.upstream_version?.author || "Google"})
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowConfirmModal(false)}
-                    className="text-slate-400 hover:text-slate-600 text-sm p-1 rounded-lg"
+                    className="text-slate-400 hover:text-white text-sm p-1 rounded-lg"
                   >
                     ✕
                   </button>
                 </div>
 
                 <div className="space-y-3 text-xs">
-                  <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-purple-950 space-y-1">
-                    <p className="font-bold">Commit Details:</p>
-                    <p className="font-mono text-[11px] text-purple-900">
+                  <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-200 space-y-1">
+                    <p className="font-bold text-amber-400">Commit Details:</p>
+                    <p className="font-mono text-[11px] text-slate-300">
                       {mantisCheckResult?.upstream_version?.message}
                     </p>
                   </div>
 
-                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-950 space-y-1">
-                    <div className="flex items-center space-x-1.5 font-bold text-emerald-900">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <div className="p-3 bg-emerald-950/40 rounded-xl border border-emerald-800/80 text-emerald-200 space-y-1">
+                    <div className="flex items-center space-x-1.5 font-bold text-emerald-300">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       <span>Automated Rollback Protection Guaranteed</span>
                     </div>
-                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                    <p className="text-[11px] text-emerald-300/80 leading-relaxed">
                       A local snapshot backup of existing skills and structural engine files will be captured before synchronization. If any syntax error or AST regression occurs during compilation, the update will immediately abort and restore the previous state without disruption.
                     </p>
                   </div>
 
-                  <p className="text-slate-500 text-[11px]">
+                  <p className="text-slate-400 text-[11px]">
                     Applying this update will refresh the 19 official modular skills and reload the Tree-Sitter structural engine.
                   </p>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowConfirmModal(false)}
                     disabled={applyingMantisUpdate}
-                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-xs"
+                    className="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 font-semibold text-xs"
                   >
                     Cancel
                   </button>
@@ -1579,7 +1579,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={handleApplyMantisUpdate}
                     disabled={applyingMantisUpdate}
-                    className="px-4 py-2 bg-purple-700 hover:bg-purple-800 active:scale-98 text-white rounded-xl font-bold text-xs shadow-xs flex items-center space-x-1.5 transition-all disabled:opacity-50"
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-98 text-slate-950 rounded-xl font-black text-xs shadow-xs flex items-center space-x-1.5 transition-all disabled:opacity-50 glow-amber-btn"
                   >
                     <Download className={`w-3.5 h-3.5 ${applyingMantisUpdate ? "animate-spin" : ""}`} />
                     <span>{applyingMantisUpdate ? "Synchronizing..." : "Confirm & Update Now"}</span>
@@ -1593,48 +1593,48 @@ export default function SettingsPage() {
 
       {/* ── Modal for Custom Model Registration ──────────────────────────────── */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="bg-white border border-purple-100 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h3 className="text-sm font-bold text-slate-900">Register Custom / Self-Hosted Model</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+          <div className="glass-card border border-slate-700 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <h3 className="text-sm font-bold text-white">Register Custom / Self-Hosted Model</h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs"
+                className="text-slate-400 hover:text-white text-xs"
               >
                 ✕
               </button>
             </div>
             <form onSubmit={handleAddCustomModel} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Model Unique Identifier</label>
+                <label className="block text-slate-300 font-semibold mb-1">Model Unique Identifier</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. ollama/mistral-large or custom/enterprise-llm"
                   value={customModel.id}
                   onChange={(e) => setCustomModel({ ...customModel, id: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono focus:border-purple-600 focus:bg-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:border-amber-500"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Display Label</label>
+                <label className="block text-slate-300 font-semibold mb-1">Display Label</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Mistral Large (Internal Gateway)"
                   value={customModel.display_name}
                   onChange={(e) => setCustomModel({ ...customModel, display_name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:border-purple-600 focus:bg-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-500"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Provider Route</label>
+                <label className="block text-slate-300 font-semibold mb-1">Provider Route</label>
                 <select
                   value={customModel.provider}
                   onChange={(e) => setCustomModel({ ...customModel, provider: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:border-purple-600 focus:bg-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-500"
                 >
                   <option value="openai">OpenAI</option>
                   <option value="anthropic">Anthropic</option>
@@ -1644,49 +1644,49 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Context Window (Tokens)</label>
+                <label className="block text-slate-300 font-semibold mb-1">Context Window (Tokens)</label>
                 <input
                   type="number"
                   value={customModel.context_window}
                   onChange={(e) => setCustomModel({ ...customModel, context_window: parseInt(e.target.value) || 128000 })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono focus:border-purple-600 focus:bg-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:border-amber-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Input USD / 1M</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Input USD / 1M</label>
                   <input
                     type="number"
                     step="0.001"
                     value={customModel.cost_per_m_in}
                     onChange={(e) => setCustomModel({ ...customModel, cost_per_m_in: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono focus:border-purple-600 focus:bg-white"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Output USD / 1M</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Output USD / 1M</label>
                   <input
                     type="number"
                     step="0.001"
                     value={customModel.cost_per_m_out}
                     onChange={(e) => setCustomModel({ ...customModel, cost_per_m_out: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono focus:border-purple-600 focus:bg-white"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:border-amber-500"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+                  className="px-3 py-1.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-3.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl font-bold shadow-xs"
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl font-black shadow-xs glow-amber-btn"
                 >
                   Save Model
                 </button>
