@@ -1,6 +1,14 @@
 .venv/
+__pycache__/
+*.py[cod]
 findings.db
 knowledge.db
+knowledge.db-journal
+knowledge.db-wal
 workflow.local.json
 *.local.json
 .workflow.local.json
+workspace/
+sandbox_evidence/
+*.log
+.DS_Store
