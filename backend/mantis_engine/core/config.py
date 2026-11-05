@@ -3061,6 +3061,10 @@ def get_llm_kwargs(
     llm_kwargs = {"model": resolved_model}
     if resolved_api_base:
         llm_kwargs["api_base"] = resolved_api_base
+        if ("ollama" in resolved_api_base.lower() or "ollama" in resolved_model.lower()):
+            ollama_key = os.environ.get("OLLAMA_API_KEY")
+            if ollama_key and "api_key" not in llm_kwargs:
+                llm_kwargs["api_key"] = ollama_key
     if effort:
         llm_kwargs["reasoning_effort"] = str(effort).lower().strip()
     if raw_timeout is not None:

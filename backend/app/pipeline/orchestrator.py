@@ -98,9 +98,18 @@ def _update_scan(scan_id: str, **fields) -> None:
     engine = _get_sync_engine()
     if not fields:
         return
-    set_clause = ", ".join(f"{k} = :{k}" for k in fields)
+    params = {"id": scan_id}
+    set_parts = []
+    for k, v in fields.items():
+        if isinstance(v, (dict, list)):
+            set_parts.append(f"{k} = CAST(:{k} AS jsonb)")
+            params[k] = json.dumps(v)
+        else:
+            set_parts.append(f"{k} = :{k}")
+            params[k] = v
+    set_clause = ", ".join(set_parts)
     with engine.begin() as conn:
-        conn.execute(text(f"UPDATE scans SET {set_clause} WHERE id = :id"), {"id": scan_id, **fields})
+        conn.execute(text(f"UPDATE scans SET {set_clause} WHERE id = :id"), params)
 
 
 def _record_trace(scan_id: str, step: int, phase: str, agent: str, **kwargs) -> None:
@@ -571,30 +580,53 @@ def _write_workflow_override(workspace: Path, config: dict) -> Path:
     }
     phase_efforts = config.get("phase_efforts") or {}
 
-    # If per-stage models or efforts are configured, inject them into wf_data nodes
+    # If per-stage models or efforts are configured, inject them into wf_data agent nodes
     if wf_data and (clean_phase_models or phase_efforts):
         for node in wf_data.get("nodes", []):
+            if node.get("type") != "agent":
+                continue
             node_id = node.get("id")
             stage = NODE_TO_STAGE.get(node_id)
             if stage:
                 assigned_model = clean_phase_models.get(stage) or (clean_phase_models.get("recon") if stage == "indexing" else None)
                 if assigned_model:
-                    node["model"] = assigned_model
+                    ollama_base = config.get("ollama_api_base") or config.get("api_base") or os.environ.get("OLLAMA_API_BASE") or "http://host.docker.internal:11434"
+                    if assigned_model.startswith("ollama/"):
+                        # Route through OpenAI-compatible /v1 endpoint for 100% reliable function calling and streaming deltas
+                        raw_name = assigned_model.replace("ollama/", "", 1)
+                        node["model"] = f"openai/{raw_name}"
+                        base = ollama_base.rstrip("/")
+                        if not base.endswith("/v1"):
+                            base = f"{base}/v1"
+                        node["api_base"] = base
+                    else:
+                        node["model"] = assigned_model
+                        if "api_base" in node:
+                            node.pop("api_base", None)
                 assigned_effort = phase_efforts.get(stage) or (phase_efforts.get("recon") if stage == "indexing" else None)
                 if assigned_effort:
                     node["reasoning_effort"] = str(assigned_effort).lower()
 
-        # Determine fallback default model
+        # In multi-model swarm mode, keep global default_model clean (Gemini fallback)
+        # and NEVER set global api_base, so nodes keep their per-node api_base routing!
         fallback_model = (
-            clean_phase_models.get("research")
-            or clean_phase_models.get("recon")
-            or clean_phase_models.get("indexing")
-            or config.get("model")
-            or "vertex_ai/gemini-3.8-flash"
+            clean_phase_models.get("recon")
+            or clean_phase_models.get("threat_model")
+            or "gemini/gemini-3.5-flash-lite"
         )
         wf_data.setdefault("config", {})["default_model"] = fallback_model
+        if "api_base" in wf_data.get("config", {}):
+            wf_data["config"].pop("api_base", None)
     elif wf_data and config.get("model"):
-        wf_data.setdefault("config", {})["default_model"] = config["model"]
+        raw_m = config["model"]
+        if raw_m.startswith("ollama/"):
+            ollama_base = (config.get("ollama_api_base") or config.get("api_base") or os.environ.get("OLLAMA_API_BASE") or "http://host.docker.internal:11434").rstrip("/")
+            if not ollama_base.endswith("/v1"):
+                ollama_base = f"{ollama_base}/v1"
+            wf_data.setdefault("config", {})["default_model"] = f"openai/{raw_m.replace('ollama/', '', 1)}"
+            wf_data.setdefault("config", {})["api_base"] = ollama_base
+        else:
+            wf_data.setdefault("config", {})["default_model"] = raw_m
 
     # Write customized workflow.json into workspace
     scan_wf_path = workspace / "workflow.json"
@@ -608,15 +640,17 @@ def _write_workflow_override(workspace: Path, config: dict) -> Path:
         }
     }
     if clean_phase_models:
-        override["config"]["default_model"] = (
-            clean_phase_models.get("research")
-            or clean_phase_models.get("recon")
-            or clean_phase_models.get("indexing")
-            or config.get("model")
-            or "vertex_ai/gemini-3.8-flash"
-        )
+        override["config"]["default_model"] = fallback_model
     elif config.get("model"):
-        override["config"]["default_model"] = config["model"]
+        raw_m = config["model"]
+        if raw_m.startswith("ollama/"):
+            override["config"]["default_model"] = f"openai/{raw_m.replace('ollama/', '', 1)}"
+            ollama_base = (config.get("ollama_api_base") or config.get("api_base") or os.environ.get("OLLAMA_API_BASE") or "http://host.docker.internal:11434").rstrip("/")
+            if not ollama_base.endswith("/v1"):
+                ollama_base = f"{ollama_base}/v1"
+            override["config"]["api_base"] = ollama_base
+        else:
+            override["config"]["default_model"] = raw_m
 
     if config.get("reasoning_effort"):
         override["config"]["reasoning_effort"] = config["reasoning_effort"]
@@ -713,16 +747,7 @@ def run_mantis_scan(
         target_dir = workspace / "target"
         emit("setup", "orchestrator", "ready", {"message": f"Workspace ready: {workspace}"})
 
-        # 2. Write workflow override
-        _write_workflow_override(workspace, scan_config)
-
-        # 3. Determine focus and exclude flags
-        focus = scan_config.get("focus")
-        exclude = scan_config.get("exclude", [])
-
-        # 4. Build Mantis CLI command
-        # We run the upstream reference harness directly as a subprocess,
-        # streaming its stdout line-by-line into Redis.
+        # 2. Build Mantis CLI command & environment
         mantis_run_sh = MANTIS_ENGINE_DIR / "run.sh"
 
         env = os.environ.copy()
@@ -757,6 +782,8 @@ def run_mantis_scan(
                                 env["GOOGLE_API_KEY"] = key_val
                             elif p_lower == "deepseek":
                                 env["DEEPSEEK_API_KEY"] = key_val
+                            elif p_lower == "ollama":
+                                env["OLLAMA_API_KEY"] = key_val
                         except Exception:
                             pass
                     if p_base:
@@ -770,6 +797,20 @@ def run_mantis_scan(
             env["GOOGLE_API_KEY"] = env["GEMINI_API_KEY"]
         elif env.get("GOOGLE_API_KEY") and not env.get("GEMINI_API_KEY"):
             env["GEMINI_API_KEY"] = env["GOOGLE_API_KEY"]
+
+        # If Ollama is routed through OpenAI-compatible /v1 endpoint, supply OLLAMA_API_KEY to OPENAI_API_KEY if not already set
+        if env.get("OLLAMA_API_KEY") and not env.get("OPENAI_API_KEY"):
+            env["OPENAI_API_KEY"] = env["OLLAMA_API_KEY"]
+
+        # Inject provider base URLs into scan_config for workflow generation
+        scan_config["ollama_api_base"] = provider_base_urls.get("ollama") or env.get("OLLAMA_API_BASE")
+
+        # 3. Write workflow override with per-stage model routing
+        _write_workflow_override(workspace, scan_config)
+
+        # 4. Determine focus and exclude flags
+        focus = scan_config.get("focus")
+        exclude = scan_config.get("exclude", [])
 
         # Determine effective model and multi-model routing
         model = scan_config.get("model")
@@ -823,7 +864,10 @@ def run_mantis_scan(
         # In multi-model mode, omitting --model allows Mantis to execute each node
         # using its individual node["model"] configured in workflow.json!
         if not is_multi_model and model:
-            cmd += ["--model", model]
+            if model.startswith("ollama/"):
+                cmd += ["--model", f"openai/{model.replace('ollama/', '', 1)}"]
+            else:
+                cmd += ["--model", model]
 
         if focus:
             cmd += ["--focus", focus]
