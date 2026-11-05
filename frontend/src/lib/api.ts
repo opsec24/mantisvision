@@ -178,6 +178,7 @@ export const api = {
       status: string;
       current_phase?: string;
       phase_models?: Record<string, any>;
+    phase_efforts?: Record<string, any>;
       budget_limit_usd?: number;
       cost_spent_usd: number;
       created_at: string;
@@ -244,6 +245,7 @@ export const api = {
     git_token?: string;
     budget_limit_usd?: number;
     phase_models?: Record<string, any>;
+    phase_efforts?: Record<string, any>;
     fresh?: boolean;
     model?: string;
     reasoning_effort?: string;
@@ -304,6 +306,7 @@ export const api = {
         branch?: string;
         status: string;
         phase_models?: Record<string, any>;
+    phase_efforts?: Record<string, any>;
         cost_spent_usd: number;
         duration_seconds?: number;
         created_at: string;

@@ -405,7 +405,11 @@ export default function ScanDetailPage() {
           <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
             <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Model">
               <Cpu className="w-3 h-3 text-amber-400" />
-              <span>{scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}</span>
+              <span>
+                {scan.phase_models && Object.keys(scan.phase_models).length > 1
+                  ? "Swarm: Multi-Model"
+                  : scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}
+              </span>
             </span>
             <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Reasoning Effort">
               <Sliders className="w-3 h-3 text-cyan-400" />
@@ -1076,7 +1080,9 @@ export default function ScanDetailPage() {
                 <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
                   <dt className="text-slate-400 font-medium">Model Architecture</dt>
                   <dd className="font-mono font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-800/60">
-                    {scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}
+                    {scan.phase_models && Object.keys(scan.phase_models).length > 1
+                      ? "Swarm: Multi-Model"
+                      : scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
@@ -1098,6 +1104,38 @@ export default function ScanDetailPage() {
                   </dd>
                 </div>
               </dl>
+
+              {/* Swarm Stage Model Breakdown if multi-model was used */}
+              {scan.phase_models && Object.keys(scan.phase_models).length > 1 && (
+                <div className="pt-3 border-t border-slate-800/70 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 font-mono block">
+                    Swarm Heterogeneous Stage Assignments
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+                    {[
+                      { key: "recon", label: "02 Recon & Indexing" },
+                      { key: "threat_model", label: "03 Threat Modeling" },
+                      { key: "research", label: "04 Deep Vulnerability Audit" },
+                      { key: "critic", label: "05 Adversarial Critic" },
+                      { key: "reproduce", label: "06 Dynamic Exploit PoC" },
+                      { key: "patch", label: "07 Patch & Pentest Report" },
+                    ].map((phase) => {
+                      const assigned = scan.phase_models[phase.key] || scan.model || "gemini-3.5-flash-lite";
+                      return (
+                        <div
+                          key={phase.key}
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800/80"
+                        >
+                          <span className="text-slate-400 text-[10px]">{phase.label}</span>
+                          <span className="text-amber-300 font-bold truncate max-w-[140px]" title={assigned}>
+                            {assigned}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Card 2: Execution & Sandboxing Strategy */}

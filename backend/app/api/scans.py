@@ -53,6 +53,8 @@ class ScanCreateRequest(BaseModel):
     git_token: Optional[str] = None
     # Mantis-native flags
     model: Optional[str] = None                    # e.g. "openai/gpt-4o", "gemini-3.5-flash-lite"
+    phase_models: Optional[dict[str, str]] = None  # Per-stage model routing
+    phase_efforts: Optional[dict[str, str]] = None # Per-stage reasoning effort
     reasoning_effort: Optional[str] = "medium"     # "low", "medium", "high"
     focus: Optional[str] = None                    # e.g. "look for IDOR", "find SSRF"
     exclude: Optional[list[str]] = None            # e.g. ["vendor", "testdata", "*.min.js"]
@@ -235,8 +237,17 @@ async def create_scan(
 
     # Fresh scan option: each scan operates in an isolated workspace under /data/scans/{scan_id}
 
+    # Clean phase models if provided
+    clean_phase_models = None
+    if body.phase_models and isinstance(body.phase_models, dict):
+        clean_phase_models = {k: v.strip() for k, v in body.phase_models.items() if v and str(v).strip()}
+        if not clean_phase_models:
+            clean_phase_models = None
+
     scan_config = {
         "model": body.model,
+        "phase_models": clean_phase_models,
+        "phase_efforts": body.phase_efforts,
         "reasoning_effort": body.reasoning_effort,
         "focus": body.focus,
         "exclude": body.exclude or [],
@@ -262,12 +273,12 @@ async def create_scan(
         status="queued",
         budget_limit_usd=body.budget_limit_usd,
         # Mantis-native fields
-        model=body.model,
+        model=body.model or ("Swarm (Multi-Model)" if clean_phase_models else None),
         reasoning_effort=body.reasoning_effort,
         focus=body.focus,
         sandbox=body.sandbox or "static-only",
         exclude_patterns=body.exclude or [],
-        phase_models=scan_config,
+        phase_models=clean_phase_models or ({"recon": body.model, "threat_model": body.model, "research": body.model, "critic": body.model, "reproduce": body.model, "patch": body.model} if body.model else None),
     )
     db.add(scan)
     await db.flush()
@@ -400,7 +411,7 @@ async def compare_scans(
         phase_models_map[p] = {}
         for s in scans:
             pm = s.phase_models or {}
-            phase_models_map[p][str(s.id)] = pm.get(p, "default")
+            phase_models_map[p][str(s.id)] = pm.get(p) or s.model or "default"
 
     # Group & merge findings
     merged_findings: dict[str, FindingComparisonItem] = {}

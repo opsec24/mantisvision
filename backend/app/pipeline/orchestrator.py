@@ -491,7 +491,25 @@ def calculate_cost_usd(
 # ── Mantis Workspace ──────────────────────────────────────────────────────────
 
 SCAN_DATA_ROOT = Path(os.getenv("SCAN_DATA_ROOT", "/data/scans"))
-MANTIS_ENGINE_DIR = Path("/app/mantis_engine")
+MANTIS_ENGINE_DIR = Path(os.getenv("MANTIS_ENGINE_DIR", "/app/mantis_engine"))
+if not MANTIS_ENGINE_DIR.exists():
+    _local_engine = Path(__file__).resolve().parent.parent.parent / "mantis_engine"
+    if _local_engine.exists():
+        MANTIS_ENGINE_DIR = _local_engine
+
+STAGE_TO_NODES = {
+    "recon": ["history", "structural_index"],
+    "indexing": ["history", "structural_index"],
+    "threat_model": ["architect", "threat_modeler"],
+    "research": ["planner", "researcher"],
+    "critic": ["deduplicator", "reviewer", "critic", "findings_gate"],
+    "reproduce": ["reproducer", "repro_classifier", "chainer"],
+    "patch": ["patcher", "calibrator", "reflector", "reporter"],
+}
+
+NODE_TO_STAGE = {
+    node: stage for stage, nodes in STAGE_TO_NODES.items() for node in nodes
+}
 
 
 def _build_workspace(scan_id: str, source_target: str, source_type: str,
@@ -536,28 +554,80 @@ def _build_workspace(scan_id: str, source_target: str, source_type: str,
 
 
 def _write_workflow_override(workspace: Path, config: dict) -> Path:
-    """Write workflow.local.json with scan-specific model and flags."""
+    """Write scan-specific workflow.json and workflow.local.json with per-stage model routing."""
+    base_wf_path = MANTIS_ENGINE_DIR / "workflow.json"
+    wf_data = {}
+    if base_wf_path.exists():
+        try:
+            wf_data = json.loads(base_wf_path.read_text(encoding="utf-8"))
+        except Exception as e:
+            logger.warning("failed_to_read_base_workflow", error=str(e))
+
+    raw_phase_models = config.get("phase_models") or {}
+    clean_phase_models = {
+        str(k).strip(): str(v).strip()
+        for k, v in raw_phase_models.items()
+        if v and str(v).strip()
+    }
+    phase_efforts = config.get("phase_efforts") or {}
+
+    # If per-stage models or efforts are configured, inject them into wf_data nodes
+    if wf_data and (clean_phase_models or phase_efforts):
+        for node in wf_data.get("nodes", []):
+            node_id = node.get("id")
+            stage = NODE_TO_STAGE.get(node_id)
+            if stage:
+                assigned_model = clean_phase_models.get(stage) or (clean_phase_models.get("recon") if stage == "indexing" else None)
+                if assigned_model:
+                    node["model"] = assigned_model
+                assigned_effort = phase_efforts.get(stage) or (phase_efforts.get("recon") if stage == "indexing" else None)
+                if assigned_effort:
+                    node["reasoning_effort"] = str(assigned_effort).lower()
+
+        # Determine fallback default model
+        fallback_model = (
+            clean_phase_models.get("research")
+            or clean_phase_models.get("recon")
+            or clean_phase_models.get("indexing")
+            or config.get("model")
+            or "vertex_ai/gemini-3.8-flash"
+        )
+        wf_data.setdefault("config", {})["default_model"] = fallback_model
+    elif wf_data and config.get("model"):
+        wf_data.setdefault("config", {})["default_model"] = config["model"]
+
+    # Write customized workflow.json into workspace
+    scan_wf_path = workspace / "workflow.json"
+    if wf_data:
+        scan_wf_path.write_text(json.dumps(wf_data, indent=2), encoding="utf-8")
+
+    # Also write workflow.local.json overlay for Mantis engine loaders
     override = {
         "config": {
             "db_path": str(workspace / "knowledge.db"),
         }
     }
-    # Model
-    if config.get("model"):
+    if clean_phase_models:
+        override["config"]["default_model"] = (
+            clean_phase_models.get("research")
+            or clean_phase_models.get("recon")
+            or clean_phase_models.get("indexing")
+            or config.get("model")
+            or "vertex_ai/gemini-3.8-flash"
+        )
+    elif config.get("model"):
         override["config"]["default_model"] = config["model"]
-    # Reasoning effort
+
     if config.get("reasoning_effort"):
         override["config"]["reasoning_effort"] = config["reasoning_effort"]
-    # Sandbox
     if config.get("sandbox"):
         override["config"]["sandbox"] = {"type": config["sandbox"], "options": {}}
-    # Budget
     if config.get("max_tokens"):
         override["budget"] = {"max_tokens": config["max_tokens"]}
 
     path = workspace / "workflow.local.json"
-    path.write_text(json.dumps(override, indent=2))
-    return path
+    path.write_text(json.dumps(override, indent=2), encoding="utf-8")
+    return scan_wf_path if scan_wf_path.exists() else path
 
 
 # ── Celery Task ───────────────────────────────────────────────────────────────
@@ -701,10 +771,20 @@ def run_mantis_scan(
         elif env.get("GOOGLE_API_KEY") and not env.get("GEMINI_API_KEY"):
             env["GEMINI_API_KEY"] = env["GOOGLE_API_KEY"]
 
-        # Determine effective model
+        # Determine effective model and multi-model routing
         model = scan_config.get("model")
+        raw_phase_models = scan_config.get("phase_models") or {}
+        clean_phase_models = {
+            str(k).strip(): str(v).strip()
+            for k, v in raw_phase_models.items()
+            if v and str(v).strip()
+        }
+        is_multi_model = bool(clean_phase_models and len(clean_phase_models) > 0)
+
         if not model or model.strip() in ("", "default"):
-            if env.get("GEMINI_API_KEY") or env.get("GOOGLE_API_KEY"):
+            if is_multi_model:
+                model = "Swarm (Multi-Model)"
+            elif env.get("GEMINI_API_KEY") or env.get("GOOGLE_API_KEY"):
                 model = "gemini-3.5-flash-lite"
             elif env.get("OPENAI_API_KEY"):
                 model = "openai/gpt-4o"
@@ -717,20 +797,33 @@ def run_mantis_scan(
             else:
                 model = "gemini-3.5-flash-lite"
 
-        # Update scan model record in DB if it was empty
-        _update_scan(scan_id, model=model)
+        effective_phase_models = clean_phase_models if is_multi_model else {
+            p: model for p in ("recon", "indexing", "threat_model", "research", "critic", "reproduce", "patch")
+        }
+        if "recon" in effective_phase_models and "indexing" not in effective_phase_models:
+            effective_phase_models["indexing"] = effective_phase_models["recon"]
 
-        # Build command
+        # Update scan model & phase_models records in DB
+        _update_scan(scan_id, model=model, phase_models=effective_phase_models)
+
+        # Build command: use scan-specific workflow if generated, otherwise fallback to upstream
+        scan_wf_path = workspace / "workflow.json"
+        effective_wf = scan_wf_path if scan_wf_path.exists() else (MANTIS_ENGINE_DIR / "workflow.json")
+
         transcript_file = workspace / "transcript.jsonl"
         cmd = [
             "bash", str(mantis_run_sh),
             str(target_dir),
-            "--workflow", str(MANTIS_ENGINE_DIR / "workflow.json"),
+            "--workflow", str(effective_wf),
             "--db", str(workspace / "knowledge.db"),
             "--transcript-out", str(transcript_file),
             "--yes",
-            "--model", model,
         ]
+        # Only pass global CLI --model flag if NOT running heterogeneous swarm routing.
+        # In multi-model mode, omitting --model allows Mantis to execute each node
+        # using its individual node["model"] configured in workflow.json!
+        if not is_multi_model and model:
+            cmd += ["--model", model]
 
         if focus:
             cmd += ["--focus", focus]
@@ -849,8 +942,10 @@ def run_mantis_scan(
                 extra_trace["tool_name"] = tool_resp_match.group(1)
                 extra_trace["tool_output"] = (tool_resp_match.group(2) or "")[:3000]
 
+            active_step_model = effective_phase_models.get(current_phase, model)
             emit(current_phase, current_node, "log_line", {
                 "message": line,
+                "model": active_step_model,
                 "decision_status": "PROGRESS",
                 **extra_trace,
             })
@@ -908,15 +1003,16 @@ def run_mantis_scan(
                                                 continue
 
                                     parsed_t_args = _parse_tool_input(t_args) if t_args else None
+                                    t_model = t_row.get("model") or effective_phase_models.get(t_phase, model)
                                     with engine.begin() as conn:
                                         conn.execute(
                                             text("""
                                                 INSERT INTO agent_inference_traces
-                                                  (scan_id, step_number, phase, agent_name,
+                                                  (scan_id, step_number, phase, agent_name, model,
                                                    response_raw, tool_name, tool_input, tool_output,
                                                    decision_status)
                                                 VALUES
-                                                  (:scan_id, :step, :phase, :agent,
+                                                  (:scan_id, :step, :phase, :agent, :model,
                                                    :resp, :tool, CAST(:tool_in AS jsonb), :tool_out,
                                                    'PROGRESS')
                                             """),
@@ -925,6 +1021,7 @@ def run_mantis_scan(
                                                 "step": 20000 + transcript_ingested_lines + t_idx,
                                                 "phase": t_phase,
                                                 "agent": t_node,
+                                                "model": t_model,
                                                 "resp": t_text,
                                                 "tool": t_name,
                                                 "tool_in": json.dumps(parsed_t_args) if parsed_t_args else None,

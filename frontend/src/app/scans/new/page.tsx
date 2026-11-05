@@ -26,6 +26,7 @@ import {
   Target,
   Crosshair,
   HelpCircle,
+  Layers,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -58,6 +59,59 @@ const SANDBOX_OPTIONS = [
   { id: "gvisor", label: "gVisor", desc: "Kernel-level isolation for PoC" },
 ];
 
+interface SwarmStageDef {
+  key: string;
+  num: string;
+  name: string;
+  nodes: string;
+  desc: string;
+}
+
+const SWARM_STAGES: SwarmStageDef[] = [
+  {
+    key: "recon",
+    num: "02",
+    name: "Recon & Indexing",
+    nodes: "history, structural_index",
+    desc: "AST structural indexing & delta tracking (Deterministic Tree-Sitter + Fast LLM)",
+  },
+  {
+    key: "threat_model",
+    num: "03",
+    name: "Threat Modeling",
+    nodes: "architect, threat_modeler",
+    desc: "STRIDE matrix, trust boundary mapping & security sink identification",
+  },
+  {
+    key: "research",
+    num: "04",
+    name: "Deep Vulnerability Audit",
+    nodes: "planner, researcher",
+    desc: "Taint flow tracing, SMT constraint solving & vulnerability hypothesis generation",
+  },
+  {
+    key: "critic",
+    num: "05",
+    name: "Adversarial Critic & Triage",
+    nodes: "deduplicator, reviewer, critic",
+    desc: "Adversarial hypothesis stress testing, FP pruning & exploitability review",
+  },
+  {
+    key: "reproduce",
+    num: "06",
+    name: "Dynamic Exploit Reproducer",
+    nodes: "reproducer, chainer",
+    desc: "Dynamic PoC harness synthesis, Docker/MicroSandbox verification & exploit chains",
+  },
+  {
+    key: "patch",
+    num: "07",
+    name: "Patch & Risk Calibration",
+    nodes: "patcher, calibrator, reporter",
+    desc: "Zero-regression patch generation, CVSS risk scoring & pentest reporting",
+  },
+];
+
 export default function NewScanPage() {
   const router = useRouter();
 
@@ -69,6 +123,8 @@ export default function NewScanPage() {
   const [gitToken, setGitToken] = useState("");
 
   // Mantis-native flags
+  const [routingMode, setRoutingMode] = useState<"single" | "swarm">("single");
+  const [swarmPreset, setSwarmPreset] = useState<string>("balanced");
   const [modelPreset, setModelPreset] = useState("gemini/gemini-3.5-flash-lite");
   const [customModel, setCustomModel] = useState("");
   const [reasoningEffort, setReasoningEffort] = useState<"low" | "medium" | "high">("medium");
@@ -100,6 +156,15 @@ export default function NewScanPage() {
 
   // Per-phase model assignments
   const [phaseModels, setPhaseModels] = useState<Record<string, string>>({
+    recon: "gemini/gemini-3.5-flash-lite",
+    threat_model: "gemini/gemini-3.8-flash",
+    research: "claude-3-5-sonnet-20241022",
+    critic: "openai/gpt-4o",
+    reproduce: "claude-3-5-sonnet-20241022",
+    patch: "gemini/gemini-3.8-flash",
+  });
+
+  const [customStageModels, setCustomStageModels] = useState<Record<string, string>>({
     recon: "",
     threat_model: "",
     research: "",
@@ -246,6 +311,79 @@ export default function NewScanPage() {
         role: "smart",
       },
     ],
+  };
+
+  const applySwarmPreset = (presetKey: string) => {
+    setSwarmPreset(presetKey);
+    if (presetKey === "balanced") {
+      setPhaseModels({
+        recon: "gemini/gemini-3.5-flash-lite",
+        threat_model: "gemini/gemini-3.8-flash",
+        research: "claude-3-5-sonnet-20241022",
+        critic: "openai/gpt-4o",
+        reproduce: "claude-3-5-sonnet-20241022",
+        patch: "gemini/gemini-3.8-flash",
+      });
+      setPhaseEfforts({
+        recon: "low",
+        threat_model: "medium",
+        research: "high",
+        critic: "high",
+        reproduce: "high",
+        patch: "high",
+      });
+    } else if (presetKey === "adversarial") {
+      setPhaseModels({
+        recon: "gemini/gemini-3.5-flash-lite",
+        threat_model: "openai/gpt-4o",
+        research: "claude-3-5-sonnet-20241022",
+        critic: "openai/gpt-4o",
+        reproduce: "claude-3-5-sonnet-20241022",
+        patch: "openai/gpt-4o",
+      });
+      setPhaseEfforts({
+        recon: "low",
+        threat_model: "medium",
+        research: "high",
+        critic: "high",
+        reproduce: "high",
+        patch: "high",
+      });
+    } else if (presetKey === "budget") {
+      setPhaseModels({
+        recon: "gemini/gemini-3.5-flash-lite",
+        threat_model: "gemini/gemini-3.5-flash-lite",
+        research: "gemini/gemini-3.8-flash",
+        critic: "gemini/gemini-3.8-flash",
+        reproduce: "gemini/gemini-3.8-flash",
+        patch: "gemini/gemini-3.5-flash-lite",
+      });
+      setPhaseEfforts({
+        recon: "low",
+        threat_model: "low",
+        research: "medium",
+        critic: "medium",
+        reproduce: "medium",
+        patch: "low",
+      });
+    } else if (presetKey === "frontier") {
+      setPhaseModels({
+        recon: "claude-3-5-sonnet-20241022",
+        threat_model: "claude-3-5-sonnet-20241022",
+        research: "claude-3-5-sonnet-20241022",
+        critic: "openai/gpt-4o",
+        reproduce: "claude-3-5-sonnet-20241022",
+        patch: "claude-3-5-sonnet-20241022",
+      });
+      setPhaseEfforts({
+        recon: "medium",
+        threat_model: "medium",
+        research: "high",
+        critic: "high",
+        reproduce: "high",
+        patch: "high",
+      });
+    }
   };
 
   const applyPreset = (selectedPreset: string, models: any[] = availableModels) => {
@@ -399,8 +537,15 @@ export default function NewScanPage() {
     setError(null);
     setLoading(true);
 
-    // Resolve effective model
-    const effectiveModel = modelPreset === "custom" ? customModel.trim() || undefined : modelPreset || undefined;
+    // Resolve effective model and per-phase swarm mappings
+    const isSwarm = routingMode === "swarm";
+    const effectivePhaseModels = isSwarm ? phaseModels : undefined;
+    const effectivePhaseEfforts = isSwarm ? phaseEfforts : undefined;
+    const effectiveModel = isSwarm
+      ? "Swarm (Multi-Model)"
+      : modelPreset === "custom"
+      ? customModel.trim() || undefined
+      : modelPreset || undefined;
 
     // Parse exclude patterns
     const excludeList = excludePatterns
@@ -417,8 +562,10 @@ export default function NewScanPage() {
         git_token: gitToken.trim() ? gitToken.trim() : undefined,
         budget_limit_usd: budgetLimit,
         fresh: freshScan,
-        // Mantis-native flags
+        // Mantis-native flags & Swarm routing
         model: effectiveModel,
+        phase_models: effectivePhaseModels,
+        phase_efforts: effectivePhaseEfforts,
         reasoning_effort: reasoningEffort,
         focus: focus.trim() || undefined,
         exclude: excludeList.length > 0 ? excludeList : undefined,
@@ -745,107 +892,348 @@ export default function NewScanPage() {
             </span>
           </div>
 
-          {/* Model Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-slate-300">
-                Model Architecture
-              </label>
-              {providers.find((p) => p.provider === "ollama")?.is_active && (
-                <span className="flex items-center space-x-1.5 text-[11px] font-mono text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-800/60">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Ollama Cloud Connected (https://ollama.com)</span>
-                </span>
-              )}
+          {/* Strategy Selector: Single vs Swarm */}
+          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">
+                    Model Architecture Strategy
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                    ADK 2.0 Native
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Execute using a uniform single model or distribute phases across a specialized multi-model agent swarm.
+                </p>
+              </div>
+              <div className="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setRoutingMode("single")}
+                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                    routingMode === "single"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-xs glow-amber-btn"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>Single Model</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRoutingMode("swarm");
+                    if (!phaseModels.recon) applySwarmPreset("balanced");
+                  }}
+                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                    routingMode === "swarm"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-xs glow-amber-btn"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Multi-Model Swarm</span>
+                  <span className="text-[9px] px-1 py-0.2 rounded font-black bg-amber-950 text-amber-300 border border-amber-500/40 ml-1">
+                    NEW
+                  </span>
+                </button>
+              </div>
             </div>
+          </div>
 
-            {/* Whitelisted Models from Settings (Ollama Cloud & Google) */}
-            {availableModels.length > 0 && (
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono block">
-                  Your Configured &amp; Whitelisted Models ({availableModels.length})
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                  {availableModels.map((m) => (
+          {/* MODE 1: SINGLE MODEL SELECTION */}
+          {routingMode === "single" && (
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Model Architecture
+                  </label>
+                  {providers.find((p) => p.provider === "ollama")?.is_active && (
+                    <span className="flex items-center space-x-1.5 text-[11px] font-mono text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-800/60">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Ollama Cloud Connected (https://ollama.com)</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Whitelisted Models from Settings */}
+                {availableModels.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono block">
+                      Your Configured &amp; Whitelisted Models ({availableModels.length})
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                      {availableModels.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setModelPreset(m.id)}
+                          className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all cursor-pointer ${
+                            modelPreset === m.id
+                              ? "bg-amber-950/80 border-amber-500 text-amber-300 shadow-md ring-2 ring-amber-500/30 font-bold glow-amber-btn"
+                              : "bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80"
+                          }`}
+                        >
+                          <div className="font-bold truncate">{m.display_name || m.id}</div>
+                          <div className={`text-[10px] font-mono truncate mt-0.5 ${modelPreset === m.id ? "text-amber-400" : "text-slate-500"}`}>
+                            {m.provider} &bull; {m.id}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Standard Cloud Presets */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono block">
+                    Standard Cloud Presets
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {MODEL_PRESETS.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setModelPreset(m.id)}
+                        className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all cursor-pointer ${
+                          modelPreset === m.id
+                            ? "bg-amber-950/80 border-amber-500 text-amber-300 shadow-md ring-2 ring-amber-500/30 font-bold glow-amber-btn"
+                            : "bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80"
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {modelPreset === "custom" && (
+                  <input
+                    type="text"
+                    value={customModel}
+                    onChange={(e) => setCustomModel(e.target.value)}
+                    placeholder="e.g. ollama/deepseek-v4.1-flash, openai/gpt-4o-mini"
+                    className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all mt-1"
+                  />
+                )}
+              </div>
+
+              {/* Reasoning Effort */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Reasoning Effort
+                </label>
+                <div className="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs gap-1">
+                  {(["low", "medium", "high"] as const).map((eff) => (
                     <button
-                      key={m.id}
+                      key={eff}
                       type="button"
-                      onClick={() => setModelPreset(m.id)}
-                      className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all cursor-pointer ${
-                        modelPreset === m.id
-                          ? "bg-amber-950/80 border-amber-500 text-amber-300 shadow-md ring-2 ring-amber-500/30 font-bold glow-amber-btn"
+                      onClick={() => setReasoningEffort(eff)}
+                      className={`px-4 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer ${
+                        reasoningEffort === eff
+                          ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-xs"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      {eff}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Controls thinking budget per LLM call. <strong>High</strong> = deeper reasoning but more tokens.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* MODE 2: MULTI-MODEL SWARM ROUTING */}
+          {routingMode === "swarm" && (
+            <div className="space-y-5">
+              {/* Swarm Quick Presets */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 font-mono uppercase tracking-wider flex items-center space-x-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Swarm Composition Architecture</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400">One-click stage assignments</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                  {[
+                    {
+                      id: "balanced",
+                      name: "⚡ Balanced Hybrid",
+                      desc: "Gemini Flash (Recon) → Claude 3.5 Sonnet (Research) → GPT-4o (Critic)",
+                      badge: "Recommended",
+                    },
+                    {
+                      id: "adversarial",
+                      name: "🛡️ Adversarial Check",
+                      desc: "Claude Researcher vs. GPT-4o Critic (slashes consensus blindspots)",
+                      badge: "Zero-FP Focus",
+                    },
+                    {
+                      id: "budget",
+                      name: "💰 Budget Optimized",
+                      desc: "Gemini 3.5 Flash-Lite & Flash across all reconnaissance & research sweeps",
+                      badge: "Cost Saver",
+                    },
+                    {
+                      id: "frontier",
+                      name: "🚀 Frontier Reasoning",
+                      desc: "Claude 3.5 Sonnet & GPT-4o across all indexing, audit, critic & PoC passes",
+                      badge: "Max Depth",
+                    },
+                  ].map((ps) => (
+                    <button
+                      key={ps.id}
+                      type="button"
+                      onClick={() => applySwarmPreset(ps.id)}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        swarmPreset === ps.id
+                          ? "bg-amber-950/80 border-amber-500 text-amber-300 ring-2 ring-amber-500/30 glow-amber-btn"
                           : "bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80"
                       }`}
                     >
-                      <div className="font-bold truncate">{m.display_name || m.id}</div>
-                      <div className={`text-[10px] font-mono truncate mt-0.5 ${modelPreset === m.id ? "text-amber-400" : "text-slate-500"}`}>
-                        {m.provider} &bull; {m.id}
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold font-mono">{ps.name}</span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded font-semibold bg-slate-950 text-slate-300 border border-slate-800">
+                            {ps.badge}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-2">{ps.desc}</p>
                       </div>
                     </button>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Standard Cloud Presets */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono block">
-                Standard Cloud Presets
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {MODEL_PRESETS.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setModelPreset(m.id)}
-                    className={`px-3 py-2 rounded-xl border text-xs text-left font-medium transition-all cursor-pointer ${
-                      modelPreset === m.id
-                        ? "bg-amber-950/80 border-amber-500 text-amber-300 shadow-md ring-2 ring-amber-500/30 font-bold glow-amber-btn"
-                        : "bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80"
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+              {/* 6-Stage Interactive Matrix */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center space-x-1.5">
+                    <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Per-Stage Model &amp; Reasoning Matrix (6 Stages)</span>
+                  </span>
+                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
+                    Phase 0 (Surveyor): Deterministic AST (0 tokens)
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {SWARM_STAGES.map((st) => {
+                    const assignedModel = phaseModels[st.key] || "gemini/gemini-3.5-flash-lite";
+                    const assignedEffort = phaseEfforts[st.key] || "medium";
+                    const isCustom = assignedModel === "custom" || customStageModels[st.key];
+
+                    return (
+                      <div
+                        key={st.key}
+                        className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-3"
+                      >
+                        {/* Stage Info */}
+                        <div className="min-w-[240px] max-w-sm">
+                          <div className="flex items-center space-x-2">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-amber-950 text-amber-400 border border-amber-800/80">
+                              {st.num}
+                            </span>
+                            <span className="text-xs font-bold text-white font-mono">{st.name}</span>
+                            <span className="text-[9px] font-mono text-slate-400 bg-slate-950 px-1.5 py-0.2 rounded border border-slate-800">
+                              {st.nodes}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                            {st.desc}
+                          </p>
+                        </div>
+
+                        {/* Model & Reasoning Controls */}
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          {/* Model Select */}
+                          <div className="flex flex-col space-y-1">
+                            <select
+                              value={isCustom ? "custom" : assignedModel}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "custom") {
+                                  setCustomStageModels((prev) => ({ ...prev, [st.key]: "openai/gpt-4o" }));
+                                  setPhaseModels((prev) => ({ ...prev, [st.key]: customStageModels[st.key] || "openai/gpt-4o" }));
+                                } else {
+                                  setCustomStageModels((prev) => ({ ...prev, [st.key]: "" }));
+                                  setPhaseModels((prev) => ({ ...prev, [st.key]: val }));
+                                }
+                              }}
+                              className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+                            >
+                              <optgroup label="Whitelisted Models">
+                                {availableModels.map((m) => (
+                                  <option key={`wl_${st.key}_${m.id}`} value={m.id}>
+                                    {m.display_name || m.id} ({m.provider})
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="Standard Cloud Models">
+                                {MODEL_PRESETS.filter((p) => p.id !== "custom").map((p) => (
+                                  <option key={`std_${st.key}_${p.id}`} value={p.id}>
+                                    {p.label}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <option value="custom">✏️ Custom Model ID...</option>
+                            </select>
+
+                            {isCustom && (
+                              <input
+                                type="text"
+                                value={customStageModels[st.key] || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCustomStageModels((prev) => ({ ...prev, [st.key]: val }));
+                                  setPhaseModels((prev) => ({ ...prev, [st.key]: val }));
+                                }}
+                                placeholder="e.g. anthropic/claude-3-5-haiku"
+                                className="px-2 py-1 bg-slate-950 border border-slate-700 rounded text-[11px] font-mono text-slate-200 focus:outline-none focus:border-amber-500"
+                              />
+                            )}
+                          </div>
+
+                          {/* Reasoning Effort Pills */}
+                          <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-[10px] font-mono font-bold">
+                            {(["low", "medium", "high"] as const).map((eff) => (
+                              <button
+                                key={`eff_${st.key}_${eff}`}
+                                type="button"
+                                onClick={() => setPhaseEfforts((prev) => ({ ...prev, [st.key]: eff }))}
+                                className={`px-2 py-0.5 rounded capitalize transition-all cursor-pointer ${
+                                  assignedEffort === eff
+                                    ? "bg-amber-500 text-slate-950 font-black shadow-xs"
+                                    : "text-slate-400 hover:text-slate-200"
+                                }`}
+                              >
+                                {eff}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-900/50 flex items-start space-x-2.5 text-xs text-amber-200/90 leading-relaxed font-sans">
+                  <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Heterogeneous Cross-Vendor Execution:</strong> Mantis ADK 2.0 routes requests via LiteLLM. For example, pairing a <em>Claude Researcher</em> with an <em>OpenAI GPT-4o Critic</em> introduces orthogonal cognitive models that expose false positives while preserving true exploit chains!
+                  </div>
+                </div>
               </div>
             </div>
-
-            {modelPreset === "custom" && (
-              <input
-                type="text"
-                value={customModel}
-                onChange={(e) => setCustomModel(e.target.value)}
-                placeholder="e.g. ollama/deepseek-v4.1-flash, openai/gpt-4o-mini"
-                className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all mt-1"
-              />
-            )}
-          </div>
-
-          {/* Reasoning Effort */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-300">
-              Reasoning Effort
-            </label>
-            <div className="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs gap-1">
-              {(["low", "medium", "high"] as const).map((eff) => (
-                <button
-                  key={eff}
-                  type="button"
-                  onClick={() => setReasoningEffort(eff)}
-                  className={`px-4 py-1.5 rounded-lg capitalize font-bold transition-all cursor-pointer ${
-                    reasoningEffort === eff
-                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold shadow-xs"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  {eff}
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Controls thinking budget per LLM call. <strong>High</strong> = deeper reasoning but more tokens.
-            </p>
-          </div>
+          )}
 
           {/* Focus */}
           <div className="space-y-2">
