@@ -293,6 +293,15 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
     if not transcript_path.exists():
         return 0
     engine = _get_sync_engine()
+    # If live transcript ingestion already recorded the transcript steps (step >= 20000), do not duplicate
+    with engine.begin() as conn:
+        existing_live = conn.execute(
+            text("SELECT count(*) FROM agent_inference_traces WHERE scan_id = :scan_id AND step_number >= 20000"),
+            {"scan_id": scan_id},
+        ).scalar()
+    if existing_live and existing_live > 0:
+        return int(existing_live)
+
     count = 0
     try:
         with open(transcript_path, "r", encoding="utf-8") as f:
@@ -340,27 +349,39 @@ def _ingest_transcript(scan_id: str, workspace_dir: Path) -> int:
                                 continue
 
                     parsed_inp = _parse_tool_input(tool_input) if tool_input else None
+                    thinking_content = row.get("thinking") or (resp_text if r_type == "text" else None)
+                    candidate_vuln_title = None
+                    decision_status = "PROGRESS"
+                    if tool_name == "report_findings" and tool_input:
+                        found_titles = re.findall(r"'title':\s*['\"]([^'\"]+)['\"]", str(tool_input))
+                        if found_titles:
+                            candidate_vuln_title = " | ".join(found_titles[:2])
+                            decision_status = "VERIFIED"
+
                     with engine.begin() as conn:
                         conn.execute(
                             text("""
                                 INSERT INTO agent_inference_traces
                                   (scan_id, step_number, phase, agent_name,
-                                   response_raw, tool_name, tool_input, tool_output,
-                                   decision_status)
+                                   thinking_content, response_raw, tool_name, tool_input, tool_output,
+                                   candidate_vuln_title, decision_status)
                                 VALUES
                                   (:scan_id, :step, :phase, :agent,
-                                   :resp, :tool, CAST(:tool_in AS jsonb), :tool_out,
-                                   'PROGRESS')
+                                   :thinking, :resp, :tool, CAST(:tool_in AS jsonb), :tool_out,
+                                   :vuln_title, :decision_status)
                             """),
                             {
                                 "scan_id": scan_id,
                                 "step": 10000 + idx,
                                 "phase": phase_mapped,
                                 "agent": node,
+                                "thinking": thinking_content,
                                 "resp": resp_text,
                                 "tool": tool_name,
                                 "tool_in": json.dumps(parsed_inp) if parsed_inp else None,
                                 "tool_out": str(tool_output)[:16000] if tool_output else None,
+                                "vuln_title": candidate_vuln_title,
+                                "decision_status": decision_status,
                             },
                         )
                     count += 1
@@ -709,26 +730,33 @@ def run_mantis_scan(
             **data,
         }
         _publish_progress(scan_id, payload)
-        # Persist to agent_inference_traces
-        try:
-            trace_data = {k: v for k, v in data.items() if k in (
-                "model", "thinking_content", "prompt_raw", "response_raw",
-                "tool_name", "tool_input", "tool_output",
-                "candidate_vuln_title", "decision_status", "decision_reason",
-                "prompt_tokens", "completion_tokens", "total_tokens",
-                "latency_ms", "cost_usd",
-            )}
-            if "response_raw" not in trace_data and "message" in data:
-                trace_data["response_raw"] = data["message"]
-            _record_trace(
-                scan_id=scan_id,
-                step=step_counter,
-                phase=phase,
-                agent=node,
-                **trace_data,
-            )
-        except Exception as exc:
-            logger.warning("trace_record_failed", error=str(exc))
+        # Persist to agent_inference_traces ONLY if there is substantive agent inference data
+        has_substance = (
+            bool(data.get("thinking_content"))
+            or bool(data.get("tool_name"))
+            or bool(data.get("candidate_vuln_title"))
+            or data.get("decision_status") in ("VERIFIED", "REJECTED_BY_CRITIC", "DISCARDED")
+        )
+        if has_substance:
+            try:
+                trace_data = {k: v for k, v in data.items() if k in (
+                    "model", "thinking_content", "prompt_raw", "response_raw",
+                    "tool_name", "tool_input", "tool_output",
+                    "candidate_vuln_title", "decision_status", "decision_reason",
+                    "prompt_tokens", "completion_tokens", "total_tokens",
+                    "latency_ms", "cost_usd",
+                )}
+                if "response_raw" not in trace_data and "message" in data:
+                    trace_data["response_raw"] = data["message"]
+                _record_trace(
+                    scan_id=scan_id,
+                    step=step_counter,
+                    phase=phase,
+                    agent=node,
+                    **trace_data,
+                )
+            except Exception as exc:
+                logger.warning("trace_record_failed", error=str(exc))
 
     try:
         _update_scan(scan_id, status="running", current_phase="setup")
@@ -1048,17 +1076,26 @@ def run_mantis_scan(
 
                                     parsed_t_args = _parse_tool_input(t_args) if t_args else None
                                     t_model = t_row.get("model") or effective_phase_models.get(t_phase, model)
+                                    t_thinking = t_row.get("thinking") or (t_text if t_type == "text" else None)
+                                    candidate_title = None
+                                    t_status = "PROGRESS"
+                                    if t_name == "report_findings" and t_args:
+                                        found_titles = re.findall(r"'title':\s*['\"]([^'\"]+)['\"]", str(t_args))
+                                        if found_titles:
+                                            candidate_title = " | ".join(found_titles[:2])
+                                            t_status = "VERIFIED"
+
                                     with engine.begin() as conn:
                                         conn.execute(
                                             text("""
                                                 INSERT INTO agent_inference_traces
                                                   (scan_id, step_number, phase, agent_name, model,
-                                                   response_raw, tool_name, tool_input, tool_output,
-                                                   decision_status)
+                                                   thinking_content, response_raw, tool_name, tool_input, tool_output,
+                                                   candidate_vuln_title, decision_status)
                                                 VALUES
                                                   (:scan_id, :step, :phase, :agent, :model,
-                                                   :resp, :tool, CAST(:tool_in AS jsonb), :tool_out,
-                                                   'PROGRESS')
+                                                   :thinking, :resp, :tool, CAST(:tool_in AS jsonb), :tool_out,
+                                                   :vuln_title, :status)
                                             """),
                                             {
                                                 "scan_id": scan_id,
@@ -1066,10 +1103,13 @@ def run_mantis_scan(
                                                 "phase": t_phase,
                                                 "agent": t_node,
                                                 "model": t_model,
+                                                "thinking": t_thinking,
                                                 "resp": t_text,
                                                 "tool": t_name,
                                                 "tool_in": json.dumps(parsed_t_args) if parsed_t_args else None,
                                                 "tool_out": str(t_resp)[:16000] if t_resp else None,
+                                                "vuln_title": candidate_title,
+                                                "status": t_status,
                                             },
                                         )
                                 except Exception:

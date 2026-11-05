@@ -123,7 +123,23 @@ export default function SwarmTraceViewer({
   // Filter client-side for immediate responsive interactions
   const displayedTraces = useMemo(() => {
     return traces.filter((t) => {
-      if (filterType === "thinking" && !t.has_thinking) return false;
+      // High-signal noise filter: exclude empty terminal logs with no tool, no thinking, no candidate decision, and short progress message
+      const isSubstantive =
+        Boolean(t.tool_name) ||
+        Boolean(t.has_thinking) ||
+        Boolean(t.thinking_content) ||
+        Boolean(t.candidate_vuln_title) ||
+        (t.decision_status && t.decision_status !== "PROGRESS") ||
+        (Boolean(t.response_raw) &&
+          t.response_raw!.length > 60 &&
+          !t.response_raw!.startsWith("[RATE LIMIT]") &&
+          !t.response_raw!.startsWith("INFO:") &&
+          !t.response_raw!.startsWith("DEBUG:"));
+
+      if (!isSubstantive) return false;
+
+      if (filterType === "thinking" && !t.has_thinking && !t.thinking_content && (!t.response_raw || t.tool_name))
+        return false;
       if (filterType === "tools" && !t.tool_name) return false;
       if (filterType === "verified" && t.decision_status !== "VERIFIED") return false;
       if (
@@ -384,7 +400,10 @@ export default function SwarmTraceViewer({
             displayedTraces.map((trace) => {
               const isSelected = selectedTrace?.id === trace.id;
               const isTool = !!trace.tool_name;
-              const isThinking = !!trace.has_thinking;
+              const hasReasoning =
+                !!trace.has_thinking ||
+                !!trace.thinking_content ||
+                (!trace.tool_name && !!trace.response_raw);
               const isVerified = trace.decision_status === "VERIFIED";
               const isRejected =
                 trace.decision_status === "REJECTED_BY_CRITIC" || trace.decision_status === "DISCARDED";
@@ -394,7 +413,7 @@ export default function SwarmTraceViewer({
                   key={trace.id}
                   onClick={() => {
                     setSelectedTrace(trace);
-                    if (trace.has_thinking) setActiveTab("thinking");
+                    if (hasReasoning) setActiveTab("thinking");
                     else if (trace.tool_name) setActiveTab("tool");
                     else if (trace.decision_status !== "PROGRESS") setActiveTab("decision");
                     else setActiveTab("raw");
@@ -434,11 +453,23 @@ export default function SwarmTraceViewer({
                   <div className="mt-2 text-xs">
                     {/* Tool Call Card */}
                     {isTool && (
-                      <div className="flex items-center space-x-2 p-2 rounded-lg bg-sky-950/50 border border-sky-800/70 text-sky-200 font-mono text-[11px]">
-                        <Wrench className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <div
+                        className={`flex items-center space-x-2 p-2 rounded-lg font-mono text-[11px] ${
+                          trace.tool_name === "report_findings"
+                            ? "bg-amber-950/50 border border-amber-600/70 text-amber-200"
+                            : "bg-sky-950/50 border border-sky-800/70 text-sky-200"
+                        }`}
+                      >
+                        {trace.tool_name === "report_findings" ? (
+                          <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        ) : (
+                          <Wrench className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                        )}
                         <span className="font-bold text-white">{trace.tool_name}</span>
-                        <span className="truncate text-sky-300">
-                          {trace.tool_input
+                        <span className="truncate text-slate-300">
+                          {trace.candidate_vuln_title
+                            ? `(${trace.candidate_vuln_title})`
+                            : trace.tool_input
                             ? JSON.stringify(trace.tool_input).slice(0, 80)
                             : "(arguments)"}
                         </span>
@@ -446,15 +477,15 @@ export default function SwarmTraceViewer({
                     )}
 
                     {/* Thinking Preview */}
-                    {isThinking && (
+                    {hasReasoning && (
                       <div className="mt-1 flex items-start space-x-2 p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-300 font-sans">
                         <Brain className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <span className="font-bold text-[11px] text-amber-300 block font-mono">
-                            Model Chain-of-Thought
+                            Forensic Reasoning &amp; Chain-of-Thought
                           </span>
-                          <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                            {trace.thinking_preview || trace.thinking_content}
+                          <p className="text-[11px] text-slate-300 line-clamp-3 leading-relaxed">
+                            {trace.thinking_preview || trace.thinking_content || trace.response_raw}
                           </p>
                         </div>
                       </div>
@@ -515,7 +546,9 @@ export default function SwarmTraceViewer({
 
             {/* Inspector Navigation Tabs */}
             <div className="flex items-center space-x-1.5 border-b border-slate-800 py-2.5 text-xs font-mono">
-              {selectedTrace.has_thinking && (
+              {(selectedTrace.has_thinking ||
+                selectedTrace.thinking_content ||
+                (!selectedTrace.tool_name && selectedTrace.response_raw)) && (
                 <button
                   onClick={() => setActiveTab("thinking")}
                   className={`px-3 py-1 rounded-lg transition-all flex items-center space-x-1.5 ${
@@ -575,10 +608,15 @@ export default function SwarmTraceViewer({
                   <div className="flex items-center justify-between text-[11px] text-slate-400">
                     <span className="flex items-center space-x-1 text-amber-300 font-bold">
                       <Brain className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Model Chain-of-Thought (&lt;think&gt;)</span>
+                      <span>Forensic Reasoning &amp; Chain-of-Thought</span>
                     </span>
                     <button
-                      onClick={() => copyToClipboard(selectedTrace.thinking_content || "", "thinking")}
+                      onClick={() =>
+                        copyToClipboard(
+                          selectedTrace.thinking_content || selectedTrace.response_raw || "",
+                          "thinking"
+                        )
+                      }
                       className="flex items-center space-x-1 text-slate-400 hover:text-white text-[10px]"
                     >
                       {copiedField === "thinking" ? (
@@ -590,7 +628,9 @@ export default function SwarmTraceViewer({
                     </button>
                   </div>
                   <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 text-xs font-sans leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto">
-                    {selectedTrace.thinking_content || "No reasoning tokens captured for this step."}
+                    {selectedTrace.thinking_content ||
+                      selectedTrace.response_raw ||
+                      "No reasoning tokens captured for this step."}
                   </div>
                 </div>
               )}

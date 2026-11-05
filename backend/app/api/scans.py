@@ -1950,7 +1950,10 @@ async def get_scan_traces(
         from sqlalchemy import or_, cast, String
         query = query.where(
             or_(
+                AgentInferenceTrace.tool_name.ilike(search_pattern),
+                AgentInferenceTrace.agent_name.ilike(search_pattern),
                 AgentInferenceTrace.thinking_content.ilike(search_pattern),
+                AgentInferenceTrace.response_raw.ilike(search_pattern),
                 AgentInferenceTrace.tool_output.ilike(search_pattern),
                 AgentInferenceTrace.candidate_vuln_title.ilike(search_pattern),
                 AgentInferenceTrace.decision_reason.ilike(search_pattern),
