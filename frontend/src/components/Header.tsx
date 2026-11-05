@@ -78,12 +78,7 @@ export default function Header() {
             <div className="p-1.5 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 text-slate-950 rounded-xl shadow-md shadow-amber-500/20">
               <Shield className="w-5 h-5 text-slate-950 stroke-[2.5]" />
             </div>
-            <div className="flex items-center space-x-2">
-              <span>NewGen<span className="text-amber-400">SAST</span></span>
-              <span className="hidden xl:inline-block text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80">
-                ENTERPRISE SWARM
-              </span>
-            </div>
+            <span>NewGen<span className="text-amber-400">SAST</span></span>
           </Link>
 
           {!isAuthPage && (
