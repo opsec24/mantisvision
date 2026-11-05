@@ -518,6 +518,8 @@ export const api = {
       success: boolean;
       message: string;
       version: any;
+      verification_checks?: any[];
+      status?: string;
     }>("/api/settings/mantis/apply-update", {
       method: "POST",
       body: JSON.stringify({ target_commit: targetCommit }),
