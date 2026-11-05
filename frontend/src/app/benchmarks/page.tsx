@@ -167,7 +167,7 @@ export default function BenchmarksLabPage() {
           <div className="space-y-2">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-medium">
               <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
-              <span>Google Mantis ADK Evaluation &amp; Benchmark Lab</span>
+              <span>Security Swarm Evaluation &amp; Benchmark Lab</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Target Generation &amp; Benchmark Suite

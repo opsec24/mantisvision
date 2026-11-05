@@ -5,7 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 
 export const metadata = {
   title: "NewGenSAST - AI-Powered Vulnerability & Patching Platform",
-  description: "Autonomous Agentic SAST Harness powered by Google Mantis ADK 2.0",
+  description: "Autonomous Agentic SAST & Dynamic Vulnerability Remediation Platform",
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
         <footer className="border-t border-slate-800/80 bg-[#090d16]/80 backdrop-blur py-4 text-center text-xs text-slate-400">
           <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
             <span>
-              NewGenSAST Platform &copy; {new Date().getFullYear()} &bull; Google Mantis ADK 2.0 Autonomous Engine
+              NewGenSAST Platform &copy; {new Date().getFullYear()} &bull; Autonomous Multi-Agent Security Engine
             </span>
             <span className="flex items-center space-x-1.5 font-mono text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shadow-sm shadow-amber-500/50"></span>

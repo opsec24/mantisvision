@@ -374,7 +374,7 @@ export default function SwarmTraceViewer({
                 <option value="critic">Squad 4: Adversarial Triage</option>
                 <option value="reproduce">Squad 5: Exploitation &amp; Remediation</option>
               </optgroup>
-              <optgroup label="Mantis Agents (15)">
+              <optgroup label="Autonomous Swarm Agents (15)">
                 <option value="history">#01 History Miner</option>
                 <option value="structural_index">#02 AST Indexer (Tree-Sitter)</option>
                 <option value="architect">#03 System Architect</option>

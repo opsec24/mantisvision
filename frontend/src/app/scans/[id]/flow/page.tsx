@@ -371,7 +371,7 @@ const FLOW_EDGES: EdgeDef[] = [
   { from: "reflector", to: "reporter", type: "standard" },
 ];
 
-export default function MantisSwarmFlowPage() {
+export default function SwarmFlowPage() {
   const params = useParams();
   const router = useRouter();
   const scanId = params.id as string;
@@ -498,7 +498,7 @@ export default function MantisSwarmFlowPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <div className="w-10 h-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
-        <p className="text-sm font-mono text-slate-400">Loading Mantis Swarm Topology Graph...</p>
+        <p className="text-sm font-mono text-slate-400">Loading Swarm Topology Graph...</p>
       </div>
     );
   }
@@ -534,7 +534,7 @@ export default function MantisSwarmFlowPage() {
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
               <h1 className="text-base font-extrabold text-white tracking-wide font-mono flex items-center space-x-2">
-                <span>Mantis ADK 2.0 Dynamic Swarm Topology</span>
+                <span>NewGenSAST Dynamic Swarm Topology</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
                   DAG STATE MACHINE
                 </span>
@@ -624,7 +624,7 @@ export default function MantisSwarmFlowPage() {
         <div className="absolute top-4 left-4 z-10 p-3 rounded-xl bg-slate-950/90 border border-slate-800/80 backdrop-blur-md text-[11px] font-mono text-slate-300 space-y-2 pointer-events-none shadow-xl">
           <div className="font-bold text-white uppercase text-[10px] tracking-wider flex items-center space-x-1.5">
             <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span>Mantis ADK 2.0 Graph Legend</span>
+            <span>Dynamic Swarm Topology Legend</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500"></div>

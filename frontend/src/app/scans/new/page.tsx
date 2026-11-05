@@ -206,7 +206,7 @@ export default function NewScanPage() {
   const [branch, setBranch] = useState("");
   const [gitToken, setGitToken] = useState("");
 
-  // Mantis-native flags
+  // Native engine execution flags
   const [routingMode, setRoutingMode] = useState<"single" | "swarm">("single");
   const [swarmPreset, setSwarmPreset] = useState<string>("balanced");
   const [modelPreset, setModelPreset] = useState("gemini/gemini-3.5-flash-lite");
@@ -224,7 +224,7 @@ export default function NewScanPage() {
   const [noReplan, setNoReplan] = useState(false);
   const [parallel, setParallel] = useState(1);
   const [maxLlmCalls, setMaxLlmCalls] = useState<number | "">("");
-  const [showAdvancedMantis, setShowAdvancedMantis] = useState(false);
+  const [showAdvancedEngine, setShowAdvancedEngine] = useState(false);
 
   // Budget
   const [budgetLimit, setBudgetLimit] = useState(5.0);
@@ -706,7 +706,7 @@ export default function NewScanPage() {
         git_token: gitToken.trim() ? gitToken.trim() : undefined,
         budget_limit_usd: budgetLimit,
         fresh: freshScan,
-        // Mantis-native flags & Swarm routing
+        // Native engine execution flags & Swarm routing
         model: effectiveModel,
         phase_models: effectivePhaseModels,
         phase_efforts: effectivePhaseEfforts,
@@ -755,7 +755,7 @@ export default function NewScanPage() {
           <span>Launch Security Audit</span>
         </h1>
         <p className="text-xs text-slate-400 mt-1 font-mono">
-          Configure repository source ingestion, Google Mantis ADK flags, and hard financial guardrails.
+          Configure repository source ingestion, Autonomous Swarm engine flags, and hard financial guardrails.
         </p>
       </div>
 
@@ -853,7 +853,7 @@ export default function NewScanPage() {
                   <span className="text-[10px] font-mono bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/60">Micro Suite</span>
                 </div>
                 <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
-                  Local test harness containing micro Flask APIs, synthetic credentials, and vault routines for rapid smoke testing of Mantis engine primitives.
+                  Local test harness containing micro Flask APIs, synthetic credentials, and vault routines for rapid smoke testing of swarm engine primitives.
                 </p>
                 <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-amber-400 font-mono">
                   Path: /app/mantis_engine/test_targets
@@ -868,7 +868,7 @@ export default function NewScanPage() {
                 onClick={() => {
                   setSourceType("local");
                   setSourceTarget("/app/mantis_engine/evals/research_target");
-                  setScanName("Mantis 26-File Seeded Corpus");
+                  setScanName("Standard 26-File Seeded Corpus");
                 }}
                 className="px-2.5 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-700/80 text-indigo-300 text-xs font-mono font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer ring-1 ring-indigo-500/30"
               >
@@ -878,7 +878,7 @@ export default function NewScanPage() {
               <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-80 p-3.5 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-indigo-500/40 z-50 pointer-events-none transition-all">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <div className="flex items-center space-x-1.5">
-                    <span className="font-bold text-xs text-indigo-300 font-mono">🎯 Mantis Seeded Benchmark</span>
+                    <span className="font-bold text-xs text-indigo-300 font-mono">🎯 Standard Seeded Benchmark</span>
                   </div>
                   <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">
                     16 Ground-Truth Flaws
@@ -886,7 +886,7 @@ export default function NewScanPage() {
                 </div>
                 <div className="mt-2 space-y-1.5 text-[11px] text-slate-300 leading-relaxed">
                   <p>
-                    Google Mantis's canonical evaluation application (a <strong>26-file Document Portal Flask app</strong>).
+                    Canonical evaluation application (a <strong>26-file Document Portal Flask app</strong>).
                   </p>
                   <p className="text-slate-400">
                     Seeded with <strong>16 verified vulnerabilities</strong>: SQL Injection, Command Injection, SSRF, Deserialization, Path Traversal, Broken Access Control, and IDOR.
@@ -1024,15 +1024,15 @@ export default function NewScanPage() {
           )}
         </div>
 
-        {/* Section 2: Mantis ADK Engine Flags */}
+        {/* Section 2: Autonomous Engine Flags */}
         <div className="glass-card rounded-2xl p-6 space-y-5 shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <h2 className="text-sm font-bold text-white flex items-center space-x-2">
               <Cpu className="w-4 h-4 text-amber-400" />
-              <span>Google Mantis ADK Engine Flags</span>
+              <span>Autonomous Engine Execution Flags</span>
             </h2>
             <span className="text-[11px] text-amber-300 font-mono bg-amber-950/80 border border-amber-800/80 px-2 py-0.5 rounded-md">
-              Mantis Native
+              Native Engine
             </span>
           </div>
 
@@ -1264,7 +1264,7 @@ export default function NewScanPage() {
                   <div>
                     <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center space-x-1.5">
                       <Sliders className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Mantis Swarm Model &amp; Reasoning Matrix</span>
+                      <span>Autonomous Swarm Model &amp; Reasoning Matrix</span>
                     </span>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       {swarmConfigMode === "squads"
@@ -1556,7 +1556,7 @@ export default function NewScanPage() {
                 <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-900/50 flex items-start space-x-2.5 text-xs text-amber-200/90 leading-relaxed font-sans">
                   <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Heterogeneous Cross-Vendor Execution:</strong> Mantis ADK 2.0 routes requests via LiteLLM. For example, pairing a <em>Claude Vulnerability Researcher</em> with an <em>OpenAI GPT-4o Adversarial Critic</em> introduces orthogonal cognitive architectures that falsify spurious hypotheses while confirming true exploit chains!
+                    <strong>Heterogeneous Cross-Vendor Execution:</strong> NewGenSAST routes requests via LiteLLM. For example, pairing a <em>Claude Vulnerability Researcher</em> with an <em>OpenAI GPT-4o Adversarial Critic</em> introduces orthogonal cognitive architectures that falsify spurious hypotheses while confirming true exploit chains!
                   </div>
                 </div>
               </div>
@@ -1584,7 +1584,7 @@ export default function NewScanPage() {
             />
             <div className="text-[11px] text-slate-400 leading-relaxed space-y-1">
               <p>
-                <strong>Tactical CWE Filter:</strong> Directs Mantis's hypothesis generator and critic swarms to isolate specific vulnerability classes or attack vectors.
+                <strong>Tactical CWE Filter:</strong> Directs the hypothesis generator and critic swarms to isolate specific vulnerability classes or attack vectors.
               </p>
               <div className="text-[11px] text-amber-200 bg-amber-950/40 rounded-xl p-2.5 border border-amber-800/60 flex items-start space-x-2">
                 <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -1678,23 +1678,23 @@ export default function NewScanPage() {
             </div>
           </label>
 
-          {/* Advanced Mantis ADK Controls Toggle */}
+          {/* Advanced Engine Controls Toggle */}
           <div className="pt-3 border-t border-slate-800">
             <button
               type="button"
-              onClick={() => setShowAdvancedMantis(!showAdvancedMantis)}
+              onClick={() => setShowAdvancedEngine(!showAdvancedEngine)}
               className="flex items-center justify-between w-full py-1 text-xs font-bold text-amber-400 hover:text-amber-300 font-mono cursor-pointer"
             >
               <div className="flex items-center space-x-2">
                 <Sliders className="w-3.5 h-3.5" />
-                <span>Advanced Mantis ADK Engine Flags ({showAdvancedMantis ? "Hide" : "Show"})</span>
+                <span>Advanced Engine Execution Flags ({showAdvancedEngine ? "Hide" : "Show"})</span>
               </div>
               <span className="text-[10px] font-mono bg-amber-950/60 px-2 py-0.5 rounded text-amber-300 border border-amber-800/60">
                 mode: {scanMode} | {parallel} worker(s)
               </span>
             </button>
 
-            {showAdvancedMantis && (
+            {showAdvancedEngine && (
               <div className="mt-4 space-y-4 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
                 {/* Scan Mode */}
                 <div className="space-y-1.5">
@@ -1772,7 +1772,7 @@ export default function NewScanPage() {
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-100 focus:outline-none focus:border-amber-500"
                   />
                   <p className="text-[10px] text-slate-400 font-mono">
-                    Path to a prior bug report; Mantis will search for structural variants of the reported bug.
+                    Path to a prior bug report; the swarm will search for structural variants of the reported bug.
                   </p>
                 </div>
 
@@ -1889,7 +1889,7 @@ export default function NewScanPage() {
                 Fresh Baseline Scan (Clean Slate)
               </span>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Purge and ignore any historical learnings, past reflections, or archived findings for this repository. Mantis will treat this as a brand-new first-time scan rather than a continuation pass.
+                Purge and ignore any historical learnings, past reflections, or archived findings for this repository. The swarm will treat this as a brand-new first-time scan rather than a continuation pass.
               </p>
             </div>
           </label>

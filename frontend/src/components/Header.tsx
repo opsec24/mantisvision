@@ -81,7 +81,7 @@ export default function Header() {
             <div className="flex items-center space-x-2">
               <span>NewGen<span className="text-amber-400">SAST</span></span>
               <span className="hidden xl:inline-block text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80">
-                MANTIS 2.0
+                ENTERPRISE SWARM
               </span>
             </div>
           </Link>

@@ -250,15 +250,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Mantis ADK Pipeline Overview */}
+      {/* Swarm Pipeline Overview */}
       <div className="glass-card rounded-2xl p-5 shadow-xl">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <Cpu className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono">Google Mantis ADK Pipeline</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono">Autonomous Swarm Pipeline</span>
             <span className="text-xs text-slate-500 font-mono">&bull; Event-Driven Graph</span>
           </div>
-          <span className="text-xs text-slate-400 font-mono">ADK Graph: 15 Nodes</span>
+          <span className="text-xs text-slate-400 font-mono">19-Stage Multi-Agent Topology</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">

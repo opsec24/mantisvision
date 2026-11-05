@@ -45,7 +45,7 @@ import ThreatModelGraph from "@/components/ThreatModelGraph";
 import SwarmTraceViewer from "@/components/SwarmTraceViewer";
 import PentestFindingModal from "@/components/PentestFindingModal";
 
-interface MantisNodeDef {
+interface SwarmNodeDef {
   id: string;
   num: string;
   name: string;
@@ -56,7 +56,7 @@ interface MantisNodeDef {
   desc: string;
 }
 
-const MANTIS_19_NODES: MantisNodeDef[] = [
+const SWARM_19_NODES: SwarmNodeDef[] = [
   { id: "history", num: "01", name: "History Miner", shortName: "History", type: "agent", squadKey: "recon", squadName: "Recon & Surface", desc: "Historical Learnings & Git Delta Miner" },
   { id: "structural_index", num: "02", name: "AST Indexer", shortName: "AST Index", type: "agent", squadKey: "recon", squadName: "Recon & Surface", desc: "Tree-Sitter AST & Symbol Grounding" },
   { id: "architect", num: "03", name: "Architect", shortName: "Architect", type: "agent", squadKey: "recon", squadName: "Recon & Surface", desc: "System Architecture & Ingress Surface Mapper" },
@@ -78,7 +78,7 @@ const MANTIS_19_NODES: MantisNodeDef[] = [
   { id: "reporter", num: "19", name: "Reporter", shortName: "Reporter", type: "agent", squadKey: "reproduce", squadName: "Exploitation & Fix", desc: "Pentest Advisory & SARIF 2.1.0 Reporter" },
 ];
 
-const MANTIS_SQUADS = [
+const SWARM_SQUADS = [
   {
     key: "recon",
     num: "SQUAD 01",
@@ -176,7 +176,7 @@ export default function ScanDetailPage() {
 
   const generateCliCommand = () => {
     const cfg = scan?.scan_config || {};
-    const parts = ["python3 -m mantis.run"];
+    const parts = ["newgensast scan"];
     const target = cfg.source_target || scan?.source_target || "<target>";
     parts.push(`--target "${target}"`);
     if (cfg.model || scan?.model) parts.push(`--model "${cfg.model || scan?.model}"`);
@@ -391,8 +391,8 @@ export default function ScanDetailPage() {
     if (!phase) return 0;
     const clean = phase.toLowerCase();
     if (clean === "running" || clean === "setup" || clean === "ingest") return 0;
-    if (clean === "completed") return MANTIS_19_NODES.length;
-    const idx = MANTIS_19_NODES.findIndex((n) => n.id === clean);
+    if (clean === "completed") return SWARM_19_NODES.length;
+    const idx = SWARM_19_NODES.findIndex((n) => n.id === clean);
     if (idx >= 0) return idx;
     const legacyToNodeIdx: Record<string, number> = {
       indexing: 0,
@@ -747,7 +747,7 @@ export default function ScanDetailPage() {
         </div>
       )}
 
-      {/* Visual Pipeline - 5 Mantis Autonomous Security Squads */}
+      {/* Visual Pipeline - 5 Autonomous Security Squads */}
       <div className="glass-card rounded-2xl p-5 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center space-x-2.5">
@@ -757,7 +757,7 @@ export default function ScanDetailPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-bold uppercase text-white tracking-wider font-mono">
-                  Mantis ADK 2.0 Security Squads Pipeline
+                  NewGenSAST Security Squads Pipeline
                 </span>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
                   5 SQUADS &bull; 19 NODES
@@ -782,13 +782,13 @@ export default function ScanDetailPage() {
 
         {/* 5 Security Squads Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-          {MANTIS_SQUADS.map((squad) => {
-            const squadNodes = MANTIS_19_NODES.filter((n) => squad.nodes.includes(n.id));
+          {SWARM_SQUADS.map((squad) => {
+            const squadNodes = SWARM_19_NODES.filter((n) => squad.nodes.includes(n.id));
             const allDone = squadNodes.every(
-              (n) => scan.status === "completed" || MANTIS_19_NODES.indexOf(n) < currentNodeIdx
+              (n) => scan.status === "completed" || SWARM_19_NODES.indexOf(n) < currentNodeIdx
             );
             const isCurrent = squadNodes.some(
-              (n) => scan.status === "running" && MANTIS_19_NODES.indexOf(n) === currentNodeIdx
+              (n) => scan.status === "running" && SWARM_19_NODES.indexOf(n) === currentNodeIdx
             );
             const totalObs = squadNodes.reduce(
               (acc, n) => acc + (scan.stage_observation_counts?.[n.id] || 0),
@@ -816,7 +816,7 @@ export default function ScanDetailPage() {
                 {/* Constituent Nodes Chips */}
                 <div className="space-y-1.5 pt-2 border-t border-slate-800">
                   {squadNodes.map((n) => {
-                    const nIdx = MANTIS_19_NODES.indexOf(n);
+                    const nIdx = SWARM_19_NODES.indexOf(n);
                     const nDone = scan.status === "completed" || nIdx < currentNodeIdx;
                     const nCurrent = scan.status === "running" && nIdx === currentNodeIdx;
                     const nObs = scan.stage_observation_counts?.[n.id];
@@ -1010,7 +1010,7 @@ export default function ScanDetailPage() {
                 <div className="flex items-center space-x-2">
                   <Layers className="w-5 h-5 text-amber-400" />
                   <h3 className="text-base font-bold text-white">
-                    System Architecture Review &amp; Trust Boundaries Report (mantis-architecture)
+                    System Architecture Review &amp; Trust Boundaries Report
                   </h3>
                 </div>
                 <span className="text-xs font-mono text-slate-400">architecture.md</span>
@@ -1038,7 +1038,7 @@ export default function ScanDetailPage() {
                 <div className="flex items-center space-x-2">
                   <ShieldAlert className="w-5 h-5 text-rose-500" />
                   <h3 className="text-base font-bold text-white">
-                    STRIDE Threat Model &amp; Attack Surface Matrix (mantis-threat-model)
+                    STRIDE Threat Model &amp; Attack Surface Matrix
                   </h3>
                 </div>
                 <span className="text-xs font-mono text-slate-400">threat_model.md</span>
@@ -1054,7 +1054,7 @@ export default function ScanDetailPage() {
             <div className="glass-card rounded-2xl p-6 shadow-xl space-y-3">
               <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-base font-bold text-white">Actionable Hunting Plan (mantis-plan)</h3>
+                <h3 className="text-base font-bold text-white">Actionable Hunting Plan</h3>
               </div>
               <div className="font-mono text-xs text-slate-200 bg-slate-950 p-4 rounded-xl border border-slate-800 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
                 {scan.hunting_plan}
@@ -1071,7 +1071,7 @@ export default function ScanDetailPage() {
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
                 <FileText className="w-5 h-5 text-amber-400" />
-                <h3 className="text-base font-bold text-white">Executive Security Review Packet (mantis-report)</h3>
+                <h3 className="text-base font-bold text-white">Executive Security Review Packet</h3>
               </div>
               <span className="text-xs font-mono text-slate-400">review_packet.md</span>
             </div>
@@ -1090,7 +1090,7 @@ export default function ScanDetailPage() {
             <div className="glass-card rounded-2xl p-6 shadow-xl space-y-3">
               <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
                 <ShieldCheck className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-base font-bold text-white">Multi-Step Exploit Chains (mantis-chain)</h3>
+                <h3 className="text-base font-bold text-white">Multi-Step Exploit Chains</h3>
               </div>
               <div className="font-mono text-xs text-slate-200 bg-slate-950 p-4 rounded-xl border border-slate-800 whitespace-pre-wrap leading-relaxed">
                 {typeof scan.exploit_chains === "string" ? scan.exploit_chains : scan.exploit_chains.raw || JSON.stringify(scan.exploit_chains, null, 2)}
@@ -1165,7 +1165,7 @@ export default function ScanDetailPage() {
                 </h3>
               </div>
               <p className="text-xs text-slate-400">
-                Detailed runtime parameters, AI reasoning engine specs, sandboxing constraints, and equivalent Google Mantis ADK CLI command.
+                Detailed runtime parameters, AI reasoning engine specs, sandboxing constraints, and equivalent CLI execution command.
               </p>
             </div>
             <div className="flex items-center space-x-2 shrink-0">
@@ -1261,7 +1261,7 @@ export default function ScanDetailPage() {
               </div>
               <dl className="grid grid-cols-1 gap-3 text-xs">
                 <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
-                  <dt className="text-slate-400 font-medium">Mantis Scan Mode</dt>
+                  <dt className="text-slate-400 font-medium">Swarm Scan Mode</dt>
                   <dd className="font-mono font-bold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded border border-cyan-800/60">
                     {scan.scan_config?.scan_mode || "file-by-file"}
                   </dd>
@@ -1388,12 +1388,12 @@ export default function ScanDetailPage() {
             </div>
           </div>
 
-          {/* Equivalent Google Mantis CLI Invocation */}
+          {/* Equivalent Swarm CLI Invocation */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="px-5 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center space-x-2 font-mono">
                 <Terminal className="w-4 h-4 text-emerald-400" />
-                <span className="text-white font-bold">Equivalent Google Mantis ADK CLI Command</span>
+                <span className="text-white font-bold">Equivalent CLI Execution Command</span>
               </span>
               <button
                 onClick={() => handleCopyCli(generateCliCommand())}
