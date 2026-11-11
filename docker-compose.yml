@@ -1,7 +1,6 @@
 services:
   proxy:
     image: nginx:alpine
-    container_name: mantisvision-proxy-1
     ports:
       - "80:80"
     volumes:
@@ -47,6 +46,7 @@ services:
       - OLLAMA_API_BASE=${OLLAMA_API_BASE:-http://host.docker.internal:11434}
     volumes:
       - ./backend:/app
+      - ./scripts:/app/scripts:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - scan_data:/data/scans
       - host_repos:/data/repos:ro
@@ -84,6 +84,7 @@ services:
     volumes:
       - ./backend:/app
       - ./backend/mantis_engine:/app/mantis_engine:ro
+      - ./scripts:/app/scripts:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - scan_data:/data/scans
       - host_repos:/data/repos:ro
@@ -99,7 +100,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./backend/app/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mantis -d mantis_web"]
       interval: 5s
@@ -109,7 +110,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:

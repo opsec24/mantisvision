@@ -3,13 +3,31 @@
 **Autonomous Multi-Agent Security & Dynamic Vulnerability Verification Platform**  
 *Powered by Google Mantis ADK 2.0 • Self-Hosted Enterprise Edition • Obsidian Amber Aurora Theme*
 
-<img width="1247" height="633" alt="Screenshot 2026-11-12 at 12 30 27 AM" src="https://github.com/user-attachments/assets/02470990-28be-43aa-a5dc-6435f02f9531" />
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://python.org)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg?logo=next.js&logoColor=white)](https://nextjs.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](docker-compose.yml)
+[![Engine](https://img.shields.io/badge/Engine-Google_Mantis_ADK_2.0-orange.svg)](https://github.com/opsec24/mantisvision)
 
+<p align="center">
+  <img width="1247" height="633" alt="MantisVision Dashboard Overview" src="https://github.com/user-attachments/assets/02470990-28be-43aa-a5dc-6435f02f9531" />
+</p>
 
-<img width="1247" height="633" alt="Screenshot 2026-11-12 at 12 30 27 AM" src="https://github.com/user-attachments/assets/c33c411a-fc13-44d0-a234-470846bbf1c0" />
+<p align="center">
+  <img width="1247" height="633" alt="MantisVision Autonomous Swarm Telemetry" src="https://github.com/user-attachments/assets/c33c411a-fc13-44d0-a234-470846bbf1c0" />
+</p>
 
-<img width="1233" height="622" alt="image" src="https://github.com/user-attachments/assets/3cbbc5d9-8731-4ff8-bfce-ceeab551449b" />
+<p align="center">
+  <img width="1233" height="622" alt="MantisVision Finding & Advisory Detail" src="https://github.com/user-attachments/assets/3cbbc5d9-8731-4ff8-bfce-ceeab551449b" />
+</p>
 
+> [!CAUTION]
+> **DISCLAIMER & RESPONSIBLE USE NOTICE**
+> MantisVision is an offensive-defensive cognitive security audit system capable of synthesizing autonomous proof-of-concept exploit scripts (`reproducer.py`) to dynamically verify vulnerabilities.
+> 
+> * **DO NOT RUN ON PRODUCTION SYSTEMS** or against systems without prior written authorization.
+> * **NO WARRANTY OR GUARANTEE**: This software is provided **"AS-IS"** without warranties, guarantees, or conditions of any kind, either express or implied, including fitness for a particular purpose or non-infringement.
+> * **LIMITATION OF LIABILITY**: The creators, authors, and contributors assume **no liability or responsibility** for misuse, disruption, downtime, data alteration, or legal consequences arising from the execution of this platform. Use strictly within isolated sandbox environments on repositories you own or are legally sanctioned to assess.
 
 ---
 
