@@ -3,6 +3,14 @@
 **Autonomous Multi-Agent Security & Dynamic Vulnerability Verification Platform**  
 *Powered by Google Mantis ADK 2.0 • Self-Hosted Enterprise Edition • Obsidian Amber Aurora Theme*
 
+<img width="1247" height="633" alt="Screenshot 2026-11-12 at 12 30 27 AM" src="https://github.com/user-attachments/assets/02470990-28be-43aa-a5dc-6435f02f9531" />
+
+
+<img width="1247" height="633" alt="Screenshot 2026-11-12 at 12 30 27 AM" src="https://github.com/user-attachments/assets/c33c411a-fc13-44d0-a234-470846bbf1c0" />
+
+<img width="1233" height="622" alt="image" src="https://github.com/user-attachments/assets/3cbbc5d9-8731-4ff8-bfce-ceeab551449b" />
+
+
 ---
 
 ## 1. Quick Start & Execution Guide
