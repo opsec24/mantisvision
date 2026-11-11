@@ -77,7 +77,7 @@ def generate_totp_secret() -> str:
     return pyotp.random_base32()
 
 
-def get_totp_uri(secret: str, email: str, issuer: str = "NewGenSAST") -> str:
+def get_totp_uri(secret: str, email: str, issuer: str = "MantisVision") -> str:
     """Return an ``otpauth://`` provisioning URI for authenticator apps."""
     totp = pyotp.TOTP(secret)
     return totp.provisioning_uri(name=email, issuer_name=issuer)

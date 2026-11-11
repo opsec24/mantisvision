@@ -219,7 +219,7 @@ async def logout(
     authorization: Optional[str] = Header(None),
     session_token: Optional[str] = Cookie(None),
 ):
-    """Server-side session invalidation for both NewGenSAST platform and Langfuse."""
+    """Server-side session invalidation for both MantisVision platform and Langfuse."""
     token: Optional[str] = None
     if authorization and authorization.startswith("Bearer "):
         token = authorization.removeprefix("Bearer ").strip()

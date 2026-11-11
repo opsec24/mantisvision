@@ -493,7 +493,7 @@ export default function BenchmarksLabPage() {
                     type="text"
                     value={customGt}
                     onChange={(e) => setCustomGt(e.target.value)}
-                    placeholder="/app/mantis_engine/evals/ground_truth/juice_shop.json"
+                    placeholder="/app/mantis_engine/evals/ground_truth/benchmark_suite.json"
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white focus:border-amber-500"
                   />
                 </div>

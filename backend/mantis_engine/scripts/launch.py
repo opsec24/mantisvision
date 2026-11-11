@@ -536,9 +536,18 @@ def run_launch(
 
         mode_str = "LLM-driven research graph synthesis" if synthesize_llm else "deterministic archetype"
         print(f"✨ Synthesizing targeted research graph for objective: '{objective}' (mode: {mode_str})...")
+        synth_wf_cfg = base_wf.get("config", {}) if "base_wf" in locals() and isinstance(base_wf, dict) else {}
+        effective_synth_model = model or synth_wf_cfg.get("default_model") or "vertex_ai/gemini-3.8-flash"
+        effective_synth_api_base = api_base or synth_wf_cfg.get("api_base")
+        if effective_synth_model.startswith("ollama/") and effective_synth_api_base and ("/v1" in effective_synth_api_base or "ollama.com" in effective_synth_api_base):
+            effective_synth_model = f"openai/{effective_synth_model.replace('ollama/', '', 1)}"
+            if not model:
+                model = effective_synth_model
+
         synthesizer = ResearchGraphSynthesizer(
-            default_model=model or "vertex_ai/gemini-3.8-flash",
+            default_model=effective_synth_model,
             db_path=db_path or "knowledge.db",
+            api_base=effective_synth_api_base,
         )
         effective_sandbox = sandbox
         if not effective_sandbox:
@@ -593,9 +602,15 @@ def run_launch(
             )
         mantis_home = os.environ.get("MANTIS_HOME")
         if mantis_home:
-            workspace_dir = (Path(mantis_home) / "workspace").resolve()
+            workspace_dir = Path(mantis_home).resolve()
+        elif workflow_path and Path(workflow_path).parent.exists():
+            workspace_dir = Path(workflow_path).resolve().parent
         else:
             workspace_dir = (Path(__file__).resolve().parent.parent / "workspace").resolve()
+            try:
+                workspace_dir.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                workspace_dir = Path("/tmp/mantis/workspace").resolve()
         recipe_path = ResearchGraphSynthesizer.persist_recipe(spec, workspace_dir)
         workflow_path = str(recipe_path)
         print(f"✅ Synthesized recipe saved to: {recipe_path}")

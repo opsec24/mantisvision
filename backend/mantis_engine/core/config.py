@@ -3058,13 +3058,17 @@ def get_llm_kwargs(
     if raw_timeout is None:
         raw_timeout = default_request_timeout(resolved_model, effort)
 
+    # If using an OpenAI-compatible /v1 endpoint (e.g. Ollama Cloud /v1), rewrite ollama/ model prefix to openai/
+    if resolved_model.startswith("ollama/") and resolved_api_base and ("/v1" in resolved_api_base or "ollama.com" in resolved_api_base):
+        resolved_model = f"openai/{resolved_model.replace('ollama/', '', 1)}"
+
     llm_kwargs = {"model": resolved_model}
     if resolved_api_base:
         llm_kwargs["api_base"] = resolved_api_base
-        if ("ollama" in resolved_api_base.lower() or "ollama" in resolved_model.lower()):
-            ollama_key = os.environ.get("OLLAMA_API_KEY")
-            if ollama_key and "api_key" not in llm_kwargs:
-                llm_kwargs["api_key"] = ollama_key
+        if ("ollama" in resolved_api_base.lower() or "ollama" in resolved_model.lower() or resolved_model.startswith("openai/")):
+            api_key = os.environ.get("OLLAMA_API_KEY") or os.environ.get("OPENAI_API_KEY")
+            if api_key and "api_key" not in llm_kwargs:
+                llm_kwargs["api_key"] = api_key
     if effort:
         llm_kwargs["reasoning_effort"] = str(effort).lower().strip()
     if raw_timeout is not None:

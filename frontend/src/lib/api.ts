@@ -1,4 +1,4 @@
-// API Client for NewGenSAST backend
+// API Client for MantisVision backend
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 

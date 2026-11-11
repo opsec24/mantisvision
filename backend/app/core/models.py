@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models for every table in the NewGenSAST schema."""
+"""SQLAlchemy ORM models for every table in the MantisVision schema."""
 
 from __future__ import annotations
 
@@ -96,6 +96,7 @@ class Scan(Base):
     focus: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     exclude_patterns: Mapped[Optional[Any]] = mapped_column(JSONB, nullable=True)
     sandbox: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default="static-only")
+    objective: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     mantis_run_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

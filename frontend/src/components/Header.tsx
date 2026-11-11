@@ -70,15 +70,22 @@ export default function Header() {
   const isAuthPage = pathname === "/login" || pathname === "/setup-totp";
 
   return (
-    <header className="border-b border-slate-800/90 bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-50 shadow-md">
+    <header className="border-b border-[#0C356A]/80 bg-[#07172C]/95 backdrop-blur-md sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center space-x-6">
-          <Link href="/dashboard" className="flex items-center space-x-3 font-bold text-lg tracking-tight text-white hover:opacity-95 transition-opacity">
-            <div className="p-1.5 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 text-slate-950 rounded-xl shadow-md shadow-amber-500/20">
+          <Link href="/dashboard" className="flex items-center space-x-3 text-white hover:opacity-95 transition-opacity">
+            <div className="p-1.5 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 text-slate-950 rounded-xl shadow-md shadow-amber-500/20 flex items-center justify-center">
               <Shield className="w-5 h-5 text-slate-950 stroke-[2.5]" />
             </div>
-            <span>NewGen<span className="text-amber-400">SAST</span></span>
+            <div className="flex flex-col">
+              <div className="flex items-center space-x-1.5 leading-none">
+                <span className="font-extrabold text-lg tracking-tight font-head text-white">Mantis<span className="text-amber-400 font-extrabold">Vision</span></span>
+              </div>
+              <span className="text-[9px] uppercase font-mono tracking-widest text-amber-400/80 font-bold mt-1">
+                // Offensive Security &amp; Exploit Telemetry
+              </span>
+            </div>
           </Link>
 
           {!isAuthPage && (

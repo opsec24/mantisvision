@@ -539,7 +539,7 @@ export default function SettingsPage() {
               <p className="font-bold text-amber-300">Dynamic Model Discovery &amp; Live Key Verification</p>
               <p className="text-slate-400 mt-0.5">
                 Enter your provider credentials below and click <strong>&quot;Discover Models&quot;</strong>.
-                NewGenSAST queries the official provider API live, fetches all available models,
+                MantisVision queries the official provider API live, fetches all available models,
                 resolves dynamic token pricing, and runs a live 1-token test ping before whitelisting.
               </p>
             </div>
@@ -1114,7 +1114,7 @@ export default function SettingsPage() {
             <div>
               <h3 className="text-sm font-bold text-white">Native Swarm Tracing &amp; Forensics</h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Integrated real-time trace inspector, chain-of-thought visualization, tool call auditing, and critic verdicts right inside NewGenSAST.
+                Integrated real-time trace inspector, chain-of-thought visualization, tool call auditing, and critic verdicts right inside MantisVision.
               </p>
             </div>
             <Link
@@ -1146,7 +1146,7 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <p className="text-slate-400 leading-relaxed max-w-3xl">
-                  NewGenSAST directly vendors Google Mantis’s 19 official modular skills and deterministic Tree-Sitter AST structural index engine (<code className="bg-slate-900 border border-slate-800 px-1 py-0.5 rounded text-[11px] font-mono text-amber-300">catalog.sqlite</code>). Before updating, NewGenSAST fetches upstream, calculates git diffs, and runs automated static AST analysis to verify that all cognitive interfaces and symbol traversal methods remain 100% backward-compatible.
+                  MantisVision directly vendors Google Mantis’s 19 official modular skills and deterministic Tree-Sitter AST structural index engine (<code className="bg-slate-900 border border-slate-800 px-1 py-0.5 rounded text-[11px] font-mono text-amber-300">catalog.sqlite</code>). Before updating, MantisVision fetches upstream, calculates git diffs, and runs automated static AST analysis to verify that all cognitive interfaces and symbol traversal methods remain 100% backward-compatible.
                 </p>
               </div>
             </div>
@@ -1446,7 +1446,7 @@ export default function SettingsPage() {
                   Vendored Google Mantis Skills Directory ({mantisStatus?.skills?.length || 19})
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Official production prompts and decision matrices loaded into NewGenSAST from upstream.
+                  Official production prompts and decision matrices loaded into MantisVision from upstream.
                 </p>
               </div>
               <div className="relative w-full sm:w-64">

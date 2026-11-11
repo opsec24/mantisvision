@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# NewGenSAST - Next-Generation Autonomous Security Swarm
+# MantisVision - Autonomous Security & Exploit Telemetry Swarm
 # Startup, Anti-Sleep Protection & Lifecycle Management Script
 # ==============================================================================
 
@@ -27,13 +27,14 @@ NC='\033[0m' # No Color
 print_banner() {
     echo -e "${CYAN}${BOLD}"
     cat << "EOF"
-  _   _             ____            ____    _    ____ _____ 
- | \ | | _____  __ / ___| ___ _ __ / ___|  / \  / ___|_   _|
- |  \| |/ _ \ \/ /| |  _ / _ \ '_ \\___ \ / _ \ \___ \ | |  
- | |\  |  __/>  < | |_| |  __/ | | |___) / ___ \ ___) || |  
- |_| \_|\___/_/\_\ \____|\___|_| |_|____/_/   \_\____/ |_|  
+  __  __             _   _     __     ___     _             
+ |  \/  |           | | (_)    \ \   / (_)   (_)            
+ | |\/| | __ _ _ __ | |_ _ ___  \ \ / / _ ___ _  ___  _ __  
+ | |  | |/ _` | '_ \| __| / __|  \ V / | / __| |/ _ \| '_ \ 
+ | |  | | (_| | | | | |_| \__ \   \ /  | \__ \ | (_) | | | |
+ |_|  |_|\__,_|_| |_|\__|_|___/    V   |_|___/_|\___/|_| |_|
 EOF
-    echo -e "         ${MAGENTA}Next-Gen Autonomous Security Swarm${NC}\n"
+    echo -e "       ${MAGENTA}Autonomous Security & Exploit Telemetry Swarm${NC}\n"
 }
 
 # ------------------------------------------------------------------------------
@@ -176,7 +177,7 @@ start_services() {
     start_anti_sleep
     setup_env
 
-    echo -e "\n${BLUE}▶ Starting NewGenSAST Swarm Containers...${NC}"
+    echo -e "\n${BLUE}▶ Starting MantisVision Swarm Containers...${NC}"
     docker compose up -d
 
     echo -e "\n${BLUE}▶ Verifying Service Health...${NC}"
@@ -248,7 +249,7 @@ start_services() {
     fi
 
     echo -e "\n${GREEN}${BOLD}======================================================================${NC}"
-    echo -e " ${BOLD}🚀 NewGenSAST is LIVE and Ready for Security Audits!${NC}"
+    echo -e " ${BOLD}🚀 MantisVision is LIVE and Ready for Security Audits!${NC}"
     echo -e "${GREEN}${BOLD}======================================================================${NC}"
     echo -e "  • ${BOLD}Web Application:${NC}      ${CYAN}http://localhost${NC}"
     echo -e "  • ${BOLD}FastAPI Backend Docs:${NC} ${CYAN}http://localhost:8000/docs${NC}"
@@ -260,7 +261,7 @@ start_services() {
 
 stop_services() {
     print_banner
-    echo -e "${BLUE}▶ Stopping NewGenSAST Swarm Containers...${NC}"
+    echo -e "${BLUE}▶ Stopping MantisVision Swarm Containers...${NC}"
     docker compose down
     stop_anti_sleep
     echo -e " ${GREEN}✓${NC} All services stopped successfully.\n"
@@ -268,7 +269,7 @@ stop_services() {
 
 restart_services() {
     print_banner
-    echo -e "${BLUE}▶ Restarting NewGenSAST Swarm...${NC}"
+    echo -e "${BLUE}▶ Restarting MantisVision Swarm...${NC}"
     docker compose down
     stop_anti_sleep
     sleep 1

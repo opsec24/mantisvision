@@ -1,7 +1,7 @@
 services:
   proxy:
     image: nginx:alpine
-    container_name: newgensast-proxy-1
+    container_name: mantisvision-proxy-1
     ports:
       - "80:80"
     volumes:

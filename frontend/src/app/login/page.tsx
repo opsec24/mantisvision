@@ -87,11 +87,11 @@ function LoginForm() {
           <div className="p-3 bg-amber-500/10 text-amber-400 rounded-2xl border border-amber-500/30 mb-3 shadow-lg shadow-amber-500/10">
             <Shield className="w-8 h-8 text-amber-400" />
           </div>
-          <h1 className="text-xl font-extrabold tracking-tight text-white">
-            {mode === "login" ? "Sign In to" : "Create Account on"} NewGen<span className="text-amber-400">SAST</span>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white font-head flex items-center space-x-1.5">
+            <span>Mantis<span className="text-amber-400 font-extrabold">Vision</span></span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Autonomous Multi-Agent Security Platform &bull; Obsidian Amber Edition
+          <p className="text-xs text-slate-400 mt-1 font-mono">
+            // Offensive Security &amp; Exploit Telemetry Platform
           </p>
         </div>
 

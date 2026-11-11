@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""CLI utility to create or seed an admin user with TOTP 2FA into the NewGenSAST database."""
+"""CLI utility to create or seed an admin user with TOTP 2FA into the MantisVision database."""
 
 import argparse
 import bcrypt
 import pyotp
 
 def main():
-    parser = argparse.ArgumentParser(description="Create NewGenSAST User with TOTP")
+    parser = argparse.ArgumentParser(description="Create MantisVision User with TOTP")
     parser.add_argument("--email", default="admin@company.internal", help="User company email")
     parser.add_argument("--password", default="AdminSecure2026!", help="Plaintext password")
     args = parser.parse_args()
@@ -16,11 +16,11 @@ def main():
     totp_secret = pyotp.random_base32()
     totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(
         name=args.email,
-        issuer_name="NewGenSAST"
+        issuer_name="MantisVision"
     )
 
     print("\n" + "=" * 60)
-    print("NewGenSAST User Credentials Created")
+    print("MantisVision User Credentials Created")
     print("=" * 60)
     print(f"Email:       {args.email}")
     print(f"Password:    {args.password}")

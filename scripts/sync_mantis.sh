@@ -3,7 +3,7 @@
 # Google Mantis Upstream Synchronizer
 # ==============================================================================
 # Synchronizes official Google Mantis (google/mantis) skills, tree-sitter
-# structural index, and staging environments directly into NewGenSAST.
+# structural index, and staging environments directly into MantisVision.
 #
 # Usage:
 #   ./scripts/sync_mantis.sh [BRANCH_OR_TAG]

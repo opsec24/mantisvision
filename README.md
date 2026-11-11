@@ -1,17 +1,17 @@
-# NewGenSAST 🛡️
+# MantisVision 🛡️
 
-**Autonomous Multi-Agent SAST & Dynamic Vulnerability Verification Platform**  
+**Autonomous Multi-Agent Security & Dynamic Vulnerability Verification Platform**  
 *Powered by Google Mantis ADK 2.0 • Self-Hosted Enterprise Edition • Obsidian Amber Aurora Theme*
 
 ---
 
 ## 1. Overview & Architectural Philosophy
 
-**NewGenSAST** transforms static application security testing from shallow pattern-matching into an **autonomous cognitive pentesting swarm**. Powered by the authentic **Google Mantis ADK 2.0 graph engine**, it pairs heterogeneous LLM reasoning models with deterministic code engines to discover, stress-test, dynamically prove, and autonomously patch critical vulnerabilities.
+**MantisVision** transforms static application security testing from shallow pattern-matching into an **autonomous cognitive pentesting swarm**. Powered by the authentic **Google Mantis ADK 2.0 graph engine**, it pairs heterogeneous LLM reasoning models with deterministic code engines to discover, stress-test, dynamically prove, and autonomously patch critical vulnerabilities.
 
 Traditional SAST scanners generate overwhelming false-positive rates (often >70%) because they flag syntax patterns without verifying taint-flow reachability, production viability, or runtime execution constraints. 
 
-NewGenSAST solves this through an **adversarial state-machine architecture**:
+MantisVision solves this through an **adversarial state-machine architecture**:
 1. **System Surface Grounding**: Deterministic Tree-Sitter AST symbol indexing + architectural ingress mapping.
 2. **Threat-Led Campaign Planning**: STRIDE threat matrix mapping and prioritized hunting plans.
 3. **Deep Vulnerability Auditing**: Multi-turn taint-flow tracing and SMT constraint solving.
@@ -148,8 +148,8 @@ When launching an audit via `/scans/new`, you have granular control over model a
 
 #### 1. Clone & Configure Environment
 ```bash
-git clone https://github.com/your-org/NewGenSAST.git
-cd NewGenSAST
+git clone https://github.com/your-org/MantisVision.git
+cd MantisVision
 cp .env.example .env
 ```
 Edit `.env` to configure your initial keys (or configure them via the web UI later):
@@ -167,12 +167,12 @@ OLLAMA_API_BASE=http://host.docker.internal:11434
 docker compose up -d --build
 ```
 This spins up all 6 core containers:
-* `newgensast-frontend-1`: Next.js 14 Web Interface (`:3000`)
-* `newgensast-backend-1`: FastAPI REST & SSE Streaming Engine (`:8000`)
-* `newgensast-worker-1`: Celery Swarm Execution Worker
-* `newgensast-postgres-1`: PostgreSQL 16 Database (`:5432`)
-* `newgensast-redis-1`: Redis 7 Task Queue & Broker (`:6379`)
-* `newgensast-proxy-1`: Nginx Reverse Proxy (`:80`)
+* `mantisvision-frontend-1`: Next.js 14 Web Interface (`:3000`)
+* `mantisvision-backend-1`: FastAPI REST & SSE Streaming Engine (`:8000`)
+* `mantisvision-worker-1`: Celery Swarm Execution Worker
+* `mantisvision-postgres-1`: PostgreSQL 16 Database (`:5432`)
+* `mantisvision-redis-1`: Redis 7 Task Queue & Broker (`:6379`)
+* `mantisvision-proxy-1`: Nginx Reverse Proxy (`:80`)
 
 #### 3. Create Admin User with TOTP 2FA
 Run the onboarding helper to generate credentials and your authenticator QR code:
@@ -198,7 +198,7 @@ async def create():
         await db.commit()
         print('Admin created! Login: admin@company.internal / AdminPass2026!')
         print('TOTP Secret:', totp_secret)
-        print('TOTP Provisioning URI:', pyotp.TOTP(totp_secret).provisioning_uri('admin@company.internal', issuer_name='NewGenSAST'))
+        print('TOTP Provisioning URI:', pyotp.TOTP(totp_secret).provisioning_uri('admin@company.internal', issuer_name='MantisVision'))
 
 asyncio.run(create())
 "

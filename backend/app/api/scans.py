@@ -278,8 +278,9 @@ async def create_scan(
         reasoning_effort=body.reasoning_effort,
         focus=body.focus,
         sandbox=body.sandbox or "static-only",
+        objective=body.objective,
         exclude_patterns=body.exclude or [],
-        phase_models=clean_phase_models or ({"recon": body.model, "threat_model": body.model, "research": body.model, "critic": body.model, "reproduce": body.model, "patch": body.model} if body.model else None),
+        phase_models=clean_phase_models,
     )
     db.add(scan)
     await db.flush()
@@ -766,21 +767,35 @@ async def retry_scan(
     scan_disk_dir = Path(f"/data/scans/{scan_id}")
     if scan_disk_dir.is_dir():
         for item in scan_disk_dir.iterdir():
-            if item.is_file():
-                try:
+            try:
+                if item.is_file() or item.is_symlink():
                     item.unlink(missing_ok=True)
-                except Exception:
-                    pass
+                elif item.is_dir():
+                    shutil.rmtree(item, ignore_errors=True)
+            except Exception:
+                pass
 
     # Enqueue pipeline in Celery
     try:
         from app.pipeline.orchestrator import run_mantis_scan
+        retry_config = {
+            "model": scan.model,
+            "phase_models": scan.phase_models,
+            "reasoning_effort": scan.reasoning_effort,
+            "focus": scan.focus,
+            "exclude": scan.exclude_patterns or [],
+            "sandbox": scan.sandbox or "static-only",
+            "scan_mode": "auto",
+            "objective": getattr(scan, "objective", None),
+            "fresh": True,
+        }
         run_mantis_scan.delay(
             scan_id=str(scan.id),
             source_type=scan.source_type,
             source_target=scan.source_target,
             branch=scan.branch,
             git_token=scan.git_token,
+            scan_config=retry_config,
         )
     except Exception as exc:
         logger.error("celery_dispatch_failed", scan_id=str(scan.id), error=str(exc))
@@ -851,8 +866,7 @@ async def resume_scan(
 
     # Verify that a scan workspace exists to resume from
     scan_disk_dir = Path(f"/data/scans/{scan_id}")
-    workspace_dir = scan_disk_dir / "workspace"
-    if not workspace_dir.is_dir():
+    if not (scan_disk_dir.is_dir() and (scan_disk_dir / "target").is_dir()):
         # No workspace to resume from; fall back to retry
         return await retry_scan(scan_id, request, background_tasks, current_user, db)
 
@@ -872,6 +886,16 @@ async def resume_scan(
     # Enqueue pipeline in Celery with resume=True
     try:
         from app.pipeline.orchestrator import run_mantis_scan
+        resume_config = {
+            "model": scan.model,
+            "phase_models": scan.phase_models,
+            "reasoning_effort": scan.reasoning_effort,
+            "focus": scan.focus,
+            "exclude": scan.exclude_patterns or [],
+            "sandbox": scan.sandbox or "static-only",
+            "scan_mode": "auto",
+            "objective": getattr(scan, "objective", None),
+        }
         run_mantis_scan.delay(
             scan_id=str(scan.id),
             source_type=scan.source_type,
@@ -879,6 +903,7 @@ async def resume_scan(
             branch=scan.branch,
             git_token=scan.git_token,
             resume=True,
+            scan_config=resume_config,
         )
     except Exception as exc:
         logger.error("celery_resume_dispatch_failed", scan_id=str(scan.id), error=str(exc))
@@ -1851,7 +1876,7 @@ def _scan_to_response(scan: Scan) -> ScanResponse:
         "exclude": getattr(scan, "exclude_patterns", None) or cfg.get("exclude") or [],
         "max_tokens": cfg.get("max_tokens"),
         "budget_limit_usd": scan.budget_limit_usd or cfg.get("budget_limit_usd"),
-        "objective": cfg.get("objective"),
+        "objective": getattr(scan, "objective", None) or cfg.get("objective"),
         "seed_report": cfg.get("seed_report"),
         "deterministic_only": bool(cfg.get("deterministic_only", False)),
         "no_replan": bool(cfg.get("no_replan", False)),

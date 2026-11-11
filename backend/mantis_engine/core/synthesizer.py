@@ -425,9 +425,15 @@ class ResearchGraphSynthesizer:
     and deterministic archetype-based synthesis with fail-safe fallback.
     """
 
-    def __init__(self, default_model: str = DEFAULT_SYNTHESIZER_MODEL, db_path: str = "knowledge.db"):
+    def __init__(
+        self,
+        default_model: str = DEFAULT_SYNTHESIZER_MODEL,
+        db_path: str = "knowledge.db",
+        api_base: Optional[str] = None,
+    ):
         self.default_model = default_model
         self.db_path = db_path
+        self.api_base = api_base
 
     def detect_domain_archetype(self, objective: str, astm: Optional[dict] = None) -> str:
         """Selects a workflow family from the objective, falling back to repo evidence.
@@ -836,6 +842,10 @@ class ResearchGraphSynthesizer:
         raw_seed = raw_cfg.get("seed_prompt", "Initial Task Input: Evaluate {filepath}")
         seed_prompt = str(raw_seed)[:1000] if isinstance(raw_seed, str) else "Initial Task Input: Evaluate {filepath}"
 
+        effective_api_base = self.api_base or os.environ.get("OPENAI_API_BASE") or os.environ.get("OLLAMA_API_BASE")
+        if chosen_model.startswith("ollama/") and effective_api_base and ("/v1" in effective_api_base or "ollama.com" in effective_api_base):
+            chosen_model = f"openai/{chosen_model.replace('ollama/', '', 1)}"
+
         config_dict = {
             "db_path": self.db_path or raw_cfg.get("db_path", "knowledge.db"),
             "default_model": chosen_model,
@@ -843,6 +853,8 @@ class ResearchGraphSynthesizer:
             "retry_attempts": retry_attempts,
             "seed_prompt": seed_prompt,
         }
+        if effective_api_base:
+            config_dict["api_base"] = effective_api_base
 
         # Gate 1 & 2: Node Sanitization & Whitelisting
         raw_nodes = raw_dict.get("nodes", [])
@@ -1220,7 +1232,7 @@ class ResearchGraphSynthesizer:
                 _, llm_kwargs = get_llm_kwargs(
                     chosen_model,
                     DEFAULT_MODEL,
-                    api_base=None,
+                    api_base=self.api_base,
                     timeout=timeout or 60.0,
                 )
             except ValueError as exc:
@@ -1344,13 +1356,20 @@ class ResearchGraphSynthesizer:
             else "custom_audit"
         )
 
-        recipe_dir = root / "workflows" / "recipes" / domain
-        recipe_dir.mkdir(parents=True, exist_ok=True)
-
-        recipe_path = recipe_dir / "workflow.json"
-        data = spec.model_dump(by_alias=True, exclude_none=True)
-        json_str = json.dumps(data, indent=2)
-        recipe_path.write_text(json_str, encoding="utf-8")
+        try:
+            recipe_dir = root / "workflows" / "recipes" / domain
+            recipe_dir.mkdir(parents=True, exist_ok=True)
+            recipe_path = recipe_dir / "workflow.json"
+            data = spec.model_dump(by_alias=True, exclude_none=True)
+            json_str = json.dumps(data, indent=2)
+            recipe_path.write_text(json_str, encoding="utf-8")
+        except OSError:
+            recipe_dir = Path("/tmp/mantis/workflows/recipes") / domain
+            recipe_dir.mkdir(parents=True, exist_ok=True)
+            recipe_path = recipe_dir / "workflow.json"
+            data = spec.model_dump(by_alias=True, exclude_none=True)
+            json_str = json.dumps(data, indent=2)
+            recipe_path.write_text(json_str, encoding="utf-8")
 
         return recipe_path
 

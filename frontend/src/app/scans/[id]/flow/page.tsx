@@ -534,7 +534,7 @@ export default function SwarmFlowPage() {
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
               <h1 className="text-base font-extrabold text-white tracking-wide font-mono flex items-center space-x-2">
-                <span>NewGenSAST Dynamic Swarm Topology</span>
+                <span>MantisVision Dynamic Swarm Topology</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
                   DAG STATE MACHINE
                 </span>

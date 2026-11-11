@@ -1,4 +1,4 @@
-"""NewGenSAST Pipeline Orchestrator.
+"""MantisVision Pipeline Orchestrator.
 
 Thin adapter: translates a web scan config into a Google Mantis ADK run,
 streams ADK graph events into Redis (SSE) and PostgreSQL (agent_inference_traces),
@@ -557,11 +557,32 @@ def _build_workspace(scan_id: str, source_target: str, source_type: str,
             parsed = urlparse(url)
             authed = parsed._replace(netloc=f"{git_token}@{parsed.netloc}")
             url = urlunparse(authed)
-        cmd = ["git", "clone", "--depth", "1"]
-        if branch:
-            cmd += ["--branch", branch]
-        cmd += [url, str(target_dir)]
-        subprocess.run(cmd, check=True, timeout=300, capture_output=True)
+
+        # Ensure target_dir is cleanly removed before git clone if it exists
+        if target_dir.is_symlink() or target_dir.is_file():
+            target_dir.unlink()
+        elif target_dir.exists():
+            shutil.rmtree(target_dir, ignore_errors=True)
+
+        # Support both branch/tag names and raw commit SHAs
+        is_commit_hash = bool(branch and len(branch.strip()) >= 7 and all(c in "0123456789abcdefABCDEF" for c in branch.strip()))
+        if is_commit_hash:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            subprocess.run(["git", "init"], cwd=str(target_dir), check=True, timeout=60, capture_output=True)
+            subprocess.run(["git", "remote", "add", "origin", url], cwd=str(target_dir), check=True, timeout=60, capture_output=True)
+            subprocess.run(["git", "fetch", "--depth", "1", "origin", branch.strip()], cwd=str(target_dir), check=True, timeout=300, capture_output=True)
+            subprocess.run(["git", "checkout", "FETCH_HEAD"], cwd=str(target_dir), check=True, timeout=60, capture_output=True)
+        else:
+            cmd = ["git", "clone", "--depth", "1"]
+            if branch:
+                cmd += ["--branch", branch]
+            cmd += [url, str(target_dir)]
+            try:
+                subprocess.run(cmd, check=True, timeout=300, capture_output=True)
+            except subprocess.CalledProcessError as exc:
+                err = exc.stderr.decode("utf-8", errors="replace") if exc.stderr else str(exc)
+                logger.error("git_clone_failed", error=err, cmd=cmd)
+                raise RuntimeError(f"Git clone failed: {err.strip()}") from exc
     elif source_type == "local":
         src = Path(source_target)
         if not src.exists():
@@ -643,8 +664,15 @@ def _write_workflow_override(workspace: Path, config: dict) -> Path:
             or clean_phase_models.get("threat_model")
             or "gemini/gemini-3.5-flash-lite"
         )
+        if fallback_model.startswith("ollama/"):
+            fallback_model = f"openai/{fallback_model.replace('ollama/', '', 1)}"
+            ollama_base = (config.get("ollama_api_base") or config.get("api_base") or os.environ.get("OLLAMA_API_BASE") or "https://ollama.com").rstrip("/")
+            if not ollama_base.endswith("/v1"):
+                ollama_base = f"{ollama_base}/v1"
+            wf_data.setdefault("config", {})["api_base"] = ollama_base
+
         wf_data.setdefault("config", {})["default_model"] = fallback_model
-        if "api_base" in wf_data.get("config", {}):
+        if "api_base" in wf_data.get("config", {}) and not fallback_model.startswith("openai/"):
             wf_data["config"].pop("api_base", None)
     elif wf_data and config.get("model"):
         raw_m = config["model"]
@@ -787,6 +815,7 @@ def run_mantis_scan(
         mantis_run_sh = MANTIS_ENGINE_DIR / "run.sh"
 
         env = os.environ.copy()
+        env["MANTIS_HOME"] = str(workspace)
         # Pass model credentials through — from settings or environment
         for key in ("GEMINI_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
                     "DEEPSEEK_API_KEY", "VERTEXAI_PROJECT", "GOOGLE_CLOUD_PROJECT",
@@ -838,6 +867,15 @@ def run_mantis_scan(
         if env.get("OLLAMA_API_KEY") and not env.get("OPENAI_API_KEY"):
             env["OPENAI_API_KEY"] = env["OLLAMA_API_KEY"]
 
+        # If Ollama base URL is present, configure OPENAI_API_BASE so LiteLLM resolves openai/* to Ollama
+        ollama_base_val = provider_base_urls.get("ollama") or env.get("OLLAMA_API_BASE")
+        if ollama_base_val:
+            base_v1 = ollama_base_val.rstrip("/")
+            if not base_v1.endswith("/v1"):
+                base_v1 = f"{base_v1}/v1"
+            if not env.get("OPENAI_API_BASE"):
+                env["OPENAI_API_BASE"] = base_v1
+
         # Inject provider base URLs into scan_config for workflow generation
         scan_config["ollama_api_base"] = provider_base_urls.get("ollama") or env.get("OLLAMA_API_BASE")
 
@@ -845,6 +883,35 @@ def run_mantis_scan(
         _write_workflow_override(workspace, scan_config)
 
         # 4. Determine focus and exclude flags
+        # Hydrate missing scan_config fields from database record if retrying/resuming
+        try:
+            engine = _get_sync_engine()
+            with engine.connect() as conn:
+                row = conn.execute(text("SELECT model, phase_models, reasoning_effort, focus, sandbox, exclude_patterns, mantis_run_id, objective FROM scans WHERE id = :id"), {"id": scan_id}).fetchone()
+                if row:
+                    if row[0]:
+                        scan_config.setdefault("model", row[0])
+                    if row[1] and isinstance(row[1], dict):
+                        scan_config.setdefault("phase_models", row[1])
+                    if row[2]:
+                        scan_config.setdefault("reasoning_effort", row[2])
+                    if row[3]:
+                        scan_config.setdefault("focus", row[3])
+                    if row[4]:
+                        scan_config.setdefault("sandbox", row[4])
+                    if row[5] and isinstance(row[5], list):
+                        scan_config.setdefault("exclude", row[5])
+                    if row[7] and not scan_config.get("objective"):
+                        scan_config["objective"] = row[7]
+        except Exception as e:
+            logger.warning("hydrate_scan_config_failed", error=str(e))
+
+        # Persist full scan_config to workspace for recovery and tracking
+        try:
+            (workspace / "scan_config.json").write_text(json.dumps(scan_config, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
         focus = scan_config.get("focus")
         exclude = scan_config.get("exclude", [])
 
@@ -856,11 +923,14 @@ def run_mantis_scan(
             for k, v in raw_phase_models.items()
             if v and str(v).strip()
         }
-        is_multi_model = bool(clean_phase_models and len(clean_phase_models) > 0)
+        distinct_models = set(clean_phase_models.values())
+        is_multi_model = len(distinct_models) > 1
 
         if not model or model.strip() in ("", "default"):
             if is_multi_model:
                 model = "Swarm (Multi-Model)"
+            elif distinct_models:
+                model = next(iter(distinct_models))
             elif env.get("GEMINI_API_KEY") or env.get("GOOGLE_API_KEY"):
                 model = "gemini-3.5-flash-lite"
             elif env.get("OPENAI_API_KEY"):
@@ -896,14 +966,17 @@ def run_mantis_scan(
             "--transcript-out", str(transcript_file),
             "--yes",
         ]
-        # Only pass global CLI --model flag if NOT running heterogeneous swarm routing.
-        # In multi-model mode, omitting --model allows Mantis to execute each node
-        # using its individual node["model"] configured in workflow.json!
-        if not is_multi_model and model:
-            if model.startswith("ollama/"):
-                cmd += ["--model", f"openai/{model.replace('ollama/', '', 1)}"]
+        # Only pass global CLI --model flag if NOT running heterogeneous swarm routing,
+        # OR if running --objective synthesis (which needs a concrete model to generate recipe nodes).
+        primary_model = model
+        if not primary_model or primary_model == "Swarm (Multi-Model)":
+            primary_model = clean_phase_models.get("recon") or clean_phase_models.get("threat_model") or next(iter(distinct_models), None)
+
+        if (not is_multi_model or scan_config.get("objective")) and primary_model:
+            if primary_model.startswith("ollama/"):
+                cmd += ["--model", f"openai/{primary_model.replace('ollama/', '', 1)}"]
             else:
-                cmd += ["--model", model]
+                cmd += ["--model", primary_model]
 
         if focus:
             cmd += ["--focus", focus]
@@ -916,7 +989,11 @@ def run_mantis_scan(
         if scan_config.get("sandbox"):
             cmd += ["--sandbox", scan_config["sandbox"]]
         if scan_config.get("scan_mode"):
-            cmd += ["--scan-mode", scan_config["scan_mode"]]
+            sm = str(scan_config["scan_mode"]).lower().strip()
+            if sm in ("auto", "whole", "file-by-file", "cross-functional", "changed"):
+                cmd += ["--scan-mode", sm]
+            elif sm not in ("standard", "default", ""):
+                cmd += ["--scan-mode", "auto"]
         if scan_config.get("objective"):
             cmd += ["--objective", scan_config["objective"]]
         if scan_config.get("seed_report"):
@@ -931,8 +1008,15 @@ def run_mantis_scan(
             cmd += ["--max-llm-calls", str(scan_config["max_llm_calls"])]
         if scan_config.get("api_base"):
             cmd += ["--api-base", scan_config["api_base"]]
-        elif model.startswith("ollama/") and env.get("OLLAMA_API_BASE"):
-            cmd += ["--api-base", env["OLLAMA_API_BASE"]]
+        else:
+            active_models = [str(model)] + [str(v) for v in raw_phase_models.values()]
+            has_ollama = any("ollama" in m or "deepseek" in m for m in active_models)
+            ollama_base = scan_config.get("ollama_api_base") or env.get("OLLAMA_API_BASE")
+            if has_ollama and ollama_base:
+                base = ollama_base.rstrip("/")
+                if not base.endswith("/v1"):
+                    base = f"{base}/v1"
+                cmd += ["--api-base", base]
         if resume and (workspace / "knowledge.db").exists():
             # Find most recent run_id from knowledge.db to resume
             try:
@@ -1240,16 +1324,34 @@ def run_mantis_scan(
 
         if exit_code not in (0, 2):
             tail_err = "\n".join(recent_output_lines[-15:]) if recent_output_lines else f"Exit code {exit_code}"
+            has_fatal_transcript_error = False
+            first_err_msg = ""
+            transcript_p = workspace / "transcript.jsonl"
+            if transcript_p.exists():
+                try:
+                    for t_line in transcript_p.read_text(encoding="utf-8", errors="replace").splitlines():
+                        if '"type": "error"' in t_line or '"type":"error"' in t_line:
+                            has_fatal_transcript_error = True
+                            try:
+                                err_data = json.loads(t_line)
+                                first_err_msg = err_data.get("text") or err_data.get("name") or ""
+                            except Exception:
+                                pass
+                            break
+                except Exception:
+                    pass
+
             # Mantis returns exit code 1 when one or more campaigns had non-fatal stage warnings (e.g. static sandbox).
-            # If findings or deliverables were generated, this is a successful audit with partial warnings, NOT a fatal crash.
-            if exit_code == 1 and (findings_in_kb > 0 or (workspace / "transcript.jsonl").exists()):
+            # If findings were generated and no unhandled error occurred, treat as completed with warnings.
+            if exit_code == 1 and findings_in_kb > 0 and not has_fatal_transcript_error:
                 logger.warning("mantis_completed_with_warnings", scan_id=scan_id, exit_code=exit_code, findings=findings_in_kb)
                 emit(current_phase, "orchestrator", "stage_warning", {
                     "message": f"Mantis completed audit with {findings_in_kb} verified findings (subtask notices logged).",
                     "decision_status": "PROGRESS",
                 })
             else:
-                raise RuntimeError(f"Mantis exited with code {exit_code}: {tail_err}")
+                err_detail = first_err_msg.strip() if first_err_msg else tail_err
+                raise RuntimeError(f"Mantis exited with code {exit_code}: {err_detail}")
 
         if exit_code == 2:
             emit("running", "orchestrator", "budget_paused", {

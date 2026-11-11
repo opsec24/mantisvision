@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
+  X,
   ExternalLink,
   ChevronDown,
   ChevronRight,
@@ -157,6 +158,7 @@ export default function ScanDetailPage() {
   const [copiedJson, setCopiedJson] = useState(false);
   const [selectedPentestFinding, setSelectedPentestFinding] = useState<any | null>(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   const handleCopyCli = (text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -176,7 +178,7 @@ export default function ScanDetailPage() {
 
   const generateCliCommand = () => {
     const cfg = scan?.scan_config || {};
-    const parts = ["newgensast scan"];
+    const parts = ["mantisvision scan"];
     const target = cfg.source_target || scan?.source_target || "<target>";
     parts.push(`--target "${target}"`);
     if (cfg.model || scan?.model) parts.push(`--model "${cfg.model || scan?.model}"`);
@@ -492,9 +494,12 @@ export default function ScanDetailPage() {
             <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Model">
               <Cpu className="w-3 h-3 text-amber-400" />
               <span>
-                {scan.phase_models && Object.keys(scan.phase_models).length > 1
-                  ? "Swarm: Multi-Model"
-                  : scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}
+                {(() => {
+                  const distinct = scan.phase_models ? Array.from(new Set(Object.values(scan.phase_models).filter(Boolean))) : [];
+                  return distinct.length > 1
+                    ? "Swarm: Multi-Model"
+                    : (scan.model && scan.model !== "Swarm (Multi-Model)" ? scan.model : (distinct[0] || scan.scan_config?.model || "gemini-3.5-flash-lite"));
+                })()}
               </span>
             </span>
             <span className="flex items-center space-x-1 font-mono text-[11px] bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded border border-slate-800" title="Reasoning Effort">
@@ -516,7 +521,10 @@ export default function ScanDetailPage() {
               </span>
             )}
             <button
-              onClick={() => setActiveTab("config")}
+              onClick={() => {
+                setShowConfigModal(true);
+                setActiveTab("config");
+              }}
               className="flex items-center space-x-1 font-mono text-[11px] font-medium text-amber-400 hover:text-amber-300 bg-amber-950/40 hover:bg-amber-900/50 px-2 py-0.5 rounded border border-amber-800/60 transition-colors cursor-pointer"
               title="Inspect full scan parameters and execution strategy"
             >
@@ -674,18 +682,20 @@ export default function ScanDetailPage() {
             <span>Inspect Swarm Traces</span>
           </button>
 
-          {/* Resume and Restart Buttons (for failed, cancelled, or error scans) */}
-          {(scan.status === "failed" || scan.status === "cancelled" || scan.status === "error" || scan.status === "budget_exceeded") && (
+          {/* Resume and Restart Buttons */}
+          {(scan.status === "failed" || scan.status === "cancelled" || scan.status === "error" || scan.status === "budget_exceeded" || scan.status === "completed") && (
             <div className="flex items-center space-x-2">
-              <button
-                onClick={handleResume}
-                disabled={actionLoading}
-                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 transition-all shadow-md shadow-amber-500/20 glow-amber-btn disabled:opacity-50 cursor-pointer"
-                title="Resume scan from last completed checkpoint without re-cloning or re-auditing finished modules"
-              >
-                <Play className={`w-3.5 h-3.5 fill-current ${actionLoading ? "animate-spin" : ""}`} />
-                <span>Resume Scan</span>
-              </button>
+              {scan.status !== "completed" && (
+                <button
+                  onClick={handleResume}
+                  disabled={actionLoading}
+                  className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 transition-all shadow-md shadow-amber-500/20 glow-amber-btn disabled:opacity-50 cursor-pointer"
+                  title="Resume scan from last completed checkpoint without re-cloning or re-auditing finished modules"
+                >
+                  <Play className={`w-3.5 h-3.5 fill-current ${actionLoading ? "animate-spin" : ""}`} />
+                  <span>Resume Scan</span>
+                </button>
+              )}
               <button
                 onClick={handleRetry}
                 disabled={actionLoading}
@@ -757,7 +767,7 @@ export default function ScanDetailPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-bold uppercase text-white tracking-wider font-mono">
-                  NewGenSAST Security Squads Pipeline
+                  MantisVision Security Squads Pipeline
                 </span>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
                   5 SQUADS &bull; 19 NODES
@@ -1193,9 +1203,12 @@ export default function ScanDetailPage() {
                 <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
                   <dt className="text-slate-400 font-medium">Model Architecture</dt>
                   <dd className="font-mono font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-800/60">
-                    {scan.phase_models && Object.keys(scan.phase_models).length > 1
-                      ? "Swarm: Multi-Model"
-                      : scan.scan_config?.model || scan.model || "gemini-3.5-flash-lite"}
+                    {(() => {
+                      const distinct = scan.phase_models ? Array.from(new Set(Object.values(scan.phase_models).filter(Boolean))) : [];
+                      return distinct.length > 1
+                        ? "Swarm: Multi-Model"
+                        : (scan.model && scan.model !== "Swarm (Multi-Model)" ? scan.model : (distinct[0] || scan.scan_config?.model || "gemini-3.5-flash-lite"));
+                    })()}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between py-1 border-b border-slate-800/50">
@@ -1711,6 +1724,159 @@ export default function ScanDetailPage() {
           scanName={scan?.name}
           scanId={id}
         />
+      )}
+
+      {/* Full Scan Configuration Modal */}
+      {showConfigModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => setShowConfigModal(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] bg-[#07172C] border border-[#0C356A] rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#0A2240]/80">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                  <Sliders className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-head flex items-center space-x-2">
+                    <span>Scan Configuration &amp; Orchestration Specs</span>
+                    <span className="text-[10px] font-mono text-amber-400 px-2 py-0.5 rounded bg-amber-950/80 border border-amber-800/80 uppercase">
+                      MantisVision ADK 2.0
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Target: <span className="font-mono text-slate-200 font-semibold">{scan.source_target}</span> (branch: <span className="font-mono text-amber-300">{scan.branch || "default"}</span>)
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowConfigModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Close configuration modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-300">
+              {/* Parameter Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">AI Model</div>
+                  <div className="font-mono text-xs font-bold text-amber-300 break-all">
+                    {(() => {
+                      const distinct = scan.phase_models ? Array.from(new Set(Object.values(scan.phase_models).filter(Boolean))) : [];
+                      return distinct.length > 1
+                        ? "Swarm: Multi-Model"
+                        : (scan.model && scan.model !== "Swarm (Multi-Model)" ? scan.model : (distinct[0] || scan.scan_config?.model || "gemini-3.5-flash-lite"));
+                    })()}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Reasoning Effort Tier</div>
+                  <div className="font-mono text-xs font-bold text-slate-200 capitalize">
+                    {scan.scan_config?.reasoning_effort || scan.reasoning_effort || "medium"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Sandbox Isolation</div>
+                  <div className="font-mono text-xs font-bold text-emerald-400">
+                    {scan.scan_config?.sandbox || scan.sandbox || "static-only"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Autonomous Scan Mode</div>
+                  <div className="font-mono text-xs font-bold text-cyan-300 uppercase">
+                    {scan.scan_config?.scan_mode || "auto"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 sm:col-span-2">
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Analysis Focus / Subsystem</div>
+                  <div className="font-mono text-xs text-slate-200 break-all">
+                    {scan.scan_config?.focus || scan.focus || "Whole repository unconstrained sweep"}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 sm:col-span-2 lg:col-span-3">
+                  <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">Natural Language Objective</div>
+                  <div className="font-mono text-xs text-amber-200 bg-amber-950/40 p-2 rounded-lg border border-amber-900/60 break-words">
+                    {scan.scan_config?.objective || scan.objective || "Standard Autonomous Vulnerability Analysis & Exploit Verification"}
+                  </div>
+                </div>
+              </div>
+
+              {/* CLI Command */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                    Equivalent CLI Execution Command
+                  </span>
+                  <button
+                    onClick={() => handleCopyCli(generateCliCommand())}
+                    className="flex items-center space-x-1 text-[11px] text-amber-400 hover:text-amber-300 font-mono font-bold cursor-pointer"
+                  >
+                    {copiedCli ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedCli ? "Copied!" : "Copy Command"}</span>
+                  </button>
+                </div>
+                <pre className="p-3 bg-slate-950 text-slate-200 rounded-xl font-mono text-[11px] border border-slate-800 overflow-x-auto whitespace-pre-wrap break-all select-all">
+                  {generateCliCommand()}
+                </pre>
+              </div>
+
+              {/* Full JSON Config */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                    Full JSON Parameters Payload
+                  </span>
+                  <button
+                    onClick={() => handleCopyJson(JSON.stringify(scan.scan_config || scan, null, 2))}
+                    className="flex items-center space-x-1 text-[11px] text-amber-400 hover:text-amber-300 font-mono font-bold cursor-pointer"
+                  >
+                    {copiedJson ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedJson ? "Copied JSON!" : "Copy JSON"}</span>
+                  </button>
+                </div>
+                <pre className="p-3 bg-slate-950 text-amber-300/90 rounded-xl font-mono text-[11px] border border-slate-800 overflow-x-auto max-h-60 overflow-y-auto whitespace-pre select-all">
+                  {JSON.stringify(scan.scan_config || {
+                    id: scan.id,
+                    name: scan.name,
+                    model: scan.model,
+                    focus: scan.focus,
+                    objective: scan.objective,
+                    sandbox: scan.sandbox,
+                    source_target: scan.source_target,
+                    branch: scan.branch,
+                  }, null, 2)}
+                </pre>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-800 bg-[#0A2240]/60">
+              <span className="text-[11px] text-slate-400 font-mono">
+                Scan ID: {scan.id}
+              </span>
+              <button
+                onClick={() => setShowConfigModal(false)}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

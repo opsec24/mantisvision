@@ -1,6 +1,6 @@
 # Google Mantis ADK 2.0: The 19-Node Autonomous Multi-Agent Swarm
 
-This document provides the complete, authoritative specification of the **19-Node Multi-Agent Security Graph** embedded within **NewGenSAST**, derived directly from the Google Mantis ADK 2.0 graph topology (`backend/mantis_engine/workflow.json` and `core/graph_loader.py`).
+This document provides the complete, authoritative specification of the **19-Node Multi-Agent Security Graph** embedded within **MantisVision**, derived directly from the Google Mantis ADK 2.0 graph topology (`backend/mantis_engine/workflow.json` and `core/graph_loader.py`).
 
 ---
 

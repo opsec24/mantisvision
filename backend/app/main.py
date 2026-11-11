@@ -36,9 +36,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title="NewGenSAST",
-    description="AI-powered Static Application Security Testing platform",
-    version="0.1.0",
+    title="MantisVision",
+    description="Autonomous Agentic Security & Exploit Telemetry Platform powered by Google Mantis ADK 2.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 

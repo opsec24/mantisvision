@@ -1,6 +1,6 @@
 """Google Mantis Upstream Synchronizer Service.
 
-Aligns with NewGenSAST decoupled architecture:
+Aligns with MantisVision decoupled architecture:
 1. Status retrieval: Inspects /app/mantis_engine, commits, 19 skills, and AST parser.
 2. Upstream check: Compares local commit with upstream google/mantis repository.
 3. Update application: Atomic snapshot backup, sync, Docker compatibility preservation,

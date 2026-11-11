@@ -1,4 +1,4 @@
--- NewGenSAST Database Schema
+-- MantisVision Database Schema
 -- Initialisation script executed by postgres entrypoint on first run.
 
 -- Enable UUID generation
@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS scans (
     focus           TEXT,
     exclude_patterns JSONB,
     sandbox         VARCHAR(50) DEFAULT 'static-only',
+    objective       TEXT,
     mantis_run_id   VARCHAR(100),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     completed_at    TIMESTAMPTZ

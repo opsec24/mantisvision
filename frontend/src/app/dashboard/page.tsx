@@ -22,7 +22,6 @@ import {
   Zap,
   Square,
   Search,
-  Layers,
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -32,54 +31,6 @@ function formatTokens(n: number = 0): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
   return (n || 0).toLocaleString();
 }
-
-const SQUADS_DEF = [
-  {
-    num: "SQUAD 01",
-    name: "Recon & Surface Mapping",
-    desc: "AST structural indexing & historical delta tracking",
-    agents: "3 Agents",
-    nodes: ["History Miner", "AST Indexer", "Architect"],
-    border: "border-amber-500/30 hover:border-amber-500/60",
-    badge: "bg-amber-950/80 text-amber-300 border-amber-800/80",
-  },
-  {
-    num: "SQUAD 02",
-    name: "Threat & Strategy",
-    desc: "STRIDE threat matrix & hunting campaign planner",
-    agents: "2 Agents",
-    nodes: ["Threat Modeler", "Campaign Planner"],
-    border: "border-cyan-500/30 hover:border-cyan-500/60",
-    badge: "bg-cyan-950/80 text-cyan-300 border-cyan-800/80",
-  },
-  {
-    num: "SQUAD 03",
-    name: "Vulnerability Audit",
-    desc: "Deep taint flow analysis & exploit hypothesis generation",
-    agents: "1 Agent + 1 Gate",
-    nodes: ["Researcher", "Findings Gate"],
-    border: "border-indigo-500/30 hover:border-indigo-500/60",
-    badge: "bg-indigo-950/80 text-indigo-300 border-indigo-800/80",
-  },
-  {
-    num: "SQUAD 04",
-    name: "Adversarial Triage",
-    desc: "Red-team stress-testing & false-positive elimination",
-    agents: "3 Agents + 2 Gates",
-    nodes: ["Deduplicator", "Reviewer", "Critic"],
-    border: "border-amber-600/40 hover:border-amber-500/80",
-    badge: "bg-amber-900/60 text-amber-400 border-amber-700/80",
-  },
-  {
-    num: "SQUAD 05",
-    name: "Exploit & Remediation",
-    desc: "Sandboxed PoC reproduction & zero-regression patch synthesis",
-    agents: "6 Agents + 1 Gate",
-    nodes: ["Reproducer", "Patcher", "Reporter"],
-    border: "border-emerald-500/30 hover:border-emerald-500/60",
-    badge: "bg-emerald-950/80 text-emerald-300 border-emerald-800/80",
-  },
-];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -307,8 +258,8 @@ export default function DashboardPage() {
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-amber-400"></span>
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-              Executive Telemetry &bull; Obsidian Amber Aurora
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400">
+              MantisVision Offensive Security Telemetry
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-white mt-1">
@@ -388,74 +339,6 @@ export default function DashboardPage() {
               {formatTokens(totalTokens)} tokens consumed
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* Autonomous Swarm Pipeline Overview: 5 Security Squads & Dynamic Flow */}
-      <div className="glass-card rounded-2xl p-5 shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
-              <Layers className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-300 font-mono">
-                  Autonomous Swarm Pipeline
-                </span>
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  5 SECURITY SQUADS &bull; 19 NODES
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                15 specialized cognitive agents &amp; 4 deterministic validation gates organized into 5 collaborative squads
-              </p>
-            </div>
-          </div>
-
-          {latestScan && (
-            <div className="flex items-center space-x-2 shrink-0">
-              <Link
-                href={`/scans/${latestScan.id}/flow`}
-                className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500 hover:text-slate-950 transition-all glow-amber-btn cursor-pointer"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>Live Dynamic Graph (DAG Flow) &rarr;</span>
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* 5 Security Squads Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-          {SQUADS_DEF.map((squad, idx) => (
-            <div
-              key={squad.num}
-              className={`p-3.5 rounded-xl border bg-slate-900/60 transition-all ${squad.border} flex flex-col justify-between`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-mono text-amber-400 font-bold uppercase">{squad.num}</span>
-                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${squad.badge}`}>
-                    {squad.agents}
-                  </span>
-                </div>
-                <div className="text-xs font-bold text-white mb-1">{squad.name}</div>
-                <p className="text-[11px] text-slate-400 leading-snug">{squad.desc}</p>
-              </div>
-
-              <div className="pt-2.5 mt-2.5 border-t border-slate-800/80 flex flex-wrap gap-1">
-                {squad.nodes.map((node) => (
-                  <span
-                    key={node}
-                    className="text-[10px] font-mono text-slate-300 bg-slate-950/80 px-1.5 py-0.5 rounded border border-slate-800"
-                  >
-                    {node}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -664,10 +547,11 @@ export default function DashboardPage() {
               <tbody className="divide-y divide-slate-800/60">
                 {filteredScans.map((scan) => {
                   const isSelected = selectedIds.includes(scan.id);
-                  const isMultiModel = scan.phase_models && Object.keys(scan.phase_models).length > 1;
+                  const distinctModels = scan.phase_models ? Array.from(new Set(Object.values(scan.phase_models).filter(Boolean))) : [];
+                  const isMultiModel = distinctModels.length > 1;
                   const activeModel = isMultiModel
                     ? "Swarm: Multi-Model"
-                    : scan.model || scan.scan_config?.model || "gemini-3.5-flash-lite";
+                    : (scan.model && scan.model !== "Swarm (Multi-Model)" ? scan.model : (distinctModels[0] || scan.scan_config?.model || "gemini-3.5-flash-lite"));
 
                   return (
                     <tr

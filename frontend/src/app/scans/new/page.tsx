@@ -49,7 +49,6 @@ const MODEL_PRESETS = [
   { id: "gemini/gemini-3.8-flash", label: "Gemini 3.8 Flash (Google AI)" },
   { id: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet (Anthropic)" },
   { id: "openai/gpt-4o", label: "GPT-4o (OpenAI)" },
-  { id: "deepseek/deepseek-chat", label: "DeepSeek Chat" },
   { id: "custom", label: "Custom (type below)" },
 ];
 
@@ -793,7 +792,7 @@ export default function NewScanPage() {
               type="text"
               value={scanName}
               onChange={(e) => setScanName(e.target.value)}
-              placeholder="e.g. JuiceShop DeepSeek-V4 Audit, sBank-v2.1-Security-Review"
+              placeholder="e.g. Enterprise Security Review, Core API Audit"
               className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono"
             />
           </div>
@@ -830,108 +829,6 @@ export default function NewScanPage() {
             </div>
           </div>
 
-          {/* Quick Target Presets */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
-            <span className="text-[11px] font-semibold text-slate-400 font-mono">Quick Test Targets:</span>
-            
-            {/* test_targets preset */}
-            <div className="relative group">
-              <button
-                type="button"
-                onClick={() => {
-                  setSourceType("local");
-                  setSourceTarget("/app/mantis_engine/test_targets");
-                  setScanName("Built-in Test Suite (Flask & Vault)");
-                }}
-                className="px-2.5 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900/70 border border-amber-800/80 text-amber-300 text-xs font-mono font-bold transition-all shadow-xs cursor-pointer"
-              >
-                🧪 test_targets
-              </button>
-              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none transition-all">
-                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                  <span className="font-bold text-xs text-amber-300 font-mono">🧪 Built-in Test Targets</span>
-                  <span className="text-[10px] font-mono bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/60">Micro Suite</span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
-                  Local test harness containing micro Flask APIs, synthetic credentials, and vault routines for rapid smoke testing of swarm engine primitives.
-                </p>
-                <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-amber-400 font-mono">
-                  Path: /app/mantis_engine/test_targets
-                </div>
-              </div>
-            </div>
-
-            {/* research_target preset with comprehensive explanation hover card */}
-            <div className="relative group">
-              <button
-                type="button"
-                onClick={() => {
-                  setSourceType("local");
-                  setSourceTarget("/app/mantis_engine/evals/research_target");
-                  setScanName("Standard 26-File Seeded Corpus");
-                }}
-                className="px-2.5 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-700/80 text-indigo-300 text-xs font-mono font-bold transition-all shadow-xs flex items-center space-x-1 cursor-pointer ring-1 ring-indigo-500/30"
-              >
-                <span>🎯 research_target</span>
-                <HelpCircle className="w-3 h-3 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-              </button>
-              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-80 p-3.5 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-2xl border border-indigo-500/40 z-50 pointer-events-none transition-all">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                  <div className="flex items-center space-x-1.5">
-                    <span className="font-bold text-xs text-indigo-300 font-mono">🎯 Standard Seeded Benchmark</span>
-                  </div>
-                  <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">
-                    16 Ground-Truth Flaws
-                  </span>
-                </div>
-                <div className="mt-2 space-y-1.5 text-[11px] text-slate-300 leading-relaxed">
-                  <p>
-                    Canonical evaluation application (a <strong>26-file Document Portal Flask app</strong>).
-                  </p>
-                  <p className="text-slate-400">
-                    Seeded with <strong>16 verified vulnerabilities</strong>: SQL Injection, Command Injection, SSRF, Deserialization, Path Traversal, Broken Access Control, and IDOR.
-                  </p>
-                </div>
-                <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px]">
-                  <span className="text-indigo-300 font-mono">/app/mantis_engine/evals/research_target</span>
-                  <span className="text-emerald-400 font-medium">⚡ Local &bull; ~5-10m</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Juice Shop preset */}
-            <div className="relative group">
-              <button
-                type="button"
-                onClick={() => {
-                  setSourceType("git");
-                  setSourceTarget("https://github.com/juice-shop/juice-shop.git");
-                  setScanName("OWASP Juice Shop Audit");
-                }}
-                className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-800/80 text-emerald-300 text-xs font-mono font-bold transition-all shadow-xs cursor-pointer"
-              >
-                🧃 Juice Shop
-              </button>
-              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3 bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none transition-all">
-                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-                  <span className="font-bold text-xs text-emerald-300 font-mono">🧃 OWASP Juice Shop</span>
-                  <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-700/50">Full Web App</span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-2 leading-relaxed">
-                  The official OWASP vulnerable JavaScript / TypeScript web application. Cloned from GitHub for complete multi-agent repository exploration and threat modeling.
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/benchmarks"
-              className="px-2.5 py-1 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 border border-amber-800/60 text-amber-300 text-xs font-mono font-medium transition-colors flex items-center space-x-1"
-            >
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>Target Studio &amp; Benchmarks →</span>
-            </Link>
-          </div>
-
           {sourceType === "git" ? (
             <div className="space-y-4">
               {/* Dummy hidden inputs to soak up browser password manager autofill heuristics */}
@@ -952,7 +849,7 @@ export default function NewScanPage() {
                   data-1p-ignore="true"
                   value={sourceTarget}
                   onChange={(e) => setSourceTarget(e.target.value)}
-                  placeholder="https://github.com/juice-shop/juice-shop.git"
+                  placeholder="https://github.com/organization/repository.git"
                   className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:bg-slate-900 focus:ring-2 focus:ring-amber-500/20 font-mono transition-all"
                 />
               </div>
@@ -1556,7 +1453,7 @@ export default function NewScanPage() {
                 <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-900/50 flex items-start space-x-2.5 text-xs text-amber-200/90 leading-relaxed font-sans">
                   <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Heterogeneous Cross-Vendor Execution:</strong> NewGenSAST routes requests via LiteLLM. For example, pairing a <em>Claude Vulnerability Researcher</em> with an <em>OpenAI GPT-4o Adversarial Critic</em> introduces orthogonal cognitive architectures that falsify spurious hypotheses while confirming true exploit chains!
+                    <strong>Heterogeneous Cross-Vendor Execution:</strong> MantisVision routes requests via LiteLLM. For example, pairing a <em>Claude Vulnerability Researcher</em> with an <em>OpenAI GPT-4o Adversarial Critic</em> introduces orthogonal cognitive architectures that falsify spurious hypotheses while confirming true exploit chains!
                   </div>
                 </div>
               </div>
